@@ -6,6 +6,7 @@ import liquibase.exception.*;
 import liquibase.logging.LogFactory;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.RawSqlStatement;
+import liquibase.util.StreamUtil;
 import liquibase.util.StringUtils;
 
 import java.io.*;
@@ -25,7 +26,7 @@ public abstract class AbstractSQLChange extends AbstractChange implements DbmsTa
     private String sql;
     private String dbms;
 
-    protected String encoding = null;
+    protected String encoding = StreamUtil.getDefaultEncoding();
 
 
     protected AbstractSQLChange() {

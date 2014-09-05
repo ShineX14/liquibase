@@ -1,5 +1,7 @@
 package liquibase.resource;
 
+import liquibase.logging.Logger;
+import liquibase.logging.core.DefaultLogger;
 import liquibase.util.FileUtil;
 import liquibase.util.StringUtils;
 
@@ -14,6 +16,8 @@ import java.util.*;
  */
 public class ClassLoaderResourceAccessor extends AbstractResourceAccessor {
 
+    private static final Logger logger = new DefaultLogger();
+    
     private ClassLoader classLoader;
     public ClassLoaderResourceAccessor() {
         this.classLoader = getClass().getClassLoader();
@@ -45,6 +49,9 @@ public class ClassLoaderResourceAccessor extends AbstractResourceAccessor {
             }
         }
 
+        if (seenUrls.size() > 1 && !"META-INF/MANIFEST.MF".equals(path)) {
+            logger.warning(seenUrls.toString());
+        }
         return returnSet;
     }
 

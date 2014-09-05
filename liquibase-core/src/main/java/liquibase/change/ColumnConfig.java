@@ -1,19 +1,18 @@
 package liquibase.change;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import liquibase.parser.core.ParsedNode;
 import liquibase.parser.core.ParsedNodeException;
 import liquibase.resource.ResourceAccessor;
 import liquibase.serializer.AbstractLiquibaseSerializable;
-import liquibase.serializer.LiquibaseSerializable;
-import liquibase.serializer.ReflectionSerializer;
 import liquibase.statement.DatabaseFunction;
 import liquibase.statement.SequenceCurrentValueFunction;
 import liquibase.statement.SequenceNextValueFunction;
@@ -204,7 +203,9 @@ public class ColumnConfig extends AbstractLiquibaseSerializable {
             }
 
             try {
-                this.valueNumeric = NumberFormat.getInstance(Locale.US).parse(valueNumeric);
+                DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance(Locale.US);
+                formatter.setParseBigDecimal(true);
+                this.valueNumeric = formatter.parse(valueNumeric);
             } catch (ParseException e) {
                 this.valueComputed = new DatabaseFunction(valueNumeric);
             }
@@ -339,6 +340,11 @@ public class ColumnConfig extends AbstractLiquibaseSerializable {
         return this;
     }
 
+    //kept compatible for 3.0
+    public ColumnConfig setValueBlob(String valueBlob) {
+        return setValueBlobFile(valueBlob);
+    }
+    
     /**
      * Return the file containing the data to load into a CLOB.
      * @see #setValue(String)
@@ -352,6 +358,11 @@ public class ColumnConfig extends AbstractLiquibaseSerializable {
         return this;
     }
 
+    //kept compatible for 3.0
+    public ColumnConfig setValueClob(String valueClob) {
+        return setValueClobFile(valueClob);
+    }
+    
     /**
      * Return encoding of a file, referenced via {@link #valueClobFile}.
      */
@@ -445,7 +456,9 @@ public class ColumnConfig extends AbstractLiquibaseSerializable {
                     defaultValueNumeric = defaultValueNumeric.replaceFirst("\\)$", "");
                 }
                 try {
-                    this.defaultValueNumeric = NumberFormat.getInstance(Locale.US).parse(defaultValueNumeric);
+                    DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance(Locale.US);
+                    formatter.setParseBigDecimal(true);
+                    this.defaultValueNumeric = formatter.parse(defaultValueNumeric);
                 } catch (ParseException e) {
                     this.defaultValueComputed = new DatabaseFunction(defaultValueNumeric);
                 }
@@ -680,7 +693,7 @@ public class ColumnConfig extends AbstractLiquibaseSerializable {
             value = StringUtils.trimToNull((String) parsedNode.getValue());
         }
         try {
-            valueNumeric = parsedNode.getChildValue(null, "valueNumeric", Double.class);
+            valueNumeric = parsedNode.getChildValue(null, "valueNumeric", BigDecimal.class);
         } catch (ParsedNodeException e) {
             valueComputed = new DatabaseFunction(parsedNode.getChildValue(null, "valueNumeric", String.class));
         }
@@ -692,6 +705,15 @@ public class ColumnConfig extends AbstractLiquibaseSerializable {
         valueBoolean = parsedNode.getChildValue(null, "valueBoolean", Boolean.class);
         valueBlobFile = parsedNode.getChildValue(null, "valueBlobFile", String.class);
         valueClobFile = parsedNode.getChildValue(null, "valueClobFile", String.class);
+        //compatible for 3.0
+        String valueBlob = parsedNode.getChildValue(null, "valueBlob", String.class);
+        String valueClob = parsedNode.getChildValue(null, "valueClob", String.class);
+        if (valueBlob != null && valueBlobFile == null) {
+            valueBlobFile = valueBlob;
+        }
+        if (valueClob != null && valueClobFile == null) {
+            valueClobFile = valueBlob;
+        }
         String valueComputedString = parsedNode.getChildValue(null, "valueComputed", String.class);
         if (valueComputedString != null) {
             valueComputed = new DatabaseFunction(valueComputedString);
@@ -708,7 +730,7 @@ public class ColumnConfig extends AbstractLiquibaseSerializable {
 
         defaultValue = parsedNode.getChildValue(null, "defaultValue", String.class);
         try {
-            defaultValueNumeric = parsedNode.getChildValue(null, "defaultValueNumeric", Double.class);
+            defaultValueNumeric = parsedNode.getChildValue(null, "defaultValueNumeric", BigDecimal.class);
         } catch (ParsedNodeException e) {
             defaultValueComputed = new DatabaseFunction(parsedNode.getChildValue(null, "defaultValueNumeric", String.class));
         }

@@ -22,6 +22,7 @@ public class ValidationFailedException extends MigrationFailedException {
     private List<Throwable> changeValidationExceptions;
     private ValidationErrors validationErrors;
     private Database database;
+    private boolean skipChangeLog;
 
     public ValidationFailedException(ValidatingVisitor changeLogHandler) {
         this.invalidMD5Sums = changeLogHandler.getInvalidMD5Sums();
@@ -32,6 +33,7 @@ public class ValidationFailedException extends MigrationFailedException {
         this.changeValidationExceptions = changeLogHandler.getChangeValidationExceptions();
         this.validationErrors = changeLogHandler.getValidationErrors();
         this.database = changeLogHandler.getDatabase();
+        this.skipChangeLog = changeLogHandler.skipChangeLog();
     }
 
 
@@ -138,4 +140,8 @@ public class ValidationFailedException extends MigrationFailedException {
             }
         }
     }
+
+    public boolean skipChangeLog() {
+        return skipChangeLog;
+      }
 }

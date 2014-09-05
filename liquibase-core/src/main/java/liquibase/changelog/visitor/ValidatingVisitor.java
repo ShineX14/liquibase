@@ -10,6 +10,7 @@ import liquibase.exception.*;
 import liquibase.precondition.ErrorPrecondition;
 import liquibase.precondition.FailedPrecondition;
 import liquibase.precondition.core.PreconditionContainer;
+import liquibase.precondition.core.PreconditionContainer.FailOption;
 import liquibase.logging.LogFactory;
 import liquibase.util.StringUtils;
 
@@ -24,6 +25,7 @@ public class ValidatingVisitor implements ChangeSetVisitor {
 
     private List<ChangeSet> invalidMD5Sums = new ArrayList<ChangeSet>();
     private List<FailedPrecondition> failedPreconditions = new ArrayList<FailedPrecondition>();
+    private final List<PreconditionContainer> failedPreconditionContainers = new ArrayList<PreconditionContainer>();
     private List<ErrorPrecondition> errorPreconditions = new ArrayList<ErrorPrecondition>();
     private Set<ChangeSet> duplicateChangeSets = new HashSet<ChangeSet>();
     private List<SetupException> setupExceptions = new ArrayList<SetupException>();
@@ -53,7 +55,11 @@ public class ValidatingVisitor implements ChangeSetVisitor {
             preconditions.check(database, changeLog, null);
         } catch (PreconditionFailedException e) {
             LogFactory.getLogger().debug("Precondition Failed: "+e.getMessage(), e);
+            if (preconditions.getOnFail() == FailOption.CONTINUE) {
+                LogFactory.getLogger().info("Precondition Failed but onFail='CONTINUE': " + preconditions.getOnFailMessage());
+            }
             failedPreconditions.addAll(e.getFailedPreconditions());
+            failedPreconditionContainers.add(preconditions);
         } catch (PreconditionErrorException e) {
             LogFactory.getLogger().debug("Precondition Error: "+e.getMessage(), e);
             errorPreconditions.addAll(e.getErrorPreconditions());
@@ -157,13 +163,30 @@ public class ValidatingVisitor implements ChangeSetVisitor {
     }
 
     public boolean validationPassed() {
-        return invalidMD5Sums.size() == 0
-                && failedPreconditions.size() == 0
-                && errorPreconditions.size() == 0
-                && duplicateChangeSets.size() == 0
-                && changeValidationExceptions.size() == 0
-                && setupExceptions.size() == 0
-                && !validationErrors.hasErrors();
+        return !hasError() && failedPreconditions.isEmpty();
+    }
+
+    private boolean hasError() {
+        return invalidMD5Sums.size() > 0
+                //&& failedPreconditions.size() > 0
+                || errorPreconditions.size() > 0
+                || duplicateChangeSets.size() > 0
+                || changeValidationExceptions.size() > 0
+                || setupExceptions.size() > 0
+                || validationErrors.hasErrors();
+    }
+
+    public boolean skipChangeLog() {
+        if (hasError()) {
+            return false;
+        }
+
+        for (PreconditionContainer container : failedPreconditionContainers) {
+            if (FailOption.CONTINUE != container.getOnFail()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public Database getDatabase() {

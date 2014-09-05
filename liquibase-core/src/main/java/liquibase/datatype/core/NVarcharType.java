@@ -28,6 +28,9 @@ public class NVarcharType extends CharType {
             }
             return new DatabaseDataType("NVARCHAR", getParameters());
         }
+        if (database instanceof PostgresDatabase){
+            return new DatabaseDataType("VARCHAR", getParameters());
+        }
         return super.toDatabaseDataType(database);
     }
 

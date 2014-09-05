@@ -1,17 +1,17 @@
 package liquibase.diff.output;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import liquibase.CatalogAndSchema;
 import liquibase.database.Database;
 import liquibase.database.InternalDatabase;
 import liquibase.database.core.H2Database;
 import liquibase.diff.output.changelog.ChangeGeneratorFactory;
-import liquibase.diff.output.changelog.core.MissingDataExternalFileChangeGenerator;
+import liquibase.diff.output.changelog.core.EbaoOracleMissingDataExternalFileChangeGenerator;
 import liquibase.structure.DatabaseObject;
 import liquibase.structure.DatabaseObjectCollection;
 import liquibase.structure.core.Schema;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class DiffOutputControl {
 
@@ -67,7 +67,7 @@ public class DiffOutputControl {
     public DiffOutputControl setDataDir(String dataDir) {
 
         if (dataDir != null) {
-            ChangeGeneratorFactory.getInstance().register(new MissingDataExternalFileChangeGenerator(dataDir));
+            ChangeGeneratorFactory.getInstance().register(new EbaoOracleMissingDataExternalFileChangeGenerator(dataDir));
         }
         return this;
     }

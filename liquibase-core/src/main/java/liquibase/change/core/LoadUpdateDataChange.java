@@ -8,10 +8,12 @@ import liquibase.database.Database;
 import liquibase.datatype.DataTypeFactory;
 import liquibase.exception.RollbackImpossibleException;
 import liquibase.exception.LiquibaseException;
+import liquibase.statement.ExecutablePreparedStatement;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.DeleteStatement;
 import liquibase.statement.core.InsertOrUpdateStatement;
 import liquibase.statement.core.InsertStatement;
+import liquibase.statement.prepared.LoadUpdateExecutablePreparedStatement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,13 +32,19 @@ public class LoadUpdateDataChange extends LoadDataChange {
         return super.getTableName();
     }
 
-    public void setPrimaryKey(String primaryKey) throws LiquibaseException {
+    public void setPrimaryKey(String primaryKey) {
         this.primaryKey = primaryKey;
     }
 
     @DatabaseChangeProperty(description = "Comma delimited list of the columns for the primary key", requiredForDatabase = "all")
     public String getPrimaryKey() {
         return primaryKey;
+    }
+
+    @Override
+    protected ExecutablePreparedStatement createExecutablePreparedStatement(
+        String[] headers, String[] line, Database database) {
+      return new LoadUpdateExecutablePreparedStatement(headers, line, database, this);
     }
 
     @Override

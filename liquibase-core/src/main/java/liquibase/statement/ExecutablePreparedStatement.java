@@ -1,5 +1,9 @@
 package liquibase.statement;
 
+import java.sql.PreparedStatement;
+import java.util.List;
+
+import liquibase.change.ColumnConfig;
 import liquibase.database.PreparedStatementFactory;
 import liquibase.exception.DatabaseException;
 
@@ -13,4 +17,19 @@ public interface ExecutablePreparedStatement extends SqlStatement {
      * @throws DatabaseException
      */
     void execute(PreparedStatementFactory factory) throws DatabaseException;
+    void execute(PreparedStatement statement) throws DatabaseException;    
+
+    Info getStatement();
+    
+    class Info {
+        public final String sql;
+        public final List<ColumnConfig> columns;
+        public final List<String> parameters;
+    
+        public Info(String sql, List<ColumnConfig> columns, List<String> parameters) {
+          this.sql = sql;
+          this.columns = columns;
+          this.parameters = parameters;
+        }
+    }
 }

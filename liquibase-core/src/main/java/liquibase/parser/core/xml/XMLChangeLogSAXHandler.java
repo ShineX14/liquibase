@@ -32,18 +32,25 @@ class XMLChangeLogSAXHandler extends DefaultHandler {
     protected Logger log;
 
 	private final DatabaseChangeLog databaseChangeLog;
-	private final ResourceAccessor resourceAccessor;
+	protected final ResourceAccessor resourceAccessor;
 	private final ChangeLogParameters changeLogParameters;
     private final Stack<ParsedNode> nodeStack = new Stack();
     private Stack<StringBuffer> textStack = new Stack<StringBuffer>();
     private ParsedNode databaseChangeLogTree;
 
 
+    @Deprecated//kept for backward compatibility
     protected XMLChangeLogSAXHandler(String physicalChangeLogLocation, ResourceAccessor resourceAccessor, ChangeLogParameters changeLogParameters) {
-		log = LogFactory.getLogger();
+        this(new DatabaseChangeLog(physicalChangeLogLocation), resourceAccessor, changeLogParameters);
+    }
+    
+    protected XMLChangeLogSAXHandler(DatabaseChangeLog databaseChangeLog, ResourceAccessor resourceAccessor, ChangeLogParameters changeLogParameters) {
+        String physicalChangeLogLocation = databaseChangeLog.getPhysicalFilePath();
+
+        log = LogFactory.getLogger();
 		this.resourceAccessor = resourceAccessor;
 
-		databaseChangeLog = new DatabaseChangeLog();
+		this.databaseChangeLog = databaseChangeLog;
 		databaseChangeLog.setPhysicalFilePath(physicalChangeLogLocation);
 		databaseChangeLog.setChangeLogParameters(changeLogParameters);
 

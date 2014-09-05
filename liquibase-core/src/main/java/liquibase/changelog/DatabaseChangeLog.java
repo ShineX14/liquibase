@@ -2,6 +2,7 @@ package liquibase.changelog;
 
 import liquibase.Contexts;
 import liquibase.LabelExpression;
+import liquibase.Liquibase;
 import liquibase.RuntimeEnvironment;
 import liquibase.changelog.filter.ContextChangeSetFilter;
 import liquibase.changelog.filter.DbmsChangeSetFilter;
@@ -9,6 +10,7 @@ import liquibase.changelog.filter.LabelChangeSetFilter;
 import liquibase.changelog.visitor.ValidatingVisitor;
 import liquibase.database.Database;
 import liquibase.database.ObjectQuotingStrategy;
+import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.exception.*;
 import liquibase.logging.LogFactory;
 import liquibase.logging.Logger;
@@ -18,6 +20,7 @@ import liquibase.parser.core.ParsedNodeException;
 import liquibase.precondition.Conditional;
 import liquibase.precondition.core.PreconditionContainer;
 import liquibase.resource.ResourceAccessor;
+import liquibase.util.StreamUtil;
 import liquibase.util.file.FilenameUtils;
 
 import java.io.File;
@@ -204,6 +207,8 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
     }
 
     protected void handleChildNode(ParsedNode node, ResourceAccessor resourceAccessor) throws ParsedNodeException, SetupException {
+        boolean defaultRelativeToChangelogFile = Liquibase.isRelativeToChangelogFile();
+        
         String nodeName = node.getName();
         if (nodeName.equals("changeSet")) {
             this.addChangeSet(createChangeSet(node, resourceAccessor));
@@ -211,7 +216,7 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
             String path = node.getChildValue(null, "file", String.class);
             path = path.replace('\\', '/');
             try {
-                include(path, node.getChildValue(null, "relativeToChangelogFile", false), resourceAccessor);
+                include(path, node.getChildValue(null, "relativeToChangelogFile", defaultRelativeToChangelogFile), resourceAccessor);
             } catch (LiquibaseException e) {
                 throw new SetupException(e);
             }
@@ -227,7 +232,7 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
                 }
             }
 
-            includeAll(path, node.getChildValue(null, "relativeToChangelogFile", false), resourceFilter, getStandardChangeLogComparator(), resourceAccessor);
+            includeAll(path, node.getChildValue(null, "relativeToChangelogFile", defaultRelativeToChangelogFile), resourceFilter, getStandardChangeLogComparator(), resourceAccessor);
         } else if (nodeName.equals("preConditions")) {
             this.preconditionContainer = new PreconditionContainer();
             try {
@@ -277,7 +282,8 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
     }
 
     protected boolean include(String fileName, boolean isRelativePath, ResourceAccessor resourceAccessor) throws LiquibaseException {
-
+        String orgFileName = fileName; 
+        
         if (fileName.equalsIgnoreCase(".svn") || fileName.equalsIgnoreCase("cvs")) {
             return false;
         }
@@ -292,6 +298,13 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
                 fileName = FilenameUtils.getFullPath(relativeBaseFileName) + fileName;
             }
         }
+        
+        IncludedDatabaseChangeLog includedDatabaseChangeLog = loadIncludedDatabaseChangeLog(orgFileName, fileName, resourceAccessor);
+        if (includedDatabaseChangeLog != null) {
+            ((IncludedDatabaseChangeLog)this).addChangeLog(includedDatabaseChangeLog);
+            return true;
+        }
+        
         DatabaseChangeLog changeLog;
         try {
             changeLog = ChangeLogParserFactory.getInstance().getParser(fileName, resourceAccessor).parse(fileName, changeLogParameters, resourceAccessor);
@@ -307,12 +320,37 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
             this.getPreconditions().addNestedPrecondition(preconditions);
         }
         for (ChangeSet changeSet : changeLog.getChangeSets()) {
-            this.changeSets.add(changeSet);
+            this.addChangeSet(changeSet);
         }
 
         return true;
     }
 
+    private IncludedDatabaseChangeLog loadIncludedDatabaseChangeLog(String orgFileName, String absFileName, ResourceAccessor resourceAccessor) {
+        if (!(this instanceof IncludedDatabaseChangeLog)) {
+            return null;
+        }
+
+        String logicalFileName = getLogicalFilePath(orgFileName);
+        String physicalFileName = StreamUtil.processDefaultPrefix(resourceAccessor, absFileName);
+        //lazy loading in case of high volume data
+        IncludedDatabaseChangeLog changeLog = new IncludedDatabaseChangeLog(physicalFileName);
+        changeLog.setLogicalFilePath(logicalFileName);
+
+        return changeLog;
+    }
+
+    private String getLogicalFilePath(String relativeFileName) {
+        String parentPath = this.getLogicalFilePath();
+        if (parentPath == null || parentPath.equals(this.getPhysicalFilePath())) {
+            return null;
+        }
+
+        parentPath = parentPath.substring(0, parentPath.lastIndexOf('/') + 1);
+        String logicalFilePath = parentPath + relativeFileName;
+        return logicalFilePath;
+    }
+    
     protected ChangeSet createChangeSet(ParsedNode node, ResourceAccessor resourceAccessor) throws ParsedNodeException, SetupException {
         ChangeSet changeSet = new ChangeSet(this);
         changeSet.setChangeLogParameters(this.getChangeLogParameters());

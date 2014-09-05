@@ -1,20 +1,25 @@
 package liquibase.change.core;
 
+import liquibase.Liquibase;
 import liquibase.change.*;
 import liquibase.database.Database;
+import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.exception.ValidationErrors;
 import liquibase.parser.core.ParsedNode;
 import liquibase.parser.core.ParsedNodeException;
 import liquibase.resource.ResourceAccessor;
 import liquibase.statement.SqlStatement;
-import liquibase.statement.UpdateExecutablePreparedStatement;
 import liquibase.statement.core.UpdateStatement;
+import liquibase.statement.prepared.UpdateExecutablePreparedStatement;
+import liquibase.statement.prepared.UpdateExecutablePreparedStatementChange;
+import liquibase.util.StreamUtil;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 @DatabaseChange(name = "update", description = "Updates data in an existing table", priority = ChangeMetaData.PRIORITY_DEFAULT, appliesTo = "table")
-public class UpdateDataChange extends AbstractModifyDataChange implements ChangeWithColumns<ColumnConfig> {
+public class UpdateDataChange extends AbstractModifyDataChange implements ChangeWithColumns<ColumnConfig>, UpdateExecutablePreparedStatementChange {
 
     private List<ColumnConfig> columns;
 
@@ -49,36 +54,20 @@ public class UpdateDataChange extends AbstractModifyDataChange implements Change
         columns.remove(column);
     }
 
+    private SqlStatement[] sqlStatements;//cache
+    
     @Override
     public SqlStatement[] generateStatements(Database database) {
 
-    	boolean needsPreparedStatement = false;
-        for (ColumnConfig column : getColumns()) {
-            if (column.getValueBlobFile() != null) {
-                needsPreparedStatement = true;
-            }
-            if (column.getValueClobFile() != null) {
-                needsPreparedStatement = true;
-            }
+        if (sqlStatements != null) {
+            return sqlStatements;
         }
 
-        if (needsPreparedStatement) {
-            UpdateExecutablePreparedStatement statement = new UpdateExecutablePreparedStatement(database, catalogName, schemaName, tableName, columns, getChangeSet(), this.getResourceAccessor());
-            
-            statement.setWhereClause(where);
-            
-            for (ColumnConfig whereParam : whereParams) {
-                if (whereParam.getName() != null) {
-                    statement.addWhereColumnName(whereParam.getName());
-                }
-                statement.addWhereParameter(whereParam.getValueObject());
-            }
-            
-            return new SqlStatement[] {
-                    statement
-            };
+        if (Liquibase.isPreparedStatementPreferred()) {
+            sqlStatements = new SqlStatement[] { new UpdateExecutablePreparedStatement(database, this) };
+            return sqlStatements;
         }
-    	
+
         UpdateStatement statement = new UpdateStatement(getCatalogName(), getSchemaName(), getTableName());
 
         for (ColumnConfig column : getColumns()) {
@@ -94,9 +83,24 @@ public class UpdateDataChange extends AbstractModifyDataChange implements Change
             statement.addWhereParameter(whereParam.getValueObject());
         }
 
-        return new SqlStatement[]{
-                statement
-        };
+        List<SqlStatement> sqlList = new ArrayList<SqlStatement>();
+        sqlList.add(statement);
+        
+        for (ColumnConfig column : columns) {
+          statement.addNewColumnValue(column.getName(), column.getValueObject());
+          if (column.getValueClobFile() != null) {
+            InputStream stream = StreamUtil.getLobFileStream(getResourceAccessor(), column.getValueBlobFile(), getChangeSet().getFilePath());
+            List<String> clobSql = GenerateClobOrBlobSql.generateClobSql(stream, tableName,column.getName(), where);
+            sqlList.addAll(GenerateClobOrBlobSql.sqlToRawSqlStatements(clobSql));
+          } else if (column.getValueBlobFile() != null) {
+            InputStream stream = StreamUtil.getLobFileStream(getResourceAccessor(), column.getValueClobFile(), getChangeSet().getFilePath());
+            List<String> blobSql = GenerateClobOrBlobSql.generateBlobSql(stream, tableName,column.getName(), where);
+            sqlList.addAll(GenerateClobOrBlobSql.sqlToRawSqlStatements(blobSql));
+          }
+        }
+
+        sqlStatements = sqlList.toArray(new SqlStatement[sqlList.size()]);
+        return sqlStatements;
     }
 
     @Override
@@ -129,4 +133,9 @@ public class UpdateDataChange extends AbstractModifyDataChange implements Change
             }
         }
     }
+    
+    public String getPrimaryKey() {
+        throw new IllegalStateException();
+    }
+    
 }

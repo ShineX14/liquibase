@@ -1,6 +1,7 @@
 package liquibase.diff.output.changelog;
 
 import liquibase.change.Change;
+import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
 import liquibase.diff.ObjectDifferences;
 import liquibase.diff.output.DiffOutputControl;
@@ -20,7 +21,7 @@ public class ChangeGeneratorChain {
         }
     }
 
-    public Change[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisionDatabase) {
+    public ChangeSet[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisionDatabase) {
         if (missingObject == null) {
             return null;
         }
@@ -41,7 +42,7 @@ public class ChangeGeneratorChain {
             return null;
         }
 
-        Change[] changes = ((MissingObjectChangeGenerator) changeGenerators.next()).fixMissing(missingObject, control, referenceDatabase, comparisionDatabase, this);
+        ChangeSet[] changes = ((MissingObjectChangeGenerator) changeGenerators.next()).fixMissing(missingObject, control, referenceDatabase, comparisionDatabase, this);
         if (changes == null) {
             return null;
         }

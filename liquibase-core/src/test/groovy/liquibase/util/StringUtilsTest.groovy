@@ -33,9 +33,9 @@ class StringUtilsTest extends Specification {
         where:
         rawString                                                 | expected
         " Some text but no comments"                              | "Some text but no comments"
-        "Some text -- with comment"                               | "Some text"
-        "Some text -- with comment\n"                             | "Some text"
-        "Some text--with comment\nMore text--and another comment" | "Some text\nMore text"
+        "Some text -- with comment"                               | "Some text -- with comment"
+        "Some text -- with comment\n"                             | "Some text -- with comment"
+        "Some text--with comment\nMore text--and another comment" | "Some text--with comment\nMore text--and another comment"
         "/*Some text\nmore text*/"                                | ""
         "some sql/*Some text\nmore text*/"                        | "some sql"
         "/*Some text\nmore text*/some sql"                        | "some sql"
@@ -69,7 +69,7 @@ class StringUtilsTest extends Specification {
         long end = System.currentTimeMillis();
 
         then:
-        result == sql.trim()
+        result == totalLine.trim()
         assert end - start <= 500: "Did not complete within 500ms"
     }
 

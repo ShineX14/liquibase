@@ -4,6 +4,7 @@ import liquibase.change.AddColumnConfig;
 import liquibase.change.Change;
 import liquibase.change.ConstraintsConfig;
 import liquibase.change.core.AddColumnChange;
+import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
 import liquibase.datatype.DataTypeFactory;
 import liquibase.diff.output.DiffOutputControl;
@@ -39,7 +40,7 @@ public class MissingColumnChangeGenerator implements MissingObjectChangeGenerato
     }
 
     @Override
-    public Change[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisonDatabase, ChangeGeneratorChain chain) {
+    public ChangeSet[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisonDatabase, ChangeGeneratorChain chain) {
         Column column = (Column) missingObject;
 //        if (!shouldModifyColumn(column)) {
 //            continue;
@@ -96,6 +97,8 @@ public class MissingColumnChangeGenerator implements MissingObjectChangeGenerato
 
         change.addColumn(columnConfig);
 
-        return new Change[] { change };
+        ChangeSet changeSet = ChangeSetUtils.generateChangeSet(change.getTableName() + "." + columnConfig.getName());
+        changeSet.addChange(change);
+        return new ChangeSet[] {changeSet};
     }
 }

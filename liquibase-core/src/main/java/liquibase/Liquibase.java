@@ -19,11 +19,14 @@ import liquibase.database.core.OracleDatabase;
 import liquibase.diff.DiffGeneratorFactory;
 import liquibase.diff.DiffResult;
 import liquibase.diff.compare.CompareControl;
+import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.diff.output.changelog.DiffToChangeLog;
+import liquibase.exception.ChangeLogParseException;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
 import liquibase.exception.LockException;
 import liquibase.exception.UnexpectedLiquibaseException;
+import liquibase.exception.ValidationFailedException;
 import liquibase.executor.Executor;
 import liquibase.executor.ExecutorService;
 import liquibase.executor.LoggingExecutor;
@@ -56,7 +59,11 @@ import javax.xml.parsers.ParserConfigurationException;
 public class Liquibase {
 
     private DatabaseChangeLog databaseChangeLog;
+    private DatabaseChangeLog databaseChangeLogBefore;
+    private DatabaseChangeLog databaseChangeLogAfter;
     private String changeLogFile;
+    private String changeLogFileBefore;
+    private String changeLogFileAfter;
     private ResourceAccessor resourceAccessor;
 
     protected Database database;
@@ -67,6 +74,13 @@ public class Liquibase {
     private ChangeLogSyncListener changeLogSyncListener;
 
     private boolean ignoreClasspathPrefix = true;
+
+    //update
+    private static boolean batchUpdate = false;
+    private static boolean preparedStatementPreferred = false;
+    private static boolean markNextDdlChangeSetRan = false;
+
+    private static boolean relativeToChangelogFile = false;
 
     /**
      * Creates a Liquibase instance for a given DatabaseConnection. The Database instance used will be found with {@link DatabaseFactory#findCorrectDatabaseImplementation(liquibase.database.DatabaseConnection)}
@@ -112,6 +126,14 @@ public class Liquibase {
         this.database = database;
         this.changeLogParameters = new ChangeLogParameters(database);
     }
+
+    public void setChangeLogFileBefore(String changeLogFileBefore) {
+        this.changeLogFileBefore = changeLogFileBefore;
+      }
+
+      public void setChangeLogFileAfter(String changeLogFileAfter) {
+        this.changeLogFileAfter = changeLogFileAfter;
+      }
 
     /**
      * Return the change log file used by this Liquibase instance.
@@ -190,14 +212,17 @@ public class Liquibase {
 
         try {
             DatabaseChangeLog changeLog = getDatabaseChangeLog();
+            checkLiquibaseTables(false, null, null, null);
 
-            checkLiquibaseTables(true, changeLog, contexts, labelExpression);
-
-            changeLog.validate(database, contexts, labelExpression);
-
-            ChangeLogIterator changeLogIterator = getStandardChangelogIterator(contexts, labelExpression, changeLog);
-
-            changeLogIterator.run(createUpdateVisitor(), new RuntimeEnvironment(database, contexts, labelExpression));
+            if (changeLogFileBefore != null && !"".equals(changeLogFileBefore)) {
+                DatabaseChangeLog changeLogBefore = getDatabaseChangeLogBefore();
+                _update(changeLogBefore, contexts, labelExpression);
+            }
+            _update(changeLog, contexts, labelExpression);
+            if (changeLogFileAfter != null && !"".equals(changeLogFileAfter)) {
+                DatabaseChangeLog changeLogAfter = getDatabaseChangeLogBefore();
+                _update(changeLogAfter, contexts, labelExpression);
+            }
         } finally {
             database.setObjectQuotingStrategy(ObjectQuotingStrategy.LEGACY);
             try {
@@ -209,29 +234,87 @@ public class Liquibase {
         }
     }
 
+    public void _update(DatabaseChangeLog changeLog, Contexts contexts, LabelExpression labelExpression) throws LiquibaseException, DatabaseException {
+        _update(changeLog, contexts, labelExpression, getStandardChangeSetFilter(contexts, labelExpression));
+    }
+    
+    public void _update(DatabaseChangeLog changeLog, Contexts contexts, LabelExpression labelExpression, ChangeSetFilter[] changeSetFilters) throws LiquibaseException, DatabaseException {
+        upgradeChecksums(changeLog, contexts, labelExpression);
+
+        try {
+            changeLog.validate(database, contexts, labelExpression);
+        } catch (ValidationFailedException e) {
+            if (changeLog instanceof IncludedDatabaseChangeLog && e.skipChangeLog()) {
+                LogFactory.getLogger().info(changeLog.getPhysicalFilePath() + " is skipped.");
+                return;
+            }
+            throw e;
+        }
+
+        ChangeLogIterator changeLogIterator = getChangelogIterator(changeLog, contexts, changeSetFilters);
+
+        changeLogIterator.run(createUpdateVisitor(), new RuntimeEnvironment(database, contexts, labelExpression));
+    }
+
     public DatabaseChangeLog getDatabaseChangeLog() throws LiquibaseException {
         if (databaseChangeLog == null) {
-            ChangeLogParser parser = ChangeLogParserFactory.getInstance().getParser(changeLogFile, resourceAccessor);
-            databaseChangeLog = parser.parse(changeLogFile, changeLogParameters, resourceAccessor);
+            databaseChangeLog = getDatabaseChangeLog(changeLogFile);
         }
 
         return databaseChangeLog;
     }
 
+    public DatabaseChangeLog getDatabaseChangeLogBefore() throws LiquibaseException {
+        if (databaseChangeLogBefore == null) {
+            databaseChangeLogBefore = getDatabaseChangeLog(changeLogFileBefore);
+        }
+
+        return databaseChangeLogBefore;
+    }
+
+    public DatabaseChangeLog getDatabaseChangeLogAfter() throws LiquibaseException {
+        if (databaseChangeLogAfter == null) {
+            databaseChangeLogBefore = getDatabaseChangeLog(changeLogFileAfter);
+        }
+
+        return databaseChangeLogAfter;
+    }
+
+    public DatabaseChangeLog getDatabaseChangeLog(String changeLogFile) throws LiquibaseException, ChangeLogParseException {
+        ChangeLogParser parser = ChangeLogParserFactory.getInstance().getParser(changeLogFile, resourceAccessor);
+        return parser.parse(changeLogFile, changeLogParameters, resourceAccessor);
+    }
 
     protected UpdateVisitor createUpdateVisitor() {
         return new UpdateVisitor(database, changeExecListener);
     }
 
-
     protected ChangeLogIterator getStandardChangelogIterator(Contexts contexts, LabelExpression labelExpression, DatabaseChangeLog changeLog) throws DatabaseException {
-        return new ChangeLogIterator(changeLog,
-                new ShouldRunChangeSetFilter(database, ignoreClasspathPrefix),
-                new ContextChangeSetFilter(contexts),
-                new LabelChangeSetFilter(labelExpression),
-                new DbmsChangeSetFilter(database));
+        ChangeSetFilter[] filters = getStandardChangeSetFilter(contexts, labelExpression);
+        return getChangelogIterator(changeLog, contexts, filters);
     }
 
+    private ChangeSetFilter[] getStandardChangeSetFilter(Contexts contexts, LabelExpression labelExpression) throws DatabaseException {
+        List<ChangeSetFilter> filters = new ArrayList<ChangeSetFilter>();
+        filters.add(new ShouldRunChangeSetFilter(database));
+        filters.add(new ContextChangeSetFilter(contexts));
+        filters.add(new LabelChangeSetFilter(labelExpression));
+        filters.add(new DbmsChangeSetFilter(database));
+        if (isMarkNextDdlChangeSetRan()) {
+          filters.add(new CountDdlChangeSetFilter());
+        }
+        return filters.toArray(new ChangeSetFilter[filters.size()]);
+    }
+
+    public ChangeLogIterator getChangelogIterator(DatabaseChangeLog changeLog, Contexts contexts, ChangeSetFilter... changeSetFilters)
+            throws DatabaseException {
+        if (changeLog instanceof IncludedDatabaseChangeLog) {
+            return new IncludedChangeLogIterator(this, contexts, (IncludedDatabaseChangeLog) changeLog, changeSetFilters);
+        } else {
+            return new ChangeLogIterator(changeLog, changeSetFilters);
+        }
+    }
+    
     public void update(String contexts, Writer output) throws LiquibaseException {
         this.update(new Contexts(contexts), output);
     }
@@ -793,6 +876,11 @@ public class Liquibase {
         LockServiceFactory.getInstance().getLockService(getDatabase()).init();
     }
 
+    public void upgradeChecksums(DatabaseChangeLog databaseChangeLog, Contexts contexts, LabelExpression labelExpression) throws LiquibaseException {
+        ChangeLogHistoryService changeLogHistoryService = ChangeLogHistoryServiceFactory.getInstance().getChangeLogService(getDatabase());
+        changeLogHistoryService.upgradeChecksums(databaseChangeLog, contexts, labelExpression);
+    }
+
     /**
      * Returns true if it is "save" to migrate the database.
      * Currently, "safe" is defined as running in an output-sql mode or against a database on localhost.
@@ -1146,7 +1234,7 @@ public class Liquibase {
     public boolean isIgnoreClasspathPrefix() {
         return ignoreClasspathPrefix;
     }
-
+    
     public void generateChangeLog(CatalogAndSchema catalogAndSchema, DiffToChangeLog changeLogWriter, PrintStream outputStream, Class<? extends DatabaseObject>... snapshotTypes) throws DatabaseException, IOException, ParserConfigurationException {
         generateChangeLog(catalogAndSchema, changeLogWriter, outputStream, null, snapshotTypes);
     }
@@ -1178,5 +1266,37 @@ public class Liquibase {
         }
     }
 
+    public static boolean isMarkNextDdlChangeSetRan() {
+        return markNextDdlChangeSetRan;
+    }
+
+    public static void setMarkNextDdlChangeSetRan() {
+        markNextDdlChangeSetRan = true;
+    }
+
+    public static boolean isBatchUpdate() {
+        return batchUpdate;
+    }
+
+    public static void setBatchUpdate() {
+        batchUpdate = true;
+    }
+
+    public static boolean isPreparedStatementPreferred() {
+        return preparedStatementPreferred;
+    }
+
+    public static void setPreparedStatementPreferred() {
+        preparedStatementPreferred = true;
+    }
+
+    public static boolean isRelativeToChangelogFile() {
+        return relativeToChangelogFile;
+    }
+
+    public static void setRelativeToChangelogFile() {
+        relativeToChangelogFile = true;
+    }
+      
 }
 

@@ -4,6 +4,7 @@ import liquibase.change.Change;
 import liquibase.change.ColumnConfig;
 import liquibase.change.ConstraintsConfig;
 import liquibase.change.core.CreateTableChange;
+import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
 import liquibase.database.core.MySQLDatabase;
 import liquibase.datatype.DataTypeFactory;
@@ -38,7 +39,7 @@ public class MissingTableChangeGenerator implements MissingObjectChangeGenerator
     }
 
     @Override
-    public Change[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisonDatabase, ChangeGeneratorChain chain) {
+    public ChangeSet[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisonDatabase, ChangeGeneratorChain chain) {
         Table missingTable = (Table) missingObject;
 
         PrimaryKey primaryKey = missingTable.getPrimaryKey();
@@ -117,9 +118,9 @@ public class MissingTableChangeGenerator implements MissingObjectChangeGenerator
         }
 
 
-        return new Change[] {
-                change
-        };
+        ChangeSet changeSet = ChangeSetUtils.generateChangeSet(change.getTableName());
+        changeSet.addChange(change);
+        return new ChangeSet[] {changeSet};
     }
 
     protected CreateTableChange createCreateTableChange() {

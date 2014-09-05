@@ -33,6 +33,8 @@ public abstract class AbstractLiquibaseUpdateMojo extends AbstractLiquibaseChang
   @Override
   protected void printSettings(String indent) {
     super.printSettings(indent);
-    getLog().info(indent + "number of changes to apply: " + changesToApply);
+    if (changesToApply > 0) {
+        getLog().info(indent + "number of changes to apply: " + changesToApply);
+    }
   }
 }

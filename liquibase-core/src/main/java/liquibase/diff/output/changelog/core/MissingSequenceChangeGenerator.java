@@ -2,6 +2,7 @@ package liquibase.diff.output.changelog.core;
 
 import liquibase.change.Change;
 import liquibase.change.core.CreateSequenceChange;
+import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
 import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.changelog.ChangeGeneratorChain;
@@ -30,7 +31,7 @@ public class MissingSequenceChangeGenerator implements MissingObjectChangeGenera
     }
 
     @Override
-    public Change[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisonDatabase, ChangeGeneratorChain chain) {
+    public ChangeSet[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisonDatabase, ChangeGeneratorChain chain) {
         Sequence sequence = (Sequence) missingObject;
 
         CreateSequenceChange change = new CreateSequenceChange();
@@ -49,7 +50,9 @@ public class MissingSequenceChangeGenerator implements MissingObjectChangeGenera
         change.setCycle(sequence.getWillCycle());
         change.setOrdered(sequence.getOrdered());
 
-        return new Change[] { change };
+        ChangeSet changeSet = ChangeSetUtils.generateChangeSet(change.getSequenceName());
+        changeSet.addChange(change);
+        return new ChangeSet[] {changeSet};
 
     }
 }

@@ -9,6 +9,7 @@ import javax.xml.transform.Source;
 import javax.xml.validation.SchemaFactory;
 
 import liquibase.changelog.ChangeLogParameters;
+import liquibase.changelog.DatabaseChangeLog;
 import liquibase.exception.ChangeLogParseException;
 import liquibase.logging.LogFactory;
 import liquibase.parser.core.ParsedNode;
@@ -27,7 +28,7 @@ import org.xml.sax.XMLReader;
 
 public class XMLChangeLogSAXParser extends AbstractChangeLogParser {
 
-    private SAXParserFactory saxParserFactory;
+    protected SAXParserFactory saxParserFactory;
 
     public XMLChangeLogSAXParser() {
         saxParserFactory = SAXParserFactory.newInstance();
@@ -54,7 +55,8 @@ public class XMLChangeLogSAXParser extends AbstractChangeLogParser {
     }
 
     @Override
-    protected ParsedNode parseToNode(String physicalChangeLogLocation, ChangeLogParameters changeLogParameters, ResourceAccessor resourceAccessor) throws ChangeLogParseException {
+    protected ParsedNode parseToNode(DatabaseChangeLog changeLog, ChangeLogParameters changeLogParameters, ResourceAccessor resourceAccessor) throws ChangeLogParseException {
+        String physicalChangeLogLocation = changeLog.getPhysicalFilePath();
         InputStream inputStream = null;
         try {
             SAXParser parser = saxParserFactory.newSAXParser();
@@ -95,7 +97,7 @@ public class XMLChangeLogSAXParser extends AbstractChangeLogParser {
                 throw new ChangeLogParseException(physicalChangeLogLocation + " does not exist");
             }
 
-            XMLChangeLogSAXHandler contentHandler = new XMLChangeLogSAXHandler(physicalChangeLogLocation, resourceAccessor, changeLogParameters);
+            XMLChangeLogSAXHandler contentHandler = new XMLChangeLogSAXHandler(changeLog, resourceAccessor, changeLogParameters);
             xmlReader.setContentHandler(contentHandler);
             xmlReader.parse(new InputSource(new UtfBomStripperInputStream(inputStream)));
 

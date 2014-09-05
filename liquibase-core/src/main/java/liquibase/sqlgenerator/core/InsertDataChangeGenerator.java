@@ -5,7 +5,7 @@ import liquibase.database.Database;
 import liquibase.exception.ValidationErrors;
 import liquibase.sql.Sql;
 import liquibase.sqlgenerator.SqlGeneratorChain;
-import liquibase.statement.InsertExecutablePreparedStatement;
+import liquibase.statement.prepared.InsertExecutablePreparedStatement;
 
 /**
  * Dummy SQL generator for <code>InsertDataChange.ExecutableStatement</code><br>

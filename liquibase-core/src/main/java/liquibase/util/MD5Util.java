@@ -3,14 +3,26 @@ package liquibase.util;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.logging.LogFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Generates md5-sums based on a string.
  */
 public class MD5Util {
+
+    private static MessageDigest digest;
+    static{
+      try {
+        digest= MessageDigest.getInstance("MD5");
+      } catch (NoSuchAlgorithmException e) {
+        throw new UnexpectedLiquibaseException(e);
+      }
+    }
 
     /**
      * Used to build output as Hex
@@ -20,15 +32,14 @@ public class MD5Util {
            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
 
-    public static String computeMD5(String input) {
+    public static synchronized String computeMD5(String input) {
         if (input == null) {
             return null;
         }
-        MessageDigest digest;
         try {
-            digest = MessageDigest.getInstance("MD5");
+            digest.reset();
             digest.update(input.getBytes("UTF-8"));
-        } catch (Exception e) {
+        } catch (UnsupportedEncodingException e) {
             throw new UnexpectedLiquibaseException(e);
         }
         byte[] digestBytes = digest.digest();
@@ -44,17 +55,16 @@ public class MD5Util {
 
     }
 
-    public static String computeMD5(InputStream stream) {
-        MessageDigest digest;
+    public static synchronized String computeMD5(InputStream stream) {
         try {
-            digest = MessageDigest.getInstance("MD5");
+            digest.reset();
 
             DigestInputStream digestStream = new DigestInputStream(stream, digest);
             byte[] buf = new byte[20480];
             while (digestStream.read(buf) != -1) {
                 ; //digest is updating
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
         byte[] digestBytes = digest.digest();

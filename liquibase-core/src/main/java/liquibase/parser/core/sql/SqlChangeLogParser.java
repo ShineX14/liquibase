@@ -27,9 +27,14 @@ public class SqlChangeLogParser implements ChangeLogParser {
     
     @Override
     public DatabaseChangeLog parse(String physicalChangeLogLocation, ChangeLogParameters changeLogParameters, ResourceAccessor resourceAccessor) throws ChangeLogParseException {
-
         DatabaseChangeLog changeLog = new DatabaseChangeLog();
         changeLog.setPhysicalFilePath(physicalChangeLogLocation);
+        return parse(changeLog, changeLogParameters, resourceAccessor);
+    }
+
+    public DatabaseChangeLog parse(DatabaseChangeLog changeLog, ChangeLogParameters changeLogParameters, ResourceAccessor resourceAccessor) throws ChangeLogParseException {
+        String physicalChangeLogLocation = changeLog.getPhysicalFilePath();
+        changeLog.setChangeLogParameters(changeLogParameters);
 
         RawSQLChange change = new RawSQLChange();
 

@@ -1,17 +1,36 @@
 package org.liquibase.maven.plugins;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 import javax.xml.parsers.ParserConfigurationException;
 
 import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.diff.output.DiffOutputControl;
+import liquibase.diff.output.EbaoDiffOutputControl;
+import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
+import liquibase.executor.Executor;
+import liquibase.executor.ExecutorService;
 import liquibase.integration.commandline.CommandLineUtils;
+import liquibase.logging.LogFactory;
+import liquibase.logging.Logger;
+import liquibase.resource.ResourceAccessor;
+import liquibase.statement.SqlStatement;
+import liquibase.statement.core.RawSqlStatement;
+import liquibase.util.ISODateFormat;
+import liquibase.util.StreamUtil;
 import liquibase.util.StringUtils;
 
 import org.apache.maven.plugin.MojoExecutionException;
+
+import com.ebao.tool.liquibase.util.LinkedProperties;
+import com.ebao.tool.liquibase.util.PropertyParser;
+import com.ebao.tool.liquibase.util.PropertyPath;
 
 /**
  * Generates SQL that marks all unapplied changes as applied.
@@ -22,6 +41,8 @@ import org.apache.maven.plugin.MojoExecutionException;
  */
 public class LiquibaseGenerateChangeLogMojo extends
         AbstractLiquibaseMojo {
+
+    private final Logger log = LogFactory.getLogger();
 
     /**
      * List of diff types to include in Change Log expressed as a comma separated list from: tables, views, columns, indexes, foreignkeys, primarykeys, uniqueconstraints, data.
@@ -65,6 +86,31 @@ public class LiquibaseGenerateChangeLogMojo extends
      */
     protected String outputChangeLogFile;
 
+  /**
+   * @parameter expression="${liquibase.diffTable}"
+   */
+  protected String diffTable;
+
+  /**
+   * @parameter expression="${liquibase.diffCondition}"
+   */
+  protected String diffCondition;
+
+  /**
+   * @parameter expression="${liquibase.diffPropertyFile}"
+   */
+  protected String diffPropertyFile;
+
+  /**
+   * @parameter expression="${liquibase.diffParameter}"
+   */
+  protected String diffParameter;
+
+  /**
+   * @parameter expression="${liquibase.insertUpdate}" default-value="false"
+   */
+  protected boolean insertUpdate = false;
+
 	@Override
 	protected void performLiquibaseTask(Liquibase liquibase)
 			throws LiquibaseException {
@@ -82,8 +128,9 @@ public class LiquibaseGenerateChangeLogMojo extends
 
         getLog().info("Generating Change Log from database " + database.toString());
         try {
+            DiffOutputControl diffOutputControl = loadDiffProperty(liquibase);
             CommandLineUtils.doGenerateChangeLog(outputChangeLogFile, database, defaultCatalogName, defaultSchemaName, StringUtils.trimToNull(diffTypes),
-                    StringUtils.trimToNull(changeSetAuthor), StringUtils.trimToNull(changeSetContext), StringUtils.trimToNull(dataDir), new DiffOutputControl(outputDefaultCatalog, outputDefaultSchema, true));
+                    StringUtils.trimToNull(changeSetAuthor), StringUtils.trimToNull(changeSetContext), StringUtils.trimToNull(dataDir), diffOutputControl);
             getLog().info("Output written to Change Log file, " + outputChangeLogFile);
         }
         catch (IOException e) {
@@ -94,6 +141,90 @@ public class LiquibaseGenerateChangeLogMojo extends
         }
 	}
 
+    private DiffOutputControl loadDiffProperty(Liquibase liquibase) {
+        System.setProperty(ISODateFormat.class.getName(), "yyyyMMddHHmmss");
+
+        log.info("loading " + diffTypes + " from schema '" + defaultSchemaName + "'");
+        EbaoDiffOutputControl diffControl = new EbaoDiffOutputControl(outputDefaultCatalog, outputDefaultSchema, true);
+        EbaoDiffOutputControl.setInsertUpdatePreferred(insertUpdate);
+        String dataDir = CommandLineUtils.createParentDir(outputChangeLogFile);
+        diffControl.setDataDir(dataDir);
+        diffControl.setTmpDataDir(project.getBuild().getDirectory());
+
+        if (diffTable != null) {
+            diffTable = diffTable.toUpperCase().trim();
+            diffControl.addDiffTable(diffTable, diffCondition);
+            log.info("table to be exported is " + diffTable + "[" + diffCondition + "]");
+        }
+
+        Map<String, String> params = new HashMap<String, String>();
+        if (diffParameter != null) {
+            log.info("loading configuration with parameters[" + diffParameter + "]");
+            String[] paramValues = diffParameter.split("[,;]");// the separator is either , or ;
+            for (String pv : paramValues) {
+                int index = pv.indexOf("=");
+                if (index < 0) {
+                    throw new IllegalArgumentException(diffParameter);
+                }
+                String param = pv.substring(0, index);
+                String value = pv.substring(index + 1);
+                if (value.startsWith("sql:")) {
+                    Database database = liquibase.getDatabase();
+                    Executor executor = ExecutorService.getInstance().getExecutor(database);
+                    SqlStatement statement = new RawSqlStatement(value.substring("sql:".length()));
+                    try {
+                        value = (String) executor.queryForObject(statement, String.class);
+                    } catch (DatabaseException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                params.put(":" + param, value);
+            }
+        }
+
+        if (diffPropertyFile != null && !"".equals(diffPropertyFile)) {
+            String[] split = diffPropertyFile.split("[,;]");
+            for (String propertyFile : split) {
+                propertyFile = propertyFile.trim();
+                loadDiffPropertyFile(propertyFile, params, diffControl);
+            }
+        }
+
+        return diffControl;
+    }
+
+    private void loadDiffPropertyFile(String propertyFile, Map<String, String> params, EbaoDiffOutputControl diffControl) {
+        log.info("loading " + propertyFile + " with parameters[" + params + "]");
+
+        Properties props = new LinkedProperties();
+        try {
+            ResourceAccessor fo = getFileOpener(getMavenArtifactClassLoader());
+            InputStream in = StreamUtil.singleInputStream(propertyFile, fo);
+            props.load(in);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (MojoExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        PropertyParser parser = new PropertyParser();
+        for (Object key : props.keySet()) {
+            if ("".equals(key)) {
+                throw new IllegalArgumentException("empty property name");
+            }
+
+            String condition = (String) props.get(key);
+            for (String name : params.keySet()) {
+                condition = condition.replaceAll(name, params.get(name));
+            }
+
+            PropertyPath path = parser.parseProperty((String) key);
+            diffControl.addDiffTable(path.table, condition, path.dir, path.filename);
+            log.info("table to be exported " + path.table + "[" + condition + "]");
+        }
+    }
+	
 	@Override
 	protected void printSettings(String indent) {
 		super.printSettings(indent);

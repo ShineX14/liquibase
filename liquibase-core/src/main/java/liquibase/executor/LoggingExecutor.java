@@ -75,6 +75,13 @@ public class LoggingExecutor extends AbstractExecutor implements Executor {
     }
 
     @Override
+    public void execute(SqlStatement[] sqls, List<SqlVisitor> sqlVisitors) throws DatabaseException {
+        for (SqlStatement sql : sqls) {
+            outputStatement(sql, sqlVisitors);
+        }
+    }
+    
+    @Override
     public int update(SqlStatement sql, List<SqlVisitor> sqlVisitors) throws DatabaseException {
         outputStatement(sql, sqlVisitors);
         return 0;

@@ -2,6 +2,7 @@ package liquibase.diff.output.changelog.core;
 
 import liquibase.change.Change;
 import liquibase.change.core.AddPrimaryKeyChange;
+import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
 import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.changelog.ChangeGeneratorChain;
@@ -40,7 +41,7 @@ public class MissingPrimaryKeyChangeGenerator implements MissingObjectChangeGene
     }
 
     @Override
-    public Change[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisonDatabase, ChangeGeneratorChain chain) {
+    public ChangeSet[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisonDatabase, ChangeGeneratorChain chain) {
         PrimaryKey pk = (PrimaryKey) missingObject;
 
         AddPrimaryKeyChange change = new AddPrimaryKeyChange();
@@ -59,7 +60,9 @@ public class MissingPrimaryKeyChangeGenerator implements MissingObjectChangeGene
 
         control.setAlreadyHandledMissing(pk.getBackingIndex());
 
-        return new Change[] { change };
+        ChangeSet changeSet = ChangeSetUtils.generateChangeSet(change.getConstraintName());
+        changeSet.addChange(change);
+        return new ChangeSet[] {changeSet};
 
     }
 }

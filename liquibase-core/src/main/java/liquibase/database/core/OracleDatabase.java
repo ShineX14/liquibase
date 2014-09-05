@@ -303,4 +303,22 @@ public class OracleDatabase extends AbstractJdbcDatabase {
 
         return userDefinedTypes;
     }
+
+    @Override
+    public void setDefaultCatalogName(String defaultCatalogName) {
+        if (defaultCatalogName != null) {
+            defaultCatalogName = defaultCatalogName.toUpperCase();
+        }
+        super.setDefaultCatalogName(defaultCatalogName);
+    }
+
+    @Override
+    public void setDefaultSchemaName(String schemaName) {
+        if (schemaName != null) {
+            schemaName = schemaName.toUpperCase();
+        }
+        super.setDefaultSchemaName(schemaName);
+        // @see #supportSchema() and #getDefaultSchemaName()
+        super.setDefaultCatalogName(schemaName);
+    }
 }

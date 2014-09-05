@@ -1,12 +1,20 @@
 package liquibase.change.core;
 
+import liquibase.Liquibase;
 import liquibase.change.*;
 import liquibase.database.Database;
+import liquibase.database.core.OracleDatabase;
+import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.exception.ValidationErrors;
-import liquibase.statement.InsertExecutablePreparedStatement;
+import liquibase.resource.ResourceAccessor;
+import liquibase.statement.prepared.InsertExecutablePreparedStatement;
+import liquibase.statement.prepared.InsertExecutablePreparedStatementChange;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.InsertStatement;
+import liquibase.util.StreamUtil;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,7 +22,7 @@ import java.util.List;
  * Inserts data into an existing table.
  */
 @DatabaseChange(name="insert", description = "Inserts data into an existing table", priority = ChangeMetaData.PRIORITY_DEFAULT, appliesTo = "table")
-public class InsertDataChange extends AbstractChange implements ChangeWithColumns<ColumnConfig>, DbmsTargetedChange {
+public class InsertDataChange extends AbstractChange implements ChangeWithColumns<ColumnConfig>, DbmsTargetedChange, InsertExecutablePreparedStatementChange {
 
     private String catalogName;
     private String schemaName;
@@ -80,8 +88,19 @@ public class InsertDataChange extends AbstractChange implements ChangeWithColumn
         columns.remove(column);
     }
 
+    private SqlStatement[] cachedSqlStatements;
+
     @Override
     public SqlStatement[] generateStatements(Database database) {
+
+        if (cachedSqlStatements != null) {
+            return cachedSqlStatements;
+        }
+
+        if (Liquibase.isPreparedStatementPreferred()) {
+            cachedSqlStatements = new SqlStatement[] { new InsertExecutablePreparedStatement(database, this) };
+            return cachedSqlStatements;
+        }
 
         boolean needsPreparedStatement = false;
         for (ColumnConfig column : columns) {
@@ -91,18 +110,20 @@ public class InsertDataChange extends AbstractChange implements ChangeWithColumn
             if (column.getValueClobFile() != null) {
                 needsPreparedStatement = true;
             }
+            if (needsPreparedStatement) {
+                break;
+            }
 //            if (column.getValueText() != null && database instanceof InformixDatabase) {
 //                needsPreparedStatement = true;
 //            }
         }
 
-        if (needsPreparedStatement) {
-            return new SqlStatement[] {
-                    new InsertExecutablePreparedStatement(database, catalogName, schemaName, tableName, columns, getChangeSet(), this.getResourceAccessor())
-            };
+        if (!(database instanceof OracleDatabase)) {
+            if (needsPreparedStatement) {
+                return new SqlStatement[] { new InsertExecutablePreparedStatement(database, this) };
+            }
         }
-
-
+        
         InsertStatement statement = new InsertStatement(getCatalogName(), getSchemaName(), getTableName());
 
         for (ColumnConfig column : columns) {
@@ -113,11 +134,30 @@ public class InsertDataChange extends AbstractChange implements ChangeWithColumn
             	continue;
             }
 
-            statement.addColumnValue(column.getName(), column.getValueObject());
+        	statement.addColumnValue(column.getName(), column.getValueObject());
+        	if (column.getValueBlobFile() != null || column.getValueClobFile() != null) {
+        	    statement.addColumnValue(column.getName(), null);
+            }
         }
-        return new SqlStatement[]{
-                statement
-        };
+
+        List<SqlStatement> sqlList = new ArrayList<SqlStatement>();
+        sqlList.add(statement);
+        
+        String whereClause = getWhereClause4Lob();
+        for (ColumnConfig column : columns) {
+            if (column.getValueClobFile() != null) {
+                InputStream stream = StreamUtil.getLobFileStream(getResourceAccessor(), column.getValueClobFile(), getChangeSet().getChangeLog().getPhysicalFilePath());
+                List<String> clobSql = GenerateClobOrBlobSql.generateClobSql(stream, tableName, column.getName(), whereClause.toString());
+                sqlList.addAll(GenerateClobOrBlobSql.sqlToRawSqlStatements(clobSql));
+            } else if (column.getValueBlobFile() != null) {
+                InputStream stream = StreamUtil.getLobFileStream(getResourceAccessor(), column.getValueBlobFile(), getChangeSet().getChangeLog().getPhysicalFilePath());
+                List<String> blobSql = GenerateClobOrBlobSql.generateBlobSql(stream, tableName, column.getName(), whereClause.toString());
+                sqlList.addAll(GenerateClobOrBlobSql.sqlToRawSqlStatements(blobSql));
+            }
+        }
+
+        cachedSqlStatements = sqlList.toArray(new SqlStatement[sqlList.size()]);
+        return cachedSqlStatements;
     }
 
     @Override
@@ -147,5 +187,28 @@ public class InsertDataChange extends AbstractChange implements ChangeWithColumn
     @Override
     public String getSerializedObjectNamespace() {
         return STANDARD_CHANGELOG_NAMESPACE;
+    }
+    
+    public String getPrimaryKey() {
+        throw new IllegalStateException();
+    }
+    
+    private String getWhereClause4Lob() {
+        StringBuilder whereClause = new StringBuilder("where ");
+        for (ColumnConfig column : columns) {
+            if (column.getValue() != null || column.getValueNumeric() != null) {
+                if (whereClause.length() > "where ".length()) {
+                    whereClause.append(" and ");
+                }
+                if (column.getValue() != null) {
+                    whereClause.append(column.getName()).append("=")
+                            .append(column.getValue());
+                } else {
+                    whereClause.append(column.getName()).append("=")
+                            .append(column.getValueNumeric());
+                }
+            }
+        }
+        return whereClause.toString();
     }
 }

@@ -40,7 +40,7 @@ public class SetTableRemarksGenerator extends AbstractSqlGenerator<SetTableRemar
 			String command = "COMMENT";
 
 			sql = command + " ON TABLE " + database.escapeTableName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName()) + " IS '"
-					+ database.escapeStringForDatabase(remarks) + "'";
+					+ remarks + "'";
 		}
 
 		return new Sql[] { new UnparsedSql(sql, getAffectedTable(statement)) };

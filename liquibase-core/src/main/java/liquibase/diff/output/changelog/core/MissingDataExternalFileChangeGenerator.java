@@ -3,6 +3,7 @@ package liquibase.diff.output.changelog.core;
 import liquibase.change.Change;
 import liquibase.change.core.LoadDataChange;
 import liquibase.change.core.LoadDataColumnConfig;
+import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
 import liquibase.database.core.PostgresDatabase;
 import liquibase.database.jvm.JdbcConnection;
@@ -45,7 +46,7 @@ public class MissingDataExternalFileChangeGenerator extends MissingDataChangeGen
     }
 
     @Override
-    public Change[] fixMissing(DatabaseObject missingObject, DiffOutputControl outputControl, Database referenceDatabase, Database comparisionDatabase, ChangeGeneratorChain chain) {
+    public ChangeSet[] fixMissing(DatabaseObject missingObject, DiffOutputControl outputControl, Database referenceDatabase, Database comparisionDatabase, ChangeGeneratorChain chain) {
         Statement stmt = null;
         ResultSet rs = null;
         try {
@@ -148,9 +149,9 @@ public class MissingDataExternalFileChangeGenerator extends MissingDataChangeGen
                 change.addColumn(columnConfig);
             }
 
-            return new Change[]{
-                    change
-            };
+            ChangeSet changeSet = ChangeSetUtils.generateChangeSet(table.getName() + ".data");
+            changeSet.addChange(change);
+            return new ChangeSet[] {changeSet};
         } catch (Exception e) {
             throw new UnexpectedLiquibaseException(e);
         } finally {

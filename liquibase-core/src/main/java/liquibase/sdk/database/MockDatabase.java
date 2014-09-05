@@ -528,6 +528,11 @@ public class MockDatabase implements Database, InternalDatabase {
     }
 
     @Override
+    public void execute(final SqlStatement[] statements, final List<SqlVisitor> sqlVisitors, boolean batchUpdate) throws LiquibaseException {
+        ;
+    }
+    
+    @Override
     public void saveStatements(final Change change, final List<SqlVisitor> sqlVisitors, final Writer writer) throws IOException, StatementNotSupportedOnDatabaseException, LiquibaseException {
         ;
     }

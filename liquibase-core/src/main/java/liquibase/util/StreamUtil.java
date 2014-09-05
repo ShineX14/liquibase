@@ -16,6 +16,16 @@ import liquibase.resource.UtfBomAwareReader;
  */
 public class StreamUtil {
 	
+    private static String defaultEncoding;
+
+    public static String getDefaultEncoding() {
+        return defaultEncoding;
+    }
+
+    public static void setDefaultEncoding(String defaultEncoding) {
+        StreamUtil.defaultEncoding = defaultEncoding;
+    }
+
     public static String getLineSeparator() {
         return LiquibaseConfiguration.getInstance().getConfiguration(GlobalConfiguration.class).getOutputLineSeparator();
     }
@@ -143,6 +153,9 @@ public class StreamUtil {
     }
 
     public static InputStream openStream(String path, Boolean relativeToChangelogFile, ChangeSet changeSet, ResourceAccessor resourceAccessor) throws IOException {
+        if (relativeToChangelogFile != null && relativeToChangelogFile) {
+            path = processDefaultPrefix(resourceAccessor, path);
+        }
         InputStream stream = openFromClasspath(path, relativeToChangelogFile, changeSet, resourceAccessor);
         if (stream == null) {
             stream = openFromFileSystem(path, relativeToChangelogFile, changeSet, resourceAccessor);
@@ -222,4 +235,41 @@ public class StreamUtil {
 
         return singleInputStream(file, resourceAccessor);
     }
+    
+    public static String processDefaultPrefix(ResourceAccessor opener, String filepath) {
+        try {
+            InputStream in = singleInputStream(filepath, opener);
+            if (in == null) {
+                String newpath = filepath.startsWith("db/") ? filepath.substring("db/".length()) : "db/" + filepath;
+                in = singleInputStream(newpath, opener);
+                if (in != null) {
+                    return newpath;
+                }
+            }
+            return filepath;
+        } catch (IOException e) {
+            throw new IllegalArgumentException(filepath, e);
+        }
+    }
+
+    public static InputStream getLobFileStream(ResourceAccessor opener, String file, String parentFilePath) {
+        try {
+            String path = StreamUtil.getFilePath(file, parentFilePath);
+            InputStream stream = StreamUtil.singleInputStream(path, opener);
+            if (stream == null) {
+                throw new IllegalArgumentException(file + " not found.");
+            }
+            return stream;
+        } catch (IOException e) {
+            throw new RuntimeException(file, e);
+        }
+    }
+
+    public static String getFilePath(String file, String parentFilePath) {
+        if (parentFilePath.contains("/")) {
+            file = parentFilePath.replaceFirst("/[^/]*$", "") + "/" + file;
+        }
+        return file;
+    }
+    
 }

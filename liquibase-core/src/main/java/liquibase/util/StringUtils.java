@@ -19,7 +19,7 @@ public class StringUtils {
      * and strip them out.  We might need to watch the case of new space--like this
      * and the case of having a space -- like this.
      */
-    private static final Pattern dashPattern = Pattern.compile("\\-\\-.*$", Pattern.MULTILINE);
+    private static final Pattern dashPattern = Pattern.compile("^\\-\\-.*$", Pattern.MULTILINE);
 
     public static String trimToEmpty(String string) {
         if (string == null) {
@@ -80,6 +80,9 @@ public class StringUtils {
         return strings.toArray(new String[strings.size()]);
     }
 
+    private static final Pattern commentPattern2 = Pattern.compile("^\\s*\\-\\-.*$", Pattern.MULTILINE);
+    private static final Pattern commentPattern3 = Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
+
     /**
      * Searches through a String which contains SQL code and strips out
      * any comments that are between \/**\/ or anything that matches
@@ -89,9 +92,9 @@ public class StringUtils {
      * @return The String without the comments in
      */
     public static String stripComments(String multiLineSQL) {
-        String strippedSingleLines = Pattern.compile("\\s*\\-\\-.*\\n").matcher(multiLineSQL).replaceAll("\n");
-        strippedSingleLines = Pattern.compile("\\s*\\-\\-.*$").matcher(strippedSingleLines).replaceAll("\n");
-        return Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL).matcher(strippedSingleLines).replaceAll("").trim();
+        //String strippedSingleLines = Pattern.compile("\\s*\\-\\-.*\\n").matcher(multiLineSQL).replaceAll("\n");
+        String strippedSingleLines = commentPattern2.matcher(multiLineSQL).replaceAll("");
+        return commentPattern3.matcher(strippedSingleLines).replaceAll("").trim();
     }
 
     public static String join(Object[] array, String delimiter, StringUtilsFormatter formatter) {

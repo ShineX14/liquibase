@@ -12,6 +12,7 @@ import liquibase.structure.core.Column;
 import liquibase.structure.core.Table;
 import liquibase.util.ISODateFormat;
 
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Date;
@@ -182,7 +183,9 @@ public class AddDefaultValueChange extends AbstractChange {
             defaultValue = getDefaultValueBoolean();
         } else if (getDefaultValueNumeric() != null) {
             try {
-                defaultValue = NumberFormat.getInstance(Locale.US).parse(getDefaultValueNumeric());
+                DecimalFormat formatter = (DecimalFormat) NumberFormat.getInstance(Locale.US);
+                formatter.setParseBigDecimal(true);
+                defaultValue = formatter.parse(getDefaultValueNumeric());
             } catch (ParseException e) {
                 defaultValue = new DatabaseFunction(getDefaultValueNumeric());
             }

@@ -3,6 +3,7 @@ package liquibase.diff.output.changelog.core;
 import liquibase.change.AddColumnConfig;
 import liquibase.change.Change;
 import liquibase.change.core.CreateIndexChange;
+import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
 import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.changelog.ChangeGeneratorChain;
@@ -35,7 +36,7 @@ public class MissingIndexChangeGenerator implements MissingObjectChangeGenerator
     }
 
     @Override
-    public Change[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisonDatabase, ChangeGeneratorChain chain) {
+    public ChangeSet[] fixMissing(DatabaseObject missingObject, DiffOutputControl control, Database referenceDatabase, Database comparisonDatabase, ChangeGeneratorChain chain) {
         Index index = (Index) missingObject;
 
         CreateIndexChange change = createCreateIndexChange();
@@ -64,7 +65,9 @@ public class MissingIndexChangeGenerator implements MissingObjectChangeGenerator
             change.addColumn(column);
         }
 
-        return new Change[] { change };
+        ChangeSet changeSet = ChangeSetUtils.generateChangeSet(change.getIndexName());
+        changeSet.addChange(change);
+        return new ChangeSet[] {changeSet};
     }
 
     protected CreateIndexChange createCreateIndexChange() {

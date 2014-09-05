@@ -221,14 +221,22 @@ public class CSVReader {
                 		}
                 	}
                 } else if (c == separator && !inQuotes) {
-                    tokensOnThisLine.add(sb.toString());
+                    if (sb.length() == 0 && (i == 0 || nextLine.charAt(i - 1) == separator)) {
+                        tokensOnThisLine.add(null);
+                    } else {
+                        tokensOnThisLine.add(sb.toString());
+                    }
                     sb = new StringBuffer(); // start work on next token
                 } else {
                     sb.append(c);
                 }
             }
         } while (inQuotes);
-        tokensOnThisLine.add(sb.toString());
+        if (sb.length() == 0) {// the last character is separator
+            tokensOnThisLine.add(null);
+        } else {
+            tokensOnThisLine.add(sb.toString());
+        }
         return (String[]) tokensOnThisLine.toArray(new String[0]);
 
     }

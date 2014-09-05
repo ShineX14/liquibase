@@ -18,6 +18,10 @@ public class DateTimeType extends LiquibaseDataType {
 
     @Override
     public DatabaseDataType toDatabaseDataType(Database database) {
+        if (database instanceof OracleDatabase) {
+            return new DatabaseDataType("Date");
+        }
+
         if (database instanceof DB2Database
                 || database instanceof DerbyDatabase
                 || database instanceof FirebirdDatabase

@@ -7,6 +7,7 @@ import liquibase.statement.SequenceNextValueFunction;
 import liquibase.util.ISODateFormat;
 import liquibase.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -232,6 +233,8 @@ public class ParsedNode {
         try {
             if (type.equals(String.class)) {
                 return (T) rawValue.toString();
+            } else if (type.equals(BigDecimal.class)) {
+                return (T) new BigDecimal(rawValue.toString());
             } else if (type.equals(Integer.class)) {
                 return (T) Integer.valueOf(rawValue.toString());
             } else if (type.equals(Float.class)) {

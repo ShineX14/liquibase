@@ -1207,6 +1207,26 @@ public abstract class AbstractJdbcDatabase implements Database {
         }
     }
 
+    public void execute(SqlStatement[] statements, List<SqlVisitor> sqlVisitors, boolean batchUpdate) throws LiquibaseException {
+        if (statements.length == 0) {
+            return;
+        }
+        
+        if (batchUpdate) {
+          List<SqlStatement> list = new ArrayList<SqlStatement>();
+          for (SqlStatement statement : statements) {
+              if (statement.skipOnUnsupported() && !SqlGeneratorFactory.getInstance().supports(statement, this)) {
+                  continue;
+              }
+              list.add(statement);
+              LogFactory.getLogger().debug("Executing Statement: " + statement);
+          }
+          ExecutorService.getInstance().getExecutor(this).execute(list.toArray(new SqlStatement[list.size()]), sqlVisitors);
+        } else {
+          execute(statements, sqlVisitors);
+        }
+      }
+    
 
     @Override
     public void saveStatements(final Change change, final List<SqlVisitor> sqlVisitors, final Writer writer) throws IOException, StatementNotSupportedOnDatabaseException, LiquibaseException {

@@ -11,6 +11,7 @@ import liquibase.parser.ChangeLogParser;
 import liquibase.parser.core.ParsedNode;
 import liquibase.resource.ResourceAccessor;
 import liquibase.util.StreamUtil;
+
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
@@ -41,6 +42,15 @@ public class YamlChangeLogParser implements ChangeLogParser {
 
     @Override
     public DatabaseChangeLog parse(String physicalChangeLogLocation, ChangeLogParameters changeLogParameters, ResourceAccessor resourceAccessor) throws ChangeLogParseException {
+        DatabaseChangeLog changeLog = new DatabaseChangeLog();
+        changeLog.setPhysicalFilePath(physicalChangeLogLocation);
+        return parse(changeLog, changeLogParameters, resourceAccessor);
+    }
+
+    public DatabaseChangeLog parse(DatabaseChangeLog changeLog, ChangeLogParameters changeLogParameters, ResourceAccessor resourceAccessor) throws ChangeLogParseException {
+        String physicalChangeLogLocation = changeLog.getPhysicalFilePath();
+        changeLog.setChangeLogParameters(changeLogParameters);
+        
         Yaml yaml = new Yaml();
 
         try {
@@ -90,8 +100,6 @@ public class YamlChangeLogParser implements ChangeLogParser {
 
             replaceParameters(parsedYaml, changeLogParameters);
 
-            DatabaseChangeLog changeLog = new DatabaseChangeLog(physicalChangeLogLocation);
-            changeLog.setChangeLogParameters(changeLogParameters);
             ParsedNode databaseChangeLogNode = new ParsedNode(null, "databaseChangeLog");
             databaseChangeLogNode.setValue(rootList);
 

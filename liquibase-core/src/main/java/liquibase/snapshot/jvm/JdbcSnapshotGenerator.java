@@ -6,6 +6,7 @@ import liquibase.database.core.PostgresDatabase;
 import liquibase.diff.DiffStatusListener;
 import liquibase.exception.DatabaseException;
 import liquibase.logging.LogFactory;
+import liquibase.logging.Logger;
 import liquibase.snapshot.DatabaseSnapshot;
 import liquibase.snapshot.InvalidExampleException;
 import liquibase.snapshot.SnapshotGenerator;
@@ -15,7 +16,11 @@ import liquibase.structure.DatabaseObject;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.spi.LoggerFactory;
+
 public abstract class JdbcSnapshotGenerator implements SnapshotGenerator {
+    private static final Logger logger = LogFactory.getInstance().getLog();
+    
     private Set<DiffStatusListener> statusListeners = new HashSet<DiffStatusListener>();
 
     private Class<? extends DatabaseObject> defaultFor = null;
@@ -56,7 +61,13 @@ public abstract class JdbcSnapshotGenerator implements SnapshotGenerator {
     @Override
     public DatabaseObject snapshot(DatabaseObject example, DatabaseSnapshot snapshot, SnapshotGeneratorChain chain) throws DatabaseException, InvalidExampleException {
         if (defaultFor != null && defaultFor.isAssignableFrom(example.getClass())) {
-            return snapshotObject(example, snapshot);
+            long start = System.currentTimeMillis();
+            DatabaseObject result = snapshotObject(example, snapshot);
+            long end = System.currentTimeMillis();
+            if (end - start >= 100) {
+                logger.info(getClass().getSimpleName() + " snapshot " + example.getClass().getSimpleName() + "[" + example.getName() + "] " + (end - start) + "ms");
+            }
+            return result;
         }
 
         DatabaseObject chainResponse = chain.snapshot(example, snapshot);
@@ -69,7 +80,12 @@ public abstract class JdbcSnapshotGenerator implements SnapshotGenerator {
                 for (Class<? extends DatabaseObject> addType : addsTo()) {
                     if (addType.isAssignableFrom(example.getClass())) {
                         if (chainResponse != null) {
+                            long start = System.currentTimeMillis();
                             addTo(chainResponse, snapshot);
+                            long end = System.currentTimeMillis();
+                            if (end - start >= 100) {
+                                logger.info(getClass().getSimpleName() + " addto " + example.getClass().getSimpleName() + "[" + example.getName() + "] " + (end - start) + "ms");
+                            }
                         }
                     }
                 }

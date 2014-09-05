@@ -2,6 +2,7 @@ package liquibase.parser.core.xml
 
 import liquibase.change.core.RawSQLChange
 import liquibase.changelog.ChangeLogParameters
+import liquibase.changelog.DatabaseChangeLog
 import liquibase.exception.ChangeLogParseException
 import liquibase.parser.core.ParsedNode
 import liquibase.resource.ResourceAccessor
@@ -73,6 +74,11 @@ class AbstractChangeLogParserTest extends Specification {
             @Override
             int getPriority() {
                 return 0
+            }
+            
+            @Override
+            protected ParsedNode parseToNode(DatabaseChangeLog changeLog, ChangeLogParameters changeLogParameters, ResourceAccessor resourceAccessor) throws ChangeLogParseException {
+                return changeLogNode;
             }
         }
     }

@@ -80,7 +80,7 @@ public class CustomPreconditionWrapper extends AbstractPrecondition {
         }
 
         try {
-            customPrecondition.check(database);
+            customPrecondition.check(database, changeLog);
         } catch (CustomPreconditionFailedException e) {
             throw new PreconditionFailedException(new FailedPrecondition("Custom Precondition Failed: "+e.getMessage(), changeLog, this));
         } catch (CustomPreconditionErrorException e) {

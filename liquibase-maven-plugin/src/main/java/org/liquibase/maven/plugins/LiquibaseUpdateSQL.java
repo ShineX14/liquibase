@@ -4,10 +4,12 @@ import java.io.*;
 
 import liquibase.Contexts;
 import liquibase.LabelExpression;
+import liquibase.parser.core.xml.XMLIncludedChangeLogSAXParser;
 import liquibase.resource.ResourceAccessor;
 import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.exception.LiquibaseException;
+
 import org.apache.maven.plugin.MojoExecutionException;
 
 /**
@@ -33,6 +35,13 @@ public class LiquibaseUpdateSQL extends AbstractLiquibaseUpdateMojo {
 	/** The writer for writing the migration SQL. */
 	private Writer outputWriter;
 
+    /**
+     * Whether or not to load included files lazily and perform SQL with batch PreparedStatement.
+     * 
+     * @parameter expression="${liquibase.batchMode}" default-value="true"
+     */
+    protected boolean batchMode;
+
 	@Override
 	protected boolean isPromptOnNonLocalDatabase() {
 		// Always run on an non-local database as we are not actually modifying
@@ -46,7 +55,10 @@ public class LiquibaseUpdateSQL extends AbstractLiquibaseUpdateMojo {
 		if (changesToApply > 0) {
 			liquibase.update(changesToApply, new Contexts(contexts), new LabelExpression(labels), outputWriter);
 		} else {
-			liquibase.update(new Contexts(contexts), new LabelExpression(labels), outputWriter);
+            if (batchMode) {
+                XMLIncludedChangeLogSAXParser.setHighPriority();
+            }
+            liquibase.update(new Contexts(contexts), new LabelExpression(labels), outputWriter);
 		}
 	}
 

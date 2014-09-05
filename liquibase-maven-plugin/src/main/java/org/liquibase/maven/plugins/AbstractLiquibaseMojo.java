@@ -14,6 +14,7 @@ import liquibase.resource.FileSystemResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 import liquibase.util.StreamUtil;
 import liquibase.util.ui.UIFactory;
+
 import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -354,7 +355,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
                 liquibase.clearCheckSums();
             }
 
-            getLog().info("Executing on Database: " + url);
+            getLog().info("Executing on Database: " + url + " with " + database.getClass().getName());
 
             if (isPromptOnNonLocalDatabase()) {
                 if (!liquibase.isSafeToRunUpdate()) {
@@ -388,11 +389,11 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
     }
 
     private void displayMojoSettings() {
-        if (verbose) {
-            getLog().info("Settings\n----------------------------");
+        //if (verbose) {
+            getLog().info("Settings");
             printSettings("    ");
             getLog().info(MavenUtils.LOG_SEPARATOR);
-        }
+        //}
     }
 
     protected Liquibase createLiquibase(ResourceAccessor fo, Database db) throws MojoExecutionException {
@@ -404,6 +405,11 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
     }
 
     public void configureFieldsAndValues(ResourceAccessor fo)
+            throws MojoExecutionException, MojoFailureException {
+        configureFieldsAndValues(fo, propertyFile, null);
+    }
+
+    public void configureFieldsAndValues(ResourceAccessor fo, String propertyFile, String prefix) 
             throws MojoExecutionException, MojoFailureException {
         // Load the properties file if there is one, but only for values that the user has not
         // already specified.
@@ -419,7 +425,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             if (is == null) {
                 throw new MojoFailureException("Failed to resolve the properties file.");
             }
-            parsePropertiesFile(is);
+            parsePropertiesFile(is, prefix);
             getLog().info(MavenUtils.LOG_SEPARATOR);
         }
     }
@@ -497,11 +503,23 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
         getLog().info(indent + "url: " + url);
         getLog().info(indent + "username: " + username);
         getLog().info(indent + "password: " + "*****");
-        getLog().info(indent + "use empty password: " + emptyPassword);
-        getLog().info(indent + "properties file: " + propertyFile);
-        getLog().info(indent + "properties file will override? " + propertyFileWillOverride);
-        getLog().info(indent + "prompt on non-local database? " + promptOnNonLocalDatabase);
-        getLog().info(indent + "clear checksums? " + clearCheckSums);
+        if (defaultSchemaName != null) {
+            getLog().info(indent + "schema: " + defaultSchemaName);
+        }
+        // getLog().info(indent + "use empty password: " + emptyPassword);
+        if (propertyFile != null && propertyFile.length() > 0) {
+            getLog().info(indent + "properties file: " + propertyFile);
+            getLog().info(indent + "properties file will override? " + propertyFileWillOverride);
+        }
+        if (!promptOnNonLocalDatabase) {
+            getLog().info(indent + "prompt on non-local database? " + promptOnNonLocalDatabase);
+        }
+        if (clearCheckSums) {
+            getLog().info(indent + "clear checksums? " + clearCheckSums);
+        }
+        if (!"info".equals(logging)) {
+            getLog().info(indent + "logging: " + logging);
+        }
     }
 
     protected void cleanup(Database db) {
@@ -528,6 +546,11 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
      */
     protected void parsePropertiesFile(InputStream propertiesInputStream)
             throws MojoExecutionException {
+        parsePropertiesFile(propertiesInputStream, null);
+    }
+
+    protected void parsePropertiesFile(InputStream propertiesInputStream, String prefix) 
+            throws MojoExecutionException {
         if (propertiesInputStream == null) {
             throw new MojoExecutionException("Properties file InputStream is null.");
         }
@@ -543,6 +566,18 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             String key = null;
             try {
                 key = (String) it.next();
+                if ("NON_POOL_DB_URL".equals(key)) {
+                    key = "url";
+                }
+                if ("NON_POOL_DB_USERNAME".equals(key)) {
+                    key = "username";
+                }
+                if ("NON_POOL_DB_PASSWORD".equals(key)) {
+                    key = "password";
+                }
+                if (prefix != null) {
+                    key = prefix + key.substring(0, 1).toUpperCase() + key.substring(1);
+                }
                 Field field = MavenUtils.getDeclaredField(this.getClass(), key);
 
                 if (propertyFileWillOverride) {
@@ -621,6 +656,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             String value = systemProperties.getProperty(key);
             System.setProperty(key, value);
         }
+        StreamUtil.setDefaultEncoding(project.getProperties().getProperty("project.build.sourceEncoding", "UTF-8"));
     }
 
 }

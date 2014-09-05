@@ -2,7 +2,9 @@ package org.liquibase.maven.plugins;
 
 import liquibase.Contexts;
 import liquibase.LabelExpression;
+import liquibase.changelog.ChangeSet;
 import liquibase.exception.LiquibaseException;
+import liquibase.parser.core.xml.XMLIncludedChangeLogSAXParser;
 import liquibase.Liquibase;
 
 /**
@@ -21,23 +23,75 @@ public class LiquibaseUpdate extends AbstractLiquibaseUpdateMojo {
      */
     protected boolean dropFirst;
 
-  @Override
-  protected void doUpdate(Liquibase liquibase) throws LiquibaseException {
-      if (dropFirst) {
-        liquibase.dropAll();
-      }
+    /**
+     * Whether or not to load included files lazily and perform SQL with batch PreparedStatement.
+     * @parameter expression="${liquibase.batchMode}" default-value="true"
+     */
+    protected boolean batchMode;
 
-    if (changesToApply > 0) {
-      liquibase.update(changesToApply, new Contexts(contexts), new LabelExpression(labels));
-    } else {
-      liquibase.update(new Contexts(contexts), new LabelExpression(labels));
+    /**
+     * Mark changeSet ran if it's fixed and ran manually.
+     * @parameter expression="${liquibase.markChangeSetRan}"
+     */
+    protected String markChangeSetRan;
+
+    /**
+   * Mark next DDl changeSet ran if it's fixed and ran manually.
+   * @parameter expression="${liquibase.markNextDdlChangeSetRan}" default-value="false"
+   */
+    protected boolean markNextDdlChangeSetRan;
+    
+    /**
+     * Whether or not to skip DDL SQL file.
+     * @parameter expression="${liquibase.skipDdlSqlFile}" default-value="false"
+     */
+    protected boolean skipDdlSqlFile;
+
+    @Override
+    protected void doUpdate(Liquibase liquibase) throws LiquibaseException {
+        if (dropFirst) {
+            liquibase.dropAll();
+        }
+        if (skipDdlSqlFile) {
+            ChangeSet.setSkipDdlSqlFile();
+        }
+        if (markChangeSetRan != null) {
+            ChangeSet.setChangeSetMarkedRan(markChangeSetRan);
+        }
+        if (batchMode) {
+            XMLIncludedChangeLogSAXParser.setHighPriority();
+            Liquibase.setBatchUpdate();
+            Liquibase.setPreparedStatementPreferred();
+        }
+
+        if (changesToApply > 0) {
+            liquibase.update(changesToApply, new Contexts(contexts), new LabelExpression(labels));
+        } else {
+            if (markNextDdlChangeSetRan) {
+                Liquibase.setMarkNextDdlChangeSetRan();
+            }
+            liquibase.update(new Contexts(contexts), new LabelExpression(labels));
+        }
     }
-  }
 
     @Override
     protected void printSettings(String indent) {
         super.printSettings(indent);
-        getLog().info(indent + "drop first? " + dropFirst);
+        if (dropFirst) {
+            getLog().info(indent + "drop first? " + dropFirst);
+        }
+        if (batchMode) {
+            getLog().info(indent + "batch mode? " + batchMode);
+        }
+        if (skipDdlSqlFile) {
+            getLog().info(indent + "skip DDL SQL file? " + skipDdlSqlFile);
+        }
+        if (markChangeSetRan != null) {
+            getLog().info(indent + "markChangeSetRan: " + markChangeSetRan);
+        }
+        if (markNextDdlChangeSetRan) {
+            getLog().info(indent + "markNextDdlChangeSetRan: " + markNextDdlChangeSetRan);
+        }
 
     }
 }

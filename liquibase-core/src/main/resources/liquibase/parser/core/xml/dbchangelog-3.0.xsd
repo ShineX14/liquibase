@@ -55,6 +55,7 @@
 		<xsd:restriction base="xsd:string">
 			<xsd:enumeration value="HALT" />
 			<xsd:enumeration value="WARN" />
+      <xsd:enumeration value="CONTINUE" />
 		</xsd:restriction>
 	</xsd:simpleType>
 
@@ -830,6 +831,17 @@
 		</xsd:complexType>
 	</xsd:element>
 
+  <xsd:element name="insertUpdate">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="column" maxOccurs="unbounded" />
+      </xsd:sequence>
+      <xsd:attributeGroup ref="tableNameAttribute" />
+      <xsd:attribute name="dbms" type="xsd:string" />
+      <xsd:attribute name="primaryKey" type="xsd:string" use="required" />
+    </xsd:complexType>
+  </xsd:element>
+
 	<xsd:element name="update">
 		<xsd:complexType mixed="true">
 			<xsd:sequence>
@@ -1066,6 +1078,7 @@
 			<xsd:element ref="renameView" maxOccurs="unbounded" />
 			<xsd:element ref="dropView" maxOccurs="unbounded" />
 			<xsd:element ref="insert" maxOccurs="unbounded" />
+      <xsd:element ref="insertUpdate" maxOccurs="unbounded" />
 			<xsd:element ref="addColumn" maxOccurs="unbounded" />
 			<xsd:element ref="sql" maxOccurs="unbounded" />
 			<xsd:element ref="createProcedure" maxOccurs="unbounded" />

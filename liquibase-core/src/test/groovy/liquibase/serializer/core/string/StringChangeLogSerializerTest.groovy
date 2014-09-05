@@ -332,6 +332,7 @@ public class StringChangeLogSerializerTest extends Specification {
                 field.set(object, createMap());
             } else if (field.getType().equals(ChangeLogParameters.class)) {
                 // TODO: unclear what to do here ...
+            } else if (field.getType().isArray() && field.getType().getComponentType().equals(liquibase.statement.SqlStatement.class)) {
             } else if (Collection.class.isAssignableFrom(field.getType())) {
                 Type genericType = field.getGenericType();
                 if (genericType instanceof ParameterizedType) {

@@ -15,9 +15,11 @@ public class ISODateFormat {
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private static final String DATE_TIME_FORMAT_STRING = "yyyy-MM-dd'T'HH:mm:ss";
     private static final String DATE_TIME_FORMAT_STRING_WITH_SPACE = "yyyy-MM-dd HH:mm:ss";
-    private static final String DATE_TIME_FORMAT_STRING_WITH_DECIMAL = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+    private static final String DATE_TIME_FORMAT_STRING_WITH_DECIMAL = System.getProperty(ISODateFormat.class.getName(), "yyyy-MM-dd'T'HH:mm:ss.SSS");
     private static final String DATE_TIME_FORMAT_STRING_WITH_SPACE_AND_DECIMAL = "yyyy-MM-dd HH:mm:ss.SSS";
 
+    private static final String DATE_TIME_FORMAT_STRING_WITHOUT_DELIMITER = "yyyyMMddHHmmss";
+    private SimpleDateFormat dateTimeFormatWithoutDelimiter = new SimpleDateFormat(DATE_TIME_FORMAT_STRING_WITHOUT_DELIMITER);
 
     public String format(java.sql.Date date) {
         return dateFormat.format(date);
@@ -55,6 +57,8 @@ public class ISODateFormat {
             dateTimeFormat = this.dateTimeFormatWithDecimal;
         } else if (dateAsString.contains(" ")) {
             dateTimeFormat = this.dateTimeFormatWithSpace;
+        } else if (dateAsString.indexOf('T') < 0) {
+            dateTimeFormat = this.dateTimeFormatWithoutDelimiter;
         }
 
         if (dateAsString.length() != dateFormat.toPattern().length() && dateAsString.length() != timeFormat.toPattern().length()) { //subtract 2 to not count the 's

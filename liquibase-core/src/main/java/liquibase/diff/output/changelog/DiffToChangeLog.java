@@ -10,6 +10,7 @@ import liquibase.database.ObjectQuotingStrategy;
 import liquibase.diff.DiffResult;
 import liquibase.diff.ObjectDifferences;
 import liquibase.diff.output.DiffOutputControl;
+import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.logging.LogFactory;
@@ -19,10 +20,12 @@ import liquibase.serializer.LiquibaseSerializable;
 import liquibase.serializer.core.xml.XMLChangeLogSerializer;
 import liquibase.structure.DatabaseObject;
 import liquibase.structure.DatabaseObjectComparator;
+import liquibase.structure.EbaoDatabaseObjectComparator;
 import liquibase.structure.core.*;
 import liquibase.util.StringUtils;
 
 import javax.xml.parsers.ParserConfigurationException;
+
 import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -137,17 +140,21 @@ public class DiffToChangeLog {
     public List<ChangeSet> generateChangeSets() {
         final ChangeGeneratorFactory changeGeneratorFactory = ChangeGeneratorFactory.getInstance();
         DatabaseObjectComparator comparator = new DatabaseObjectComparator();
+        DatabaseObjectComparator comparator0 = comparator;
+        if (diffOutputControl instanceof EbaoDiffOutputControl) {
+            comparator0 = new EbaoDatabaseObjectComparator(((EbaoDiffOutputControl)diffOutputControl).getDiffTables());
+        }
 
         List<ChangeSet> changeSets = new ArrayList<ChangeSet>();
         List<Class<? extends DatabaseObject>> types = getOrderedOutputTypes(MissingObjectChangeGenerator.class);
         for (Class<? extends DatabaseObject> type : types) {
             ObjectQuotingStrategy quotingStrategy = ObjectQuotingStrategy.QUOTE_ALL_OBJECTS;
-            for (DatabaseObject object : diffResult.getMissingObjects(type, comparator)) {
+            for (DatabaseObject object : diffResult.getMissingObjects(type, comparator0)) {
                 if (object == null) {
                     continue;
                 }
                 if (!diffResult.getReferenceSnapshot().getDatabase().isLiquibaseObject(object) && !diffResult.getReferenceSnapshot().getDatabase().isSystemObject(object)) {
-                    Change[] changes = changeGeneratorFactory.fixMissing(object, diffOutputControl, diffResult.getReferenceSnapshot().getDatabase(), diffResult.getComparisonSnapshot().getDatabase());
+                    ChangeSet[] changes = changeGeneratorFactory.fixMissing(object, diffOutputControl, diffResult.getReferenceSnapshot().getDatabase(), diffResult.getComparisonSnapshot().getDatabase());
                     addToChangeSets(changes, changeSets, quotingStrategy);
                 }
             }
@@ -198,6 +205,14 @@ public class DiffToChangeLog {
         return types;
     }
 
+    private void addToChangeSets(ChangeSet[] changes, List<ChangeSet> changeSets, ObjectQuotingStrategy quotingStrategy) {
+        if (changes != null) {
+            for (ChangeSet change : changes) {
+                changeSets.add(change);
+            }
+        }
+    }
+    
     private void addToChangeSets(Change[] changes, List<ChangeSet> changeSets, ObjectQuotingStrategy quotingStrategy) {
         if (changes != null) {
             ChangeSet changeSet = new ChangeSet(generateId(), getChangeSetAuthor(), false, false, null, changeSetContext,

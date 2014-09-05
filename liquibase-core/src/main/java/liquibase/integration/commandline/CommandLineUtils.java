@@ -9,14 +9,20 @@ import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.diff.DiffStatusListener;
 import liquibase.diff.compare.CompareControl;
+import liquibase.diff.compare.EbaoCompareControl;
 import liquibase.diff.output.DiffOutputControl;
+import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.exception.*;
 import liquibase.logging.LogFactory;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import liquibase.snapshot.EbaoSnapshotControl;
 import liquibase.snapshot.InvalidExampleException;
+import liquibase.snapshot.SnapshotControl;
 import liquibase.util.StringUtils;
 
 import javax.xml.parsers.ParserConfigurationException;
+
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -59,10 +65,11 @@ public class CommandLineUtils {
     }
 
     public static void doDiff(Database referenceDatabase, Database targetDatabase, String snapshotTypes, CompareControl.SchemaComparison[] schemaComparisons) throws LiquibaseException {
+        CompareControl compareControl = getCompareControl(schemaComparisons, snapshotTypes, null);
         DiffCommand diffCommand = new DiffCommand()
                 .setReferenceDatabase(referenceDatabase)
                 .setTargetDatabase(targetDatabase)
-                .setCompareControl(new CompareControl(schemaComparisons, snapshotTypes))
+                .setCompareControl(compareControl)
                 .setSnapshotTypes(snapshotTypes)
                 .setOutputStream(System.out);
 
@@ -93,10 +100,11 @@ public class CommandLineUtils {
             throws LiquibaseException, IOException, ParserConfigurationException {
 
         DiffToChangeLogCommand command = new DiffToChangeLogCommand();
+        CompareControl compareControl = getCompareControl(schemaComparisons, snapshotTypes, diffOutputControl);
         command.setReferenceDatabase(referenceDatabase)
                 .setTargetDatabase(targetDatabase)
                 .setSnapshotTypes(snapshotTypes)
-                .setCompareControl(new CompareControl(schemaComparisons, snapshotTypes))
+                .setCompareControl(compareControl)
                 .setOutputStream(System.out);
         command.setChangeLogFile(changeLogFile)
                 .setDiffOutputControl(diffOutputControl);
@@ -119,7 +127,7 @@ public class CommandLineUtils {
         for (CatalogAndSchema schema : schemas) {
             comparisons[i++] = new CompareControl.SchemaComparison(schema, schema);
         }
-        CompareControl compareControl = new CompareControl(comparisons, snapshotTypes);
+        CompareControl compareControl = getCompareControl(comparisons, snapshotTypes, diffOutputControl);
         diffOutputControl.setDataDir(dataDir);
 
         GenerateChangeLogCommand command = new GenerateChangeLogCommand();
@@ -133,6 +141,11 @@ public class CommandLineUtils {
         command.setAuthor(author)
                 .setContext(context);
 
+        if ("data".equals(snapshotTypes)) {
+            SnapshotControl snapshotControl = new EbaoSnapshotControl(originalDatabase, "table,column,primaryKey,foreignKey,data", (EbaoDiffOutputControl)diffOutputControl);;
+            command.setReferenceSnapshotControl(snapshotControl);
+        }
+        
         try {
             command.execute();
         } catch (CommandExecutionException e) {
@@ -151,4 +164,28 @@ public class CommandLineUtils {
 
     }
 
+    public static String createParentDir(String changeLogFile) {
+        if (!changeLogFile.contains("/")) {
+            return null;
+        }
+
+        String dataDir = changeLogFile.substring(0, changeLogFile.lastIndexOf("/"));
+        File dir = new File(dataDir);
+        if (!dir.exists()) {
+            boolean done = dir.mkdirs();
+            if (!done) {
+                throw new IllegalStateException(dataDir);
+            }
+        }
+        return dataDir;
+    }
+
+    private static CompareControl getCompareControl(CompareControl.SchemaComparison[] schemaComparisons, String snapshotTypes, DiffOutputControl diffOutputControl) {
+        CompareControl compareControl = new CompareControl(schemaComparisons, snapshotTypes);
+        if (diffOutputControl instanceof EbaoDiffOutputControl) {
+            compareControl = new EbaoCompareControl(schemaComparisons, snapshotTypes, (EbaoDiffOutputControl) diffOutputControl);
+        }
+        return compareControl;
+    }
+    
 }

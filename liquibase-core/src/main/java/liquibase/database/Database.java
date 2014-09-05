@@ -242,6 +242,7 @@ public interface Database extends PrioritizedService {
      * @throws DatabaseException if there were problems issuing the statements
      */
     void execute(SqlStatement[] statements, List<SqlVisitor> sqlVisitors) throws LiquibaseException;
+    void execute(SqlStatement[] statements, List<SqlVisitor> sqlVisitors, boolean batchUpdate) throws LiquibaseException;
 
     void saveStatements(Change change, List<SqlVisitor> sqlVisitors, Writer writer) throws IOException, StatementNotSupportedOnDatabaseException, LiquibaseException;
 

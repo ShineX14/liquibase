@@ -87,7 +87,8 @@ public class SnapshotControl implements LiquibaseSerializable {
     public boolean addType(Class<? extends DatabaseObject> type, Database database) {
         boolean added = this.types.add(type);
         if (added) {
-            for (Class<? extends DatabaseObject> container : SnapshotGeneratorFactory.getInstance().getContainerTypes(type, database)) {
+            Set<Class<? extends DatabaseObject>> containerTypes = SnapshotGeneratorFactory.getInstance().getContainerTypes(type, database);
+            for (Class<? extends DatabaseObject> container : containerTypes) {
                 addType(container, database);
             }
         }

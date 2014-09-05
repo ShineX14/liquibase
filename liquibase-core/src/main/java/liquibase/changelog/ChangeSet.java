@@ -1,18 +1,43 @@
 package liquibase.changelog;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
 import liquibase.ContextExpression;
 import liquibase.Labels;
+import liquibase.Liquibase;
 import liquibase.change.Change;
 import liquibase.change.ChangeFactory;
 import liquibase.change.CheckSum;
 import liquibase.change.DbmsTargetedChange;
+import liquibase.change.core.DeleteDataChange;
 import liquibase.change.core.EmptyChange;
+import liquibase.change.core.InsertDataChange;
+import liquibase.change.core.LoadDataChange;
+import liquibase.change.core.LoadUpdateDataChange;
 import liquibase.change.core.RawSQLChange;
+import liquibase.change.core.SQLFileChange;
+import liquibase.change.core.UpdateDataChange;
 import liquibase.changelog.visitor.ChangeExecListener;
 import liquibase.database.Database;
 import liquibase.database.DatabaseList;
 import liquibase.database.ObjectQuotingStrategy;
-import liquibase.exception.*;
+import liquibase.diff.output.EbaoDiffOutputControl;
+import liquibase.exception.BatchUpdateDatabaseException;
+import liquibase.exception.DatabaseException;
+import liquibase.exception.MigrationFailedException;
+import liquibase.exception.PreconditionErrorException;
+import liquibase.exception.PreconditionFailedException;
+import liquibase.exception.RollbackFailedException;
+import liquibase.exception.SetupException;
+import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.executor.Executor;
 import liquibase.executor.ExecutorService;
 import liquibase.logging.LogFactory;
@@ -30,8 +55,6 @@ import liquibase.sql.visitor.SqlVisitorFactory;
 import liquibase.statement.SqlStatement;
 import liquibase.util.StreamUtil;
 import liquibase.util.StringUtils;
-
-import java.util.*;
 
 /**
  * Encapsulates a changeSet and all its associated changes.
@@ -230,7 +253,11 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
         return filePath;
     }
 
+    private CheckSum checkSum;//cache
     public CheckSum generateCheckSum() {
+        if (checkSum != null) {
+            return checkSum;
+        }
         StringBuffer stringToMD5 = new StringBuffer();
         for (Change change : getChanges()) {
             stringToMD5.append(change.generateCheckSum()).append(":");
@@ -241,7 +268,8 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
         }
 
 
-        return CheckSum.compute(stringToMD5.toString());
+        checkSum = CheckSum.compute(stringToMD5.toString());
+        return checkSum;
     }
 
     @Override
@@ -525,6 +553,19 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
                 database.rollback();
             }
 
+            if (isSkipDdlSqlFile() && getChanges().size() == 1 && getChanges().get(0) instanceof SQLFileChange && !isRunOnChange()) {// DDL
+                execType = ExecType.MARK_RAN;
+                skipChange = true;
+
+                log.info("Marking ChangeSet: " + toString() + " ran due to skipDdlSqlFile");
+            }
+            if (getIdentifier().equals(getChangeSetMarkedRan())) {
+                execType = ExecType.MARK_RAN;
+                skipChange = true;
+
+                log.info("Marking ChangeSet: " + toString() + " ran due to markChangeSetRan");
+            }
+
             if (!skipChange) {
                 for (Change change : changes) {
                     try {
@@ -535,18 +576,42 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
                 }
 
                 log.debug("Reading ChangeSet: " + toString());
-                for (Change change : getChanges()) {
-                    if ((!(change instanceof DbmsTargetedChange)) || DatabaseList.definitionMatches(((DbmsTargetedChange) change).getDbms(), database, true)) {
-                        if (listener != null) {
-                            listener.willRun(change, this, changeLog, database);
+                if (isBatchUpdate()) {
+                    List<SqlStatement> list = new ArrayList<SqlStatement>();
+                    for (Change change : getChanges()) {
+                        if ((!(change instanceof DbmsTargetedChange))
+                                || DatabaseList.definitionMatches(((DbmsTargetedChange) change).getDbms(), database, true)) {
+                            SqlStatement[] statements = change.generateStatements(database);
+                            list.addAll(Arrays.asList(statements));
+                            if (listener != null) {
+                                listener.willRun(change, this, changeLog, database);
+                            }
+                        } else {
+                            log.debug("Change " + change.getSerializedObjectName() + " not included for database " + database.getShortName());
                         }
-                        database.executeStatements(change, databaseChangeLog, sqlVisitors);
-                        log.info(change.getConfirmationMessage());
+                    }
+                    database.execute(list.toArray(new SqlStatement[list.size()]), sqlVisitors, true);
+                    for (Change change : getChanges()) {
+                        log.debug(change.getConfirmationMessage());
                         if (listener != null) {
                             listener.ran(change, this, changeLog, database);
                         }
-                    } else {
-                        log.debug("Change " + change.getSerializedObjectName() + " not included for database " + database.getShortName());
+                    }
+                } else {
+                    for (Change change : getChanges()) {
+                        if ((!(change instanceof DbmsTargetedChange))
+                                || DatabaseList.definitionMatches(((DbmsTargetedChange) change).getDbms(), database, true)) {
+                            if (listener != null) {
+                                listener.willRun(change, this, changeLog, database);
+                            }
+                            database.executeStatements(change, databaseChangeLog, sqlVisitors);
+                            log.debug(change.getConfirmationMessage());
+                            if (listener != null) {
+                                listener.ran(change, this, changeLog, database);
+                            }
+                        } else {
+                            log.debug("Change " + change.getSerializedObjectName() + " not included for database " + database.getShortName());
+                        }
                     }
                 }
 
@@ -567,12 +632,20 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
             } catch (Exception e1) {
                 throw new MigrationFailedException(this, e);
             }
+            if (isSkipDdlSqlFile() && getChanges().size() == 1 && getChanges().get(0) instanceof SQLFileChange && isRunOnChange()) {// DML
+                setFailOnError(false);
+            }
             if (getFailOnError() != null && !getFailOnError()) {
                 log.info("Change set " + toString(false) + " failed, but failOnError was false.  Error: " + e.getMessage());
                 log.debug("Failure Stacktrace", e);
                 execType = ExecType.FAILED;
             } else {
-                log.severe("Change Set " + toString(false) + " failed.  Error: " + e.getMessage(), e);
+                log.severe("Change Set " + toString(false) + " failed.  Error: " + e.getMessage());
+                log.severe("Failure Stacktrace", e);
+                if (e instanceof BatchUpdateDatabaseException) {
+                    log.severe("Run 'mvn liquibase:update ... -Dliquibase.batchMode=false -DchangeLogFile=" + getFilePath()
+                            + "' to get the SQL details.");
+                }
                 if (e instanceof MigrationFailedException) {
                     throw ((MigrationFailedException) e);
                 } else {
@@ -591,6 +664,34 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
             }
         }
         return execType;
+    }
+
+    private boolean isBatchUpdate() {
+        boolean batchUpdate = Liquibase.isBatchUpdate();
+        if (batchUpdate) {
+            for (Change change : getChanges()) {
+                if (!isBatchUpdateChange(change)) {
+                    return false;
+                }
+            }
+        }
+        return batchUpdate;
+    }
+
+    private Class<?>[] batchUpdateChangeClass = new Class<?>[] {//
+            InsertDataChange.class, //
+            LoadDataChange.class, //
+            LoadUpdateDataChange.class, //
+            UpdateDataChange.class, //
+            DeleteDataChange.class };
+    
+    private boolean isBatchUpdateChange(Change change) {
+        for (Class<?> changeClass : batchUpdateChangeClass) {
+            if (changeClass.isInstance(change)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void rollback(Database database) throws RollbackFailedException {
@@ -700,6 +801,10 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
 
     public String toString(boolean includeMD5Sum) {
         return filePath + "::" + getId() + "::" + getAuthor() + (includeMD5Sum ? ("::(Checksum: " + generateCheckSum() + ")") : "");
+    }
+
+    public String getIdentifier() {
+        return filePath + "::" + getId() + "::" + getAuthor();
     }
 
     @Override
@@ -1009,4 +1114,24 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
     public int hashCode() {
         return toString(false).hashCode();
     }
+
+    private static boolean skipDdlSqlFile = false;
+    private static String changeSetMarkedRan;
+
+    public static boolean isSkipDdlSqlFile() {
+      return skipDdlSqlFile;
+    }
+
+    public static void setSkipDdlSqlFile() {
+      skipDdlSqlFile = true;
+    }
+
+    public static String getChangeSetMarkedRan() {
+      return changeSetMarkedRan;
+    }
+
+    public static void setChangeSetMarkedRan(String changeSetMarkedRan) {
+      ChangeSet.changeSetMarkedRan = changeSetMarkedRan;
+    }
+
 }

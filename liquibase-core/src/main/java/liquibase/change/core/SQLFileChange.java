@@ -3,12 +3,17 @@ package liquibase.change.core;
 import java.io.IOException;
 import java.io.InputStream;
 
+import liquibase.Liquibase;
 import liquibase.change.*;
 import liquibase.changelog.ChangeLogParameters;
 import liquibase.database.Database;
 import liquibase.exception.SetupException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.exception.ValidationErrors;
+import liquibase.parser.core.ParsedNode;
+import liquibase.parser.core.ParsedNodeException;
+import liquibase.resource.ResourceAccessor;
+import liquibase.statement.SqlStatement;
 import liquibase.util.StreamUtil;
 import liquibase.util.StringUtils;
 
@@ -104,7 +109,11 @@ public class SQLFileChange extends AbstractSQLChange {
 
         InputStream inputStream = null;
         try {
-            inputStream = StreamUtil.openStream(path, isRelativeToChangelogFile(), getChangeSet(), getResourceAccessor());
+            Boolean relativePath = isRelativeToChangelogFile();
+            if (relativePath == null) {
+                relativePath = Liquibase.isRelativeToChangelogFile();
+            }
+            inputStream = StreamUtil.openStream(path, relativePath, getChangeSet(), getResourceAccessor());
         } catch (IOException e) {
             throw new IOException("Unable to read file '" + path + "'", e);
         }
@@ -128,9 +137,15 @@ public class SQLFileChange extends AbstractSQLChange {
         return "SQL in file " + path + " executed";
     }
 
+    private String cachedSql;
+    
     @Override
     @DatabaseChangeProperty(isChangeProperty = false)
     public String getSql() {
+        if (cachedSql != null) {
+            return cachedSql;
+        }
+        
         String sql = super.getSql();
         if (sql == null) {
             InputStream sqlStream;
@@ -146,11 +161,14 @@ public class SQLFileChange extends AbstractSQLChange {
                         content = parameters.expandExpressions(content);
                     }
                 }
+                cachedSql = content;
+                initProperties(content);
                 return content;
             } catch (IOException e) {
                 throw new UnexpectedLiquibaseException(e);
             }
         } else {
+            cachedSql = sql;
             return sql;
         }
     }
@@ -167,4 +185,21 @@ public class SQLFileChange extends AbstractSQLChange {
     public String getSerializedObjectNamespace() {
         return STANDARD_CHANGELOG_NAMESPACE;
     }
+
+    private void initProperties(String sql) {
+        if (getEndDelimiter() == null && sql.length() > 0) {
+            int index = sql.length() - 1;
+            char lastchar = sql.charAt(index);
+            while (lastchar == '\n' || lastchar == '\r' || lastchar == ' ' || lastchar == '\t') {
+                index--;
+                lastchar = sql.charAt(index);
+            }
+            if (lastchar == '/') {// oracle package/trigger/view
+                super.setEndDelimiter("\\n\\s*/\\s*\\n|\\n\\s*/\\s*$");
+            } else {// oracle ddl/dml
+                super.setStripComments(true);
+            }
+        }
+    }
+
 }

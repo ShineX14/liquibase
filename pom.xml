@@ -2,19 +2,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.liquibase</groupId>
+    <groupId>com.ebao.liquibase</groupId>
     <artifactId>liquibase-parent</artifactId>
     <version>3.3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Liquibase Parent Configuration</name>
     <description>Liquibase is a tool for managing and executing database changes.</description>
-    <url>http://www.liquibase.org</url>
-
-    <organization>
-        <name>Liquibase.org</name>
-        <url>http://www.liquibase.org</url>
-    </organization>
 
     <licenses>
         <license>
@@ -23,30 +17,9 @@
         </license>
     </licenses>
 
-    <issueManagement>
-        <url>http://liquibase.jira.com/browse/CORE</url>
-    </issueManagement>
-
     <scm>
-        <connection>scm:git:https://github.com/liquibase/liquibase.git</connection>
-        <url>scm:git:https://github.com/liquibase/liquibase.git</url>
-        <developerConnection>scm:git:https://github.com/liquibase/liquibase.git</developerConnection>
+      <connection>scm:svn:http://svnedge.ebaotech.com/svn/repos/ls_misc/liquibase</connection>
     </scm>
-
-    <developers>
-       <developer>
-         <id>nvoxland</id>
-         <name>Nathan Voxland</name>
-         <email>nathan@voxland.net</email>
-         <url>http://nathan.voxland.net</url>
-         <organizationUrl>http://nathan.voxland.net/</organizationUrl>
-         <roles>
-           <role>architect</role>
-           <role>developer</role>
-         </roles>
-         <timezone>-6</timezone>
-       </developer>
-     </developers>
 
     <properties>
         <maven.build.timestamp.format>E MMM dd hh:mm:ss zzz yyyy</maven.build.timestamp.format>
@@ -57,10 +30,6 @@
     <modules>
         <module>liquibase-core</module>
         <module>liquibase-maven-plugin</module>
-        <module>liquibase-osgi</module>
-        <module>liquibase-cdi</module>
-        <module>liquibase-integration-tests</module>
-        <module>liquibase-debian</module>
     </modules>
 
     <dependencyManagement>
@@ -246,6 +215,20 @@
                     <artifactId>build-helper-maven-plugin</artifactId>
                     <version>1.4</version>
                 </plugin>
+                <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-source-plugin</artifactId>
+                  <version>2.2.1</version>
+                  <executions>
+                    <execution>
+                      <id>attach-sources</id>
+                      <goals>
+                        <goal>jar-no-fork</goal>
+                        <goal>test-jar-no-fork</goal>
+                      </goals>
+                    </execution>
+                  </executions>
+                </plugin>
 
 
                 <plugin>
@@ -304,17 +287,12 @@
 
     <distributionManagement>
         <repository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>sonatype-nexus-staging</id>
-            <name>Sonatype Production Repository</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-
+            <id>ebao</id>
+            <url>http://maven-repository.ebaotech.com/artifactory/libs-release-local</url>
         </repository>
         <snapshotRepository>
-            <uniqueVersion>false</uniqueVersion>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sontatype Snapshot Repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <id>ebao</id>
+            <url>http://maven-repository.ebaotech.com/artifactory/libs-snapshot-local</url>
         </snapshotRepository>
     </distributionManagement>
 

@@ -49,36 +49,41 @@ public class ChangeLogIterator {
             }
 
             for (ChangeSet changeSet : changeSetList) {
-                boolean shouldVisit = true;
-                Set<ChangeSetFilterResult> reasonsAccepted = new HashSet<ChangeSetFilterResult>();
-                Set<ChangeSetFilterResult> reasonsDenied = new HashSet<ChangeSetFilterResult>();
-                if (changeSetFilters != null) {
-                    for (ChangeSetFilter filter : changeSetFilters) {
-                        ChangeSetFilterResult acceptsResult = filter.accepts(changeSet);
-                        if (acceptsResult.isAccepted()) {
-                            reasonsAccepted.add(acceptsResult);
-                        } else {
-                            shouldVisit = false;
-                            reasonsDenied.add(acceptsResult);
-                            break;
-                        }
-                    }
-                }
-
-                log.setChangeSet(changeSet);
-                if (shouldVisit) {
-                    visitor.visit(changeSet, databaseChangeLog, env.getTargetDatabase(), reasonsAccepted);
-                } else {
-                    if (visitor instanceof SkippedChangeSetVisitor) {
-                        ((SkippedChangeSetVisitor) visitor).skipped(changeSet, databaseChangeLog, env.getTargetDatabase(), reasonsDenied);
-                    }
-                }
-                log.setChangeSet(null);
+                run(visitor, env, changeSet);
             }
         } finally {
             log.setChangeLog(null);
             databaseChangeLog.setRuntimeEnvironment(null);
         }
+    }
+
+    protected void run(ChangeSetVisitor visitor, RuntimeEnvironment env, ChangeSet changeSet) throws LiquibaseException {
+        Logger log = LogFactory.getLogger();
+        boolean shouldVisit = true;
+        Set<ChangeSetFilterResult> reasonsAccepted = new HashSet<ChangeSetFilterResult>();
+        Set<ChangeSetFilterResult> reasonsDenied = new HashSet<ChangeSetFilterResult>();
+        if (changeSetFilters != null) {
+            for (ChangeSetFilter filter : changeSetFilters) {
+                ChangeSetFilterResult acceptsResult = filter.accepts(changeSet);
+                if (acceptsResult.isAccepted()) {
+                    reasonsAccepted.add(acceptsResult);
+                } else {
+                    shouldVisit = false;
+                    reasonsDenied.add(acceptsResult);
+                    break;
+                }
+            }
+        }
+
+        log.setChangeSet(changeSet);
+        if (shouldVisit) {
+            visitor.visit(changeSet, databaseChangeLog, env.getTargetDatabase(), reasonsAccepted);
+        } else {
+            if (visitor instanceof SkippedChangeSetVisitor) {
+                ((SkippedChangeSetVisitor) visitor).skipped(changeSet, databaseChangeLog, env.getTargetDatabase(), reasonsDenied);
+            }
+        }
+        log.setChangeSet(null);
     }
 
     public List<ChangeSetFilter> getChangeSetFilters() {

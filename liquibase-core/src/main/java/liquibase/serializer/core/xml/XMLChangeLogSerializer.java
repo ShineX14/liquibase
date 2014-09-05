@@ -3,6 +3,7 @@ package liquibase.serializer.core.xml;
 import liquibase.change.*;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
+import liquibase.changelog.IncludedFile;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.parser.NamespaceDetails;
 import liquibase.parser.NamespaceDetailsFactory;
@@ -14,11 +15,13 @@ import liquibase.util.StreamUtil;
 import liquibase.util.StringUtils;
 import liquibase.util.XMLUtil;
 import liquibase.util.xml.DefaultXmlWriter;
+
 import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+
 import java.io.*;
 import java.util.*;
 
@@ -117,7 +120,11 @@ public class XMLChangeLogSerializer implements ChangeLogSerializer {
         setCurrentChangeLogFileDOM(doc);
 
         for (ChangeSet changeSet : changeSets) {
-            doc.getDocumentElement().appendChild(createNode(changeSet));
+            if (changeSet instanceof IncludedFile) {
+                doc.getDocumentElement().appendChild(createNode((IncludedFile) changeSet));
+            } else {
+                doc.getDocumentElement().appendChild(createNode(changeSet));
+            }
         }
 
         new DefaultXmlWriter().write(doc, out);
@@ -163,6 +170,8 @@ public class XMLChangeLogSerializer implements ChangeLogSerializer {
         return node;
     }
 
+    private static final ISODateFormat dateFormat = new ISODateFormat();
+    
     private void setValueOnNode(Element node, String objectName, Object value, LiquibaseSerializable.SerializationType serializationType) {
         if (value == null) {
             return;
@@ -186,7 +195,11 @@ public class XMLChangeLogSerializer implements ChangeLogSerializer {
             } else if (serializationType.equals(LiquibaseSerializable.SerializationType.DIRECT_VALUE)) {
                 node.setTextContent(value.toString());
             } else {
-                node.setAttribute(objectName, value.toString());
+                String attrValue = value.toString();
+                if (value instanceof Date) {
+                    attrValue = dateFormat.format((Date)value);
+                }
+                node.setAttribute(objectName, attrValue);
             }
         }
     }
@@ -237,6 +250,12 @@ public class XMLChangeLogSerializer implements ChangeLogSerializer {
         }
         if (columnConfig.getValueDate() != null) {
             element.setAttribute("valueDate", new ISODateFormat().format(columnConfig.getValueDate()));
+        }
+        if (columnConfig.getValueBlobFile() != null) {
+          element.setAttribute("valueBlobFile", columnConfig.getValueBlobFile());
+        }
+        if (columnConfig.getValueClobFile() != null) {
+          element.setAttribute("valueClobFile", columnConfig.getValueClobFile());
         }
         if (columnConfig.getValueComputed() != null) {
             element.setAttribute("valueComputed", columnConfig.getValueComputed().toString());

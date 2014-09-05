@@ -73,7 +73,8 @@ public class SnapshotGeneratorFactory {
         SortedSet<SnapshotGenerator> validGenerators = new TreeSet<SnapshotGenerator>(new SnapshotGeneratorComparator(generatorClass, database));
 
         for (SnapshotGenerator generator : generators) {
-            if (generator.getPriority(generatorClass, database) > 0) {
+            int priority = generator.getPriority(generatorClass, database);
+            if (priority > 0) {
                 validGenerators.add(generator);
             }
         }

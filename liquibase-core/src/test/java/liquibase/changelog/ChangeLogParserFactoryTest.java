@@ -127,6 +127,12 @@ public class ChangeLogParserFactoryTest {
         }
 
         @Override
+        public DatabaseChangeLog parse(DatabaseChangeLog databaseChangeLog, ChangeLogParameters changeLogParameters,
+                ResourceAccessor resourceAccessor) throws ChangeLogParseException {
+            return null;
+        }        
+
+        @Override
         public boolean supports(String changeLogFile, ResourceAccessor resourceAccessor) {
             return changeLogFile.endsWith(".test");
         }
@@ -134,6 +140,7 @@ public class ChangeLogParserFactoryTest {
         @Override
         public int getPriority() {
             return PRIORITY_DEFAULT;
-        }        
+        }
+
     }
 }

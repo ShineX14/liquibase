@@ -3,6 +3,10 @@
 package org.liquibase.maven.plugins;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -10,13 +14,17 @@ import liquibase.CatalogAndSchema;
 import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.diff.output.DiffOutputControl;
+import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.exception.LiquibaseException;
 import liquibase.integration.commandline.CommandLineUtils;
+import liquibase.resource.ResourceAccessor;
+import liquibase.util.StreamUtil;
 import liquibase.util.StringUtils;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.wagon.authentication.AuthenticationInfo;
+
+import com.ebao.tool.liquibase.util.LinkedProperties;
 
 /**
  * Generates a diff between the specified database and the reference database.
@@ -116,15 +124,37 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
      */
     private String diffTypes;
 
+    /**
+     * @parameter expression="${liquibase.refPropertyFile}"
+     */
+    protected String refPropertyFile;
+
+    /**
+     * @parameter expression="${liquibase.skipPropertyFile}"
+     */
+    protected String skipPropertyFile;
+
+    /**
+     * @parameter expression="${liquibase.diffAuthor}"
+     */
+    protected String diffAuthor;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-    	if(referenceServer!=null) {
-    		AuthenticationInfo referenceInfo = wagonManager.getAuthenticationInfo(referenceServer);
-    		if (referenceInfo != null) {
-    			referenceUsername = referenceInfo.getUserName();
-    			referencePassword = referenceInfo.getPassword();
-    		}
-    	}
+        try {
+            ClassLoader artifactClassLoader = getMavenArtifactClassLoader();
+            configureFieldsAndValues(getFileOpener(artifactClassLoader), refPropertyFile, "reference");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+//        if(referenceServer!=null) {
+//    		AuthenticationInfo referenceInfo = wagonManager.getAuthenticationInfo(referenceServer);
+//    		if (referenceInfo != null) {
+//    			referenceUsername = referenceInfo.getUserName();
+//    			referencePassword = referenceInfo.getPassword();
+//    		}
+//    	}
 
         super.execute();
     }
@@ -143,10 +173,12 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
         Database db = liquibase.getDatabase();
         Database referenceDatabase = CommandLineUtils.createDatabaseObject(cl, referenceUrl, referenceUsername, referencePassword, referenceDriver, referenceDefaultCatalogName, referenceDefaultSchemaName, outputDefaultCatalog, outputDefaultSchema, null, null, null, null);
 
-        getLog().info("Performing Diff on database " + db.toString());
+        getLog().info("Performing diff database\n" + db.toString() + "\n" + referenceDatabase.toString());
         if (diffChangeLogFile != null) {
+            CommandLineUtils.createParentDir(diffChangeLogFile);
             try {
-                CommandLineUtils.doDiffToChangeLog(diffChangeLogFile, referenceDatabase, db, new DiffOutputControl(diffIncludeCatalog, diffIncludeSchema, diffIncludeTablespace).addIncludedSchema(new CatalogAndSchema(referenceDefaultCatalogName, referenceDefaultSchemaName)), StringUtils.trimToNull(diffTypes));
+                DiffOutputControl diffOutputConfig = loadDiffOutputControl();
+                CommandLineUtils.doDiffToChangeLog(diffChangeLogFile, referenceDatabase, db, diffOutputConfig, StringUtils.trimToNull(diffTypes));
                 getLog().info("Differences written to Change Log File, " + diffChangeLogFile);
             }
             catch (IOException e) {
@@ -160,6 +192,38 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
         }
     }
 
+    private DiffOutputControl loadDiffOutputControl() throws LiquibaseException {
+        EbaoDiffOutputControl diffConfig = new EbaoDiffOutputControl(diffIncludeCatalog, diffIncludeSchema, diffIncludeTablespace);
+        diffConfig.addIncludedSchema(new CatalogAndSchema(referenceDefaultCatalogName, referenceDefaultSchemaName));
+
+        diffConfig.setTmpDataDir(project.getBuild().getDirectory());
+        
+        if (skipPropertyFile != null && !"".equals(skipPropertyFile)) {
+          getLog().info("Loading skipped objects property file:" + skipPropertyFile);
+          try {
+            ResourceAccessor fo = getFileOpener(getMavenArtifactClassLoader());
+            InputStream is = StreamUtil.singleInputStream(skipPropertyFile, fo);
+            if (is == null) {
+                throw new LiquibaseException("Failed to resolve the properties file:" + propertyFile);
+            }
+            Properties props = new LinkedProperties();
+            props.load(is);
+            for (Object key : props.keySet()) {
+              getLog().info("Object skipped:" + key);
+              diffConfig.addSkippedObject((String)key);
+            }
+          } catch (IOException e) {
+            throw new LiquibaseException("Failed to resolve the properties file:" + propertyFile, e);
+          } catch (MojoExecutionException e) {
+            throw new LiquibaseException("Failed to resolve the properties file:" + propertyFile, e);
+          }
+        }
+        
+        return diffConfig;
+    }
+
+    
+    
     @Override
     protected void printSettings(String indent) {
         super.printSettings(indent);

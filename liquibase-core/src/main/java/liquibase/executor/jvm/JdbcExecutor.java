@@ -7,6 +7,7 @@ import liquibase.database.OfflineConnection;
 import liquibase.database.PreparedStatementFactory;
 import liquibase.database.core.OracleDatabase;
 import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.BatchUpdateDatabaseException;
 import liquibase.exception.DatabaseException;
 import liquibase.executor.AbstractExecutor;
 import liquibase.executor.Executor;
@@ -20,6 +21,7 @@ import liquibase.util.JdbcUtils;
 import liquibase.util.StringUtils;
 
 import java.sql.CallableStatement;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -122,6 +124,101 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
         execute(new ExecuteStatementCallback(sql, sqlVisitors), sqlVisitors);
     }
 
+    @Override
+    public void execute(final SqlStatement[] statements, final List<SqlVisitor> sqlVisitors) throws DatabaseException {
+        List<SqlStatement> sqlList = new ArrayList<SqlStatement>();
+        List<ExecutablePreparedStatement> psList = new ArrayList<ExecutablePreparedStatement>();
+
+        for (SqlStatement statement : statements) {
+            if (statement instanceof ExecutablePreparedStatement) {
+                ExecutablePreparedStatement eps = (ExecutablePreparedStatement) statement;
+                if (!sqlList.isEmpty()) {
+                    _execute(sqlList, sqlVisitors);
+                    sqlList.clear();
+                }
+                if (psList.isEmpty()) {
+                    psList.add(eps);
+                } else {
+                    if (!psList.get(0).getStatement().sql.equals(eps.getStatement().sql)) {
+                        _execute(psList);
+                        psList.clear();
+                    }
+                    psList.add(eps);
+                }
+            } else {
+                if (!psList.isEmpty()) {
+                    _execute(psList);
+                    psList.clear();
+                }
+                sqlList.add(statement);
+            }
+        }
+
+        if (!sqlList.isEmpty()) {
+            _execute(sqlList, sqlVisitors);
+        }
+        if (!psList.isEmpty()) {
+            _execute(psList);
+        }
+    }
+
+    private void _execute(final List<SqlStatement> statements, final List<SqlVisitor> sqlVisitors) throws DatabaseException {
+        class ExecuteStatementCallback implements StatementCallback {
+            @Override
+            public Object doInStatement(Statement stmt) throws SQLException, DatabaseException {
+                List<String> sqls = new ArrayList<String>();
+                for (SqlStatement statement : statements) {
+                    for (String sql : applyVisitors(statement, sqlVisitors)) {
+                        if (database instanceof OracleDatabase) {
+                            sql = sql.replaceFirst("/\\s*/\\s*$", ""); // remove duplicated /'s
+                        }
+
+                        log.debug("Executing EXECUTE database command: " + sql);
+                        sqls.add(sql);
+                        // if (statement.contains("?") || statement.contains("{")) {
+                        stmt.setEscapeProcessing(false);
+                        // }
+                        stmt.addBatch(sql);
+                    }
+                }
+                try {
+                    stmt.executeBatch();
+                } catch (SQLException e) {
+                    log.severe(sqls.toString());
+                    throw new BatchUpdateDatabaseException(e);
+                }
+                return null;
+            }
+
+            @Override
+            public SqlStatement getStatement() {
+                throw new UnsupportedOperationException();
+            }
+        }
+        execute(new ExecuteStatementCallback(), sqlVisitors);
+    }
+
+    private void _execute(List<ExecutablePreparedStatement> statements) throws DatabaseException {
+        PreparedStatementFactory f = new PreparedStatementFactory((JdbcConnection) database.getConnection());
+        String sql = statements.get(0).getStatement().sql;
+        try {
+            PreparedStatement dbStatement = f.create(sql);
+            log.debug("Executing EXECUTE database command: " + sql);
+            for (ExecutablePreparedStatement statement : statements) {
+                statement.execute(dbStatement);
+            }
+            dbStatement.executeBatch();
+            dbStatement.close();
+        } catch (SQLException e) {
+            log.severe(sql);
+            for (int i = 0; i < statements.size() && i < 10; i++) {
+                ExecutablePreparedStatement statement = statements.get(i);
+                log.severe("with parameters: " + statement.getStatement().parameters);
+            }
+            log.severe("... " + statements.size() + " record(s) in the batch update.");
+            throw new BatchUpdateDatabaseException(e);
+        }
+    }
 
     public Object query(final SqlStatement sql, final ResultSetExtractor rse) throws DatabaseException {
         return query(sql, rse, new ArrayList<SqlVisitor>());
@@ -303,9 +400,9 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
                 }
 
                 log.debug("Executing EXECUTE database command: "+statement);
-                if (statement.contains("?")) {
+                // if (statement.contains("?") || statement.contains("{")) {
                     stmt.setEscapeProcessing(false);
-                }
+                //}
                 try {
                     stmt.execute(statement);
                 } catch (SQLException e) {
