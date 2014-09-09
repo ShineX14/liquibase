@@ -285,7 +285,9 @@
         <xsd:attribute name="valueSequenceCurrent" type="xsd:string" />
         <xsd:attribute name="valueSequenceNext" type="xsd:string" />
         <xsd:attribute name="valueBlobFile" type="xsd:string"/>
+        <xsd:attribute name="valueBlob" type="xsd:string"/>
         <xsd:attribute name="valueClobFile" type="xsd:string"/>
+        <xsd:attribute name="valueClob" type="xsd:string"/>
 		<xsd:attribute name="defaultValue" type="xsd:string" />
 		<xsd:attribute name="defaultValueNumeric" type="xsd:string" />
 		<xsd:attribute name="defaultValueDate" type="xsd:string" />

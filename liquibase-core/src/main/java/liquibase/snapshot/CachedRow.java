@@ -2,9 +2,10 @@ package liquibase.snapshot;
 
 import liquibase.executor.jvm.ColumnMapRowMapper;
 
+import java.io.Serializable;
 import java.util.Map;
 
-public class CachedRow {
+public class CachedRow implements Serializable {
     private Map row;
 
     public CachedRow(Map row) {

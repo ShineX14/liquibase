@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -200,7 +202,13 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
             while (rs.next()) {
                 Map<String, Object> row = new HashMap<String, Object>();
                 for (int i = 1; i <= columns; ++i) {
-                    row.put(md.getColumnName(i), rs.getObject(i));
+                    Object value = rs.getObject(i);
+                    if (value instanceof Blob) {
+                        value = rs.getBytes(i);
+                    } else if (value instanceof Clob) {
+                        value = rs.getString(i);
+                    }
+                    row.put(md.getColumnName(i), value);
                 }
                 list.add(row);
             }

@@ -11,6 +11,7 @@ import liquibase.resource.ClassLoaderResourceAccessor
 import liquibase.resource.CompositeResourceAccessor
 import liquibase.resource.FileSystemResourceAccessor
 import liquibase.resource.ResourceAccessor
+import liquibase.statement.prepared.*
 import org.easymock.Capture
 import org.easymock.IAnswer
 import org.junit.Assert
