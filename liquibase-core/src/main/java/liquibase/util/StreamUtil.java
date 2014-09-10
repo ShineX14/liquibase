@@ -153,7 +153,7 @@ public class StreamUtil {
     }
 
     public static InputStream openStream(String path, Boolean relativeToChangelogFile, ChangeSet changeSet, ResourceAccessor resourceAccessor) throws IOException {
-        if (relativeToChangelogFile != null && relativeToChangelogFile) {
+        if (relativeToChangelogFile != null && !relativeToChangelogFile) {
             path = processDefaultPrefix(resourceAccessor, path);
         }
         InputStream stream = openFromClasspath(path, relativeToChangelogFile, changeSet, resourceAccessor);
@@ -237,6 +237,10 @@ public class StreamUtil {
     }
     
     public static String processDefaultPrefix(ResourceAccessor opener, String filepath) {
+        if (opener == null) {
+            return filepath;
+        }
+        
         try {
             InputStream in = singleInputStream(filepath, opener);
             if (in == null) {
