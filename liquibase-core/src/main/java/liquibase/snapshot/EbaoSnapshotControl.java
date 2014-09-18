@@ -16,7 +16,4 @@ public class EbaoSnapshotControl extends SnapshotControl {
         return diffOutputControl.isDiffTable(name);
     }
 
-    public String getTmpDataDir() {
-        return diffOutputControl.getTmpDataDir();
-    }
 }

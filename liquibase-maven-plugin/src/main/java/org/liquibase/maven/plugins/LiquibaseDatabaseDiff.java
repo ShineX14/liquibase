@@ -196,8 +196,6 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
         EbaoDiffOutputControl diffConfig = new EbaoDiffOutputControl(diffIncludeCatalog, diffIncludeSchema, diffIncludeTablespace);
         diffConfig.addIncludedSchema(new CatalogAndSchema(referenceDefaultCatalogName, referenceDefaultSchemaName));
 
-        diffConfig.setTmpDataDir(project.getBuild().getDirectory());
-        
         if (skipPropertyFile != null && !"".equals(skipPropertyFile)) {
           getLog().info("Loading skipped objects property file:" + skipPropertyFile);
           try {

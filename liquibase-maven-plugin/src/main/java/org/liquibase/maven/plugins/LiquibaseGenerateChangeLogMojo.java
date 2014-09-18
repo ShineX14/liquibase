@@ -149,7 +149,6 @@ public class LiquibaseGenerateChangeLogMojo extends
         EbaoDiffOutputControl.setInsertUpdatePreferred(insertUpdate);
         String dataDir = CommandLineUtils.createParentDir(outputChangeLogFile);
         diffControl.setDataDir(dataDir);
-        diffControl.setTmpDataDir(project.getBuild().getDirectory());
 
         if (diffTable != null) {
             diffTable = diffTable.toUpperCase().trim();

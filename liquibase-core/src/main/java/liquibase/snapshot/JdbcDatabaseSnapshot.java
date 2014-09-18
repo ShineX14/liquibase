@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import liquibase.CatalogAndSchema;
+import liquibase.Liquibase;
 import liquibase.database.AbstractJdbcDatabase;
 import liquibase.database.Database;
 import liquibase.database.core.DB2Database;
@@ -125,7 +126,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 @Override
 				public List<CachedRow> bulkFetch() throws SQLException, DatabaseException {
                     if (database instanceof OracleDatabase) {
-                        File f = new File(((EbaoSnapshotControl)getSnapshotControl()).getTmpDataDir(), catalogName + "." + schemaName + ".foreignkey.cache");
+                        File f = new File(Liquibase.getTmpDataDir(), catalogName + "." + schemaName + ".foreignkey.cache");
                         if (f.exists()) {
                             logger.info("loading database foreign keys metadata from " + f.getAbsolutePath());
                             return readFromFile(f);
@@ -314,7 +315,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 @Override
 				public List<CachedRow> bulkFetchQuery() throws SQLException, DatabaseException {
                     if (database instanceof OracleDatabase) {
-                        File f = new File(((EbaoSnapshotControl)getSnapshotControl()).getTmpDataDir(), catalogName + "." + schemaName + ".columns.cache");
+                        File f = new File(Liquibase.getTmpDataDir(), catalogName + "." + schemaName + ".columns.cache");
                         if (f.exists()) {
                             logger.info("loading database columns metadata from " + f.getAbsolutePath());
                             return readFromFile(f);
@@ -509,7 +510,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
 
                 @Override
 				public List<CachedRow> bulkFetchQuery() throws SQLException, DatabaseException {
-                    File f = new File(((EbaoSnapshotControl)getSnapshotControl()).getTmpDataDir(), catalogName + "." + schemaName + ".uniqueconstraints.cache");
+                    File f = new File(Liquibase.getTmpDataDir(), catalogName + "." + schemaName + ".uniqueconstraints.cache");
                     if (f.exists()) {
                         logger.info("loading database unique constraint metadata from " + f.getAbsolutePath());
                         return readFromFile(f);

@@ -14,21 +14,12 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
   private static boolean insertUpdatePreferred = false;
 
   //compare
-  private String tmpDataDir = null; //for database metadata cache
   private final List<String> skippedObjects = new ArrayList<String>();
 
   public EbaoDiffOutputControl(boolean includeCatalog, boolean includeSchema, boolean includeTablespace) {
       super(includeCatalog, includeSchema, includeTablespace);
   }
   
-    public String getTmpDataDir() {
-        return tmpDataDir;
-    }
-
-    public void setTmpDataDir(String tmpDataDir) {
-        this.tmpDataDir = tmpDataDir;
-    }
-
     public void addSkippedObject(String name) {
         skippedObjects.add(name);
     }

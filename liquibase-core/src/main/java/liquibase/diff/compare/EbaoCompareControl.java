@@ -11,10 +11,6 @@ public class EbaoCompareControl extends CompareControl {
         this.diffOutputControl = diffOutputControl;
     };
     
-    public String getTmpDataDir() {
-        return diffOutputControl.getTmpDataDir();
-    }
-
     public boolean isSkipped(String name) {
         return diffOutputControl.isSkipped(name);
     }

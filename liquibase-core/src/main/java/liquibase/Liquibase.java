@@ -19,7 +19,6 @@ import liquibase.database.core.OracleDatabase;
 import liquibase.diff.DiffGeneratorFactory;
 import liquibase.diff.DiffResult;
 import liquibase.diff.compare.CompareControl;
-import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.diff.output.changelog.DiffToChangeLog;
 import liquibase.exception.ChangeLogParseException;
 import liquibase.exception.DatabaseException;
@@ -82,6 +81,8 @@ public class Liquibase {
 
     private static boolean relativeToChangelogFile = false;
 
+    private static String tmpDataDir; //for database metadata cache
+    
     /**
      * Creates a Liquibase instance for a given DatabaseConnection. The Database instance used will be found with {@link DatabaseFactory#findCorrectDatabaseImplementation(liquibase.database.DatabaseConnection)}
      *
@@ -1298,5 +1299,13 @@ public class Liquibase {
         relativeToChangelogFile = true;
     }
       
+    public static String getTmpDataDir() {
+        return tmpDataDir;
+    }
+
+    public static void setTmpDataDir(String tmpDataDir) {
+        tmpDataDir = tmpDataDir;
+    }
+
 }
 

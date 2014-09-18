@@ -657,6 +657,9 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             System.setProperty(key, value);
         }
         StreamUtil.setDefaultEncoding(project.getProperties().getProperty("project.build.sourceEncoding", "UTF-8"));
+        if (project.getBuild() != null) {//in unit test
+            Liquibase.setTmpDataDir(project.getBuild().getDirectory());
+        }
     }
 
 }
