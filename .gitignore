@@ -13,3 +13,4 @@ derby.log
 *.iml
 .DS_Store
 /liquibase-core/src/test/java/MyDebug.java
+/local-maven-repository/local-maven-repository
