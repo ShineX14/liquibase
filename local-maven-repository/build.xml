@@ -1,0 +1,45 @@
+<project name="life" default="init" basedir=".">
+
+  
+  <property name="db.url" value="-Durl=jdbc:oracle:thin:@172.25.12.193:1521:ora11g2" />
+  <property name="db.user" value="-Dusername=willy_zhuo" />
+  <property name="db.password" value="-Dpassword=willy_zhuo" />
+  
+  <property name="maven.settings" value="--settings settings.xml" />
+  <property name="liquibase.changeLogFile" value="-DchangeLogFile=db/upgrade-db.xml" />
+
+  <target name="init">
+    <echo>
+ant clean: to clean up the workspace
+ant build: to build the package
+ant deploy: to deploy the package into maven-repository    
+    </echo>
+  </target>
+
+  <target name="clean">
+    <delete dir="local-maven-repository"/>
+  </target>
+  
+  <target name="all" depends="build, deploy" />
+  
+  <!--
+mvn liquibase:releaseLocks -s settings.xml -Doracle.net.tns_admin=C:\oraclexe\app\oracle\product\11.2.0\server\network\ADMIN -Durl=jdbc:oracle:thin:@mydb -Dusername=willy_zhuo -Dpassword=willy_zhuo
+mvn liquibase:update2 -s settings.xml -Doracle.net.tns_admin=C:\oraclexe\app\oracle\product\11.2.0\server\network\ADMIN -Durl=jdbc:oracle:thin:@mydb -Dusername=willy_zhuo -Dpassword=willy_zhuo -DchangeLogFile=test-package/upgrade-db.xml -U
+  -->
+  <target name="build">
+    <delete dir="local-maven-repository/com/ebao"/>
+    
+    <exec executable="mvn.bat" failonerror="true">
+      <arg line="liquibase:releaseLocks ${maven.settings} ${db.url} ${db.user} ${db.password}"/>
+    </exec>
+    <exec executable="mvn.bat" failonerror="true">
+      <arg line="liquibase:update ${maven.settings} ${db.url} ${db.user} ${db.password} ${liquibase.changeLogFile} -e"/>
+    </exec>
+  </target>
+
+  <target name="deploy">
+    <exec executable="mvn.bat" failonerror="true">
+      <arg line="deploy"/>
+    </exec>
+  </target>
+</project>

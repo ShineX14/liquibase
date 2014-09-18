@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.ebao.ls.dist</groupId>
+  <artifactId>liquibase-local-maven-repository</artifactId>
+  <version>1.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <parent>
+    <groupId>com.ebao</groupId>
+    <artifactId>ebao-lib-pom</artifactId>
+    <version>1.0.0</version>
+    <relativePath></relativePath>
+  </parent>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <appendAssemblyId>false</appendAssemblyId>
+          <descriptors>
+            <descriptor>assembly.xml</descriptor>
+          </descriptors>
+        </configuration>
+        <executions>
+          <execution>
+            <id>assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.ebao.liquibase</groupId>
+        <artifactId>liquibase-maven-plugin</artifactId>
+        <version>3.3.0-SNAPSHOT</version>
+        <configuration>
+          <promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
+          <propertyFileWillOverride>true</propertyFileWillOverride>
+          <propertyFile>${propertyFile}</propertyFile>
+          <contexts>${contexts}</contexts>
+          <driver>oracle.jdbc.OracleDriver</driver>
+          <url>${url}</url>
+          <username>${username}</username>
+          <password>${password}</password>
+          <changeLogFile>${changeLogFile}</changeLogFile>
+          <changeLogFileBefore>init-user.xml</changeLogFileBefore>
+          <changeLogFileAfter>recompile-plsql.xml</changeLogFileAfter>
+          <!--update-->
+          <batchMode>${batchMode}</batchMode>
+          <relativeToChangelogFile>true</relativeToChangelogFile>
+          <resourceJars>${resourceJars}</resourceJars>
+          <resourceJarPath>ls,gs</resourceJarPath>
+          <localFileFirst>${localFileFirst}</localFileFirst>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>oracle.jdbc</groupId>
+            <artifactId>ojdbc6</artifactId>
+            <version>11.2.0.2.0</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+    </plugins>
+  </build>
+</project>

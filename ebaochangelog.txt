@@ -1,0 +1,46 @@
+* preCondition onFail="continue" at includedChangeLog level
+ValidatingVisitor
+ValidationFailedException
+Liquibase
+* changeLogBefore/changeLogAfter
+Liquibase
+AbstractLiquibaseChangeLogMojo
+* BigDecimal parsing
+AddDefaultValueChange
+ColumnConfig
+* Date parsing
+ISODateFormat
+* PreparedStatement
+InsertDateChange
+LoadDataChange
+LoadUpdateDataChange
+liquibase.core.statement.prepared
+ExecutablePreparedStatement
+* path
+SQLFileChange
+* LOB
+InsertDataChange
+UpdateDataChange
+GenerateClobOrBlobSql
+* performance/cache
+AbstractChange
+* skipNextDdlChangeSet
+* Null
+InsertGenerator
+CSVReader
+* log level todo
+* maven plugin
+Main
+CommandLineUtils
+* diff
+* diff on column
+DataType
+Column
+
+required properties in 3.3.0-SNAPSHOT pom.xml
+liquibase.outputFileEncoding
+liquibase.diffTypes
+liquibase.diffAuthor=>liquibase.changeSetAuthor
+liquibase.changeLogFile=>liquibase.outputChangeLogFile
+liquibase.outputDefaultCatalog
+liquibase.outputDefaultSchema
