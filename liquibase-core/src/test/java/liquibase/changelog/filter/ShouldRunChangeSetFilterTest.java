@@ -85,7 +85,7 @@ public class ShouldRunChangeSetFilterTest  {
         ranChanges.add(new RanChangeSet("path/changelog", "1", "testAuthor", CheckSum.parse("12345"), new Date(), null, null, null, null));
         ranChanges.add(new RanChangeSet("classpath:path/changelog", "2", "testAuthor", CheckSum.parse("12345"), new Date(), null, null, null, null));
 
-        expect(database.getRanChangeSetList()).andReturn(ranChanges);
+        expect(database.getRanChangeSetList()).andReturn(ranChanges).anyTimes();
         expect(database.getDatabaseChangeLogTableName()).andReturn("DATABASECHANGELOG").anyTimes();
         expect(database.getDefaultSchemaName()).andReturn(null).anyTimes();
 

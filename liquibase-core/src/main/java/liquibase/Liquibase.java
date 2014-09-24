@@ -235,7 +235,7 @@ public class Liquibase {
         }
     }
 
-    public void _update(DatabaseChangeLog changeLog, Contexts contexts, LabelExpression labelExpression) throws LiquibaseException, DatabaseException {
+    private void _update(DatabaseChangeLog changeLog, Contexts contexts, LabelExpression labelExpression) throws LiquibaseException, DatabaseException {
         _update(changeLog, contexts, labelExpression, getStandardChangeSetFilter(contexts, labelExpression));
     }
     

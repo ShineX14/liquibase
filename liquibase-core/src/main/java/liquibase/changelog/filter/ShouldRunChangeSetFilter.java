@@ -9,12 +9,14 @@ import liquibase.exception.DatabaseException;
 
 public class ShouldRunChangeSetFilter implements ChangeSetFilter {
 
-    private final List<RanChangeSet> ranChangeSets;
+    //private final List<RanChangeSet> ranChangeSets;
+	private final Database database;
     private final boolean ignoreClasspathPrefix;
 
     public ShouldRunChangeSetFilter(Database database, boolean ignoreClasspathPrefix) throws DatabaseException {
         this.ignoreClasspathPrefix = ignoreClasspathPrefix;
-        this.ranChangeSets = database.getRanChangeSetList();
+        //this.ranChangeSets = database.getRanChangeSetList();
+        this.database = database;
     }
 
     public ShouldRunChangeSetFilter(Database database) throws DatabaseException {
@@ -24,7 +26,17 @@ public class ShouldRunChangeSetFilter implements ChangeSetFilter {
     @Override
     @SuppressWarnings({"RedundantIfStatement"})
     public ChangeSetFilterResult accepts(ChangeSet changeSet) {
-        for (RanChangeSet ranChangeSet : ranChangeSets) {
+		try {
+			List<RanChangeSet> ranChangeSets = database.getRanChangeSetList();
+			return accepts(changeSet, ranChangeSets);
+		} catch (DatabaseException e) {
+			throw new RuntimeException(e);
+		}
+    }
+
+	private ChangeSetFilterResult accepts(ChangeSet changeSet,
+			List<RanChangeSet> ranChangeSets) {
+		for (RanChangeSet ranChangeSet : ranChangeSets) {
             if (changeSetsMatch(changeSet, ranChangeSet)) {
                 if (changeSet.shouldAlwaysRun()) {
                     return new ChangeSetFilterResult(true, "Change set always runs", this.getClass());
@@ -36,7 +48,7 @@ public class ShouldRunChangeSetFilter implements ChangeSetFilter {
             }
         }
         return new ChangeSetFilterResult(true, "Change set has not ran yet", this.getClass());
-    }
+	}
 
     protected boolean changeSetsMatch(ChangeSet changeSet, RanChangeSet ranChangeSet) {
         return idsAreEqual(changeSet, ranChangeSet)

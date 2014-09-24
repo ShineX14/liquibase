@@ -5,6 +5,7 @@ import liquibase.changelog.DatabaseChangeLog;
 import liquibase.changelog.IncludedDatabaseChangeLog;
 import liquibase.exception.ChangeLogParseException;
 import liquibase.resource.ResourceAccessor;
+import liquibase.util.StreamUtil;
 
 public class XMLIncludedChangeLogSAXParser extends XMLChangeLogSAXParser {
 
@@ -22,6 +23,7 @@ public class XMLIncludedChangeLogSAXParser extends XMLChangeLogSAXParser {
     @Override
     public DatabaseChangeLog parse(String physicalChangeLogLocation, ChangeLogParameters changeLogParameters, ResourceAccessor resourceAccessor)
             throws ChangeLogParseException {
+        physicalChangeLogLocation = StreamUtil.processDefaultPrefix(resourceAccessor, physicalChangeLogLocation);
         DatabaseChangeLog changeLog = new IncludedDatabaseChangeLog(physicalChangeLogLocation);
         return parse(changeLog, changeLogParameters, resourceAccessor);
     }
