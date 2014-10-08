@@ -198,4 +198,10 @@ public class SQLFileChange extends AbstractSQLChange {
         }
     }
 
+	@Override
+	public CheckSum generateCheckSum() {
+		getSql();//to call initProperties(String)
+		return super.generateCheckSum();
+	}
+
 }

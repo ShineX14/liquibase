@@ -286,6 +286,11 @@ public class Liquibase {
         return parser.parse(changeLogFile, changeLogParameters, resourceAccessor);
     }
 
+    public DatabaseChangeLog getIncludedDatabaseChangeLog(DatabaseChangeLog changeLog) throws LiquibaseException, ChangeLogParseException {
+        ChangeLogParser parser = ChangeLogParserFactory.getInstance().getParser(changeLog.getPhysicalFilePath(), resourceAccessor);
+        return parser.parse(changeLog, changeLogParameters, resourceAccessor);
+    }
+
     protected UpdateVisitor createUpdateVisitor() {
         return new UpdateVisitor(database, changeExecListener);
     }

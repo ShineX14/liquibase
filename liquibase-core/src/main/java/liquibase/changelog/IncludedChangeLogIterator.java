@@ -57,8 +57,9 @@ public class IncludedChangeLogIterator extends ChangeLogIterator {
         String changeLogFile = includedChangeLog.getPhysicalFilePath();
 
         // new instance to avoid OutOfMemory issue in case of high volume data
-        DatabaseChangeLog runnableChangeLog = liquibase.getDatabaseChangeLog(changeLogFile);
+        DatabaseChangeLog runnableChangeLog = new IncludedDatabaseChangeLog(changeLogFile);
         runnableChangeLog.setLogicalFilePath(includedChangeLog.getLogicalFilePath());
+   		liquibase.getIncludedDatabaseChangeLog(runnableChangeLog);
         
         liquibase._update(runnableChangeLog, env.getContexts(), env.getLabels(), changeSetFilters);
     }
