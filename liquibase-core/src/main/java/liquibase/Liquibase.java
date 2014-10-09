@@ -221,7 +221,7 @@ public class Liquibase {
             }
             _update(changeLog, contexts, labelExpression);
             if (changeLogFileAfter != null && !"".equals(changeLogFileAfter)) {
-                DatabaseChangeLog changeLogAfter = getDatabaseChangeLogBefore();
+                DatabaseChangeLog changeLogAfter = getDatabaseChangeLogAfter();
                 _update(changeLogAfter, contexts, labelExpression);
             }
         } finally {
