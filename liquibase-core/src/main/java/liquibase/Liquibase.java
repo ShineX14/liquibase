@@ -275,7 +275,7 @@ public class Liquibase {
 
     public DatabaseChangeLog getDatabaseChangeLogAfter() throws LiquibaseException {
         if (databaseChangeLogAfter == null) {
-            databaseChangeLogBefore = getDatabaseChangeLog(changeLogFileAfter);
+        	databaseChangeLogAfter = getDatabaseChangeLog(changeLogFileAfter);
         }
 
         return databaseChangeLogAfter;
