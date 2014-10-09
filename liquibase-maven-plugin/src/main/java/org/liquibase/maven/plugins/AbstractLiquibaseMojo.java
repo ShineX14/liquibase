@@ -563,9 +563,9 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
         }
 
         for (Iterator it = props.keySet().iterator(); it.hasNext();) {
-            String key = null;
+            String key = (String) it.next();
+            String value = (String) props.get(key);
             try {
-                key = (String) it.next();
                 if ("NON_POOL_DB_URL".equals(key)) {
                     key = "url";
                 }
@@ -580,13 +580,13 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
                 }
                 Field field = MavenUtils.getDeclaredField(this.getClass(), key);
 
-                if (propertyFileWillOverride) {
+				if (propertyFileWillOverride) {
                     getLog().debug("  properties file setting value: " + field.getName());
-                    setFieldValue(field, props.get(key).toString());
+                    setFieldValue(field, value.toString());
                 } else {
                     if (!isCurrentFieldValueSpecified(field)) {
                         getLog().debug("  properties file setting value: " + field.getName());
-                        setFieldValue(field, props.get(key).toString());
+                        setFieldValue(field, value.toString());
                     }
                 }
             }
