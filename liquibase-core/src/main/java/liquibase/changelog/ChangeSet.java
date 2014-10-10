@@ -643,7 +643,7 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
                 log.severe("Change Set " + toString(false) + " failed.  Error: " + e.getMessage());
                 log.severe("Failure Stacktrace", e);
                 if (e instanceof BatchUpdateDatabaseException) {
-                    log.severe("Run 'mvn liquibase:update ... -Dliquibase.batchMode=false -DchangeLogFile=" + getFilePath()
+                    log.severe("Run 'mvn liquibase:update ... -Dliquibase.batchMode=false -DchangeLogFile=" + getChangeLog().getPhysicalFilePath()
                             + "' to get the SQL details.");
                 }
                 if (e instanceof MigrationFailedException) {
@@ -804,7 +804,7 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
     }
 
     public String getIdentifier() {
-        return filePath + "::" + getId() + "::" + getAuthor();
+        return toString(false);
     }
 
     @Override

@@ -37,7 +37,7 @@ public class MigrationFailedException extends LiquibaseException {
         Throwable cause = this.getCause();
         if (cause instanceof BatchUpdateDatabaseException) {
             message += "Run 'mvn liquibase:update ... -Dliquibase.batchMode=false -DchangeLogFile=" 
-                    + failedChangeSet.getFilePath()
+                    + failedChangeSet.getChangeLog().getPhysicalFilePath()
                     + "' to get the SQL details.";
         }
         while (cause != null) {

@@ -55,7 +55,6 @@
           <changeLogFileBefore>init-user.xml</changeLogFileBefore>
           <changeLogFileAfter>recompile-plsql.xml</changeLogFileAfter>
           <!--update-->
-          <batchMode>${batchMode}</batchMode>
           <relativeToChangelogFile>true</relativeToChangelogFile>
           <resourceJars>${resourceJars}</resourceJars>
           <resourceJarPath>ls,gs</resourceJarPath>
