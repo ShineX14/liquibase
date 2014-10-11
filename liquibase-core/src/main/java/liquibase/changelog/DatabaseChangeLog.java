@@ -95,7 +95,11 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
     }
 
     public void setLogicalFilePath(String logicalFilePath) {
-        this.logicalFilePath = logicalFilePath;
+        //the calculated path from parent should not be overridden
+        //if no logicalFilePath was assigned in the xml contents
+        if (logicalFilePath != null) {
+          this.logicalFilePath = logicalFilePath;
+        }
     }
 
     public String getFilePath() {
@@ -299,15 +303,23 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
             }
         }
         
-        IncludedDatabaseChangeLog includedDatabaseChangeLog = loadIncludedDatabaseChangeLog(orgFileName, fileName, resourceAccessor);
-        if (includedDatabaseChangeLog != null) {
+        String logicalFileName = getLogicalFilePath(orgFileName);
+        String physicalFileName = StreamUtil.processDefaultPrefix(resourceAccessor, fileName);
+
+        if (this instanceof IncludedDatabaseChangeLog) {
+            //lazy loading in case of high volume data
+            IncludedDatabaseChangeLog includedDatabaseChangeLog = new IncludedDatabaseChangeLog(physicalFileName);
+            includedDatabaseChangeLog.setLogicalFilePath(logicalFileName);
+
             ((IncludedDatabaseChangeLog)this).addChangeLog(includedDatabaseChangeLog);
             return true;
         }
         
         DatabaseChangeLog changeLog;
         try {
-            changeLog = ChangeLogParserFactory.getInstance().getParser(fileName, resourceAccessor).parse(fileName, changeLogParameters, resourceAccessor);
+            changeLog = new DatabaseChangeLog(physicalFileName);
+            changeLog.setLogicalFilePath(logicalFileName);
+            changeLog = ChangeLogParserFactory.getInstance().getParser(fileName, resourceAccessor).parse(changeLog, changeLogParameters, resourceAccessor);
         } catch (UnknownChangelogFormatException e) {
             LogFactory.getInstance().getLog().warning("included file " + relativeBaseFileName + "/" + fileName + " is not a recognized file type");
             return false;
@@ -324,20 +336,6 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
         }
 
         return true;
-    }
-
-    private IncludedDatabaseChangeLog loadIncludedDatabaseChangeLog(String orgFileName, String absFileName, ResourceAccessor resourceAccessor) {
-        if (!(this instanceof IncludedDatabaseChangeLog)) {
-            return null;
-        }
-
-        String logicalFileName = getLogicalFilePath(orgFileName);
-        String physicalFileName = StreamUtil.processDefaultPrefix(resourceAccessor, absFileName);
-        //lazy loading in case of high volume data
-        IncludedDatabaseChangeLog changeLog = new IncludedDatabaseChangeLog(physicalFileName);
-        changeLog.setLogicalFilePath(logicalFileName);
-
-        return changeLog;
     }
 
     private String getLogicalFilePath(String relativeFileName) {

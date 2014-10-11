@@ -25,12 +25,4 @@ public class IncludedDatabaseChangeLog extends DatabaseChangeLog {
     this.changeSetAndLogs.add(changeLog);
   }
 
-  @Override
-  public void setLogicalFilePath(String logicalFilePath) {
-    //the calculated path from parent should not be overridden
-    //if no logicalFilePath was assigned in the xml contents
-    if (logicalFilePath != null) {
-      super.setLogicalFilePath(logicalFilePath);
-    }
-  }
 }
