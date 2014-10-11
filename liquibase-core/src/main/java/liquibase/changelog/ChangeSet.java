@@ -32,6 +32,7 @@ import liquibase.database.ObjectQuotingStrategy;
 import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.exception.BatchUpdateDatabaseException;
 import liquibase.exception.DatabaseException;
+import liquibase.exception.LiquibaseException;
 import liquibase.exception.MigrationFailedException;
 import liquibase.exception.PreconditionErrorException;
 import liquibase.exception.PreconditionFailedException;
@@ -577,42 +578,19 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
 
                 log.debug("Reading ChangeSet: " + toString());
                 if (isBatchUpdate()) {
-                    List<SqlStatement> list = new ArrayList<SqlStatement>();
-                    for (Change change : getChanges()) {
-                        if ((!(change instanceof DbmsTargetedChange))
-                                || DatabaseList.definitionMatches(((DbmsTargetedChange) change).getDbms(), database, true)) {
-                            SqlStatement[] statements = change.generateStatements(database);
-                            list.addAll(Arrays.asList(statements));
-                            if (listener != null) {
-                                listener.willRun(change, this, changeLog, database);
-                            }
-                        } else {
-                            log.debug("Change " + change.getSerializedObjectName() + " not included for database " + database.getShortName());
+                	try {
+                      executeByBatch(listener, database);
+                	} catch (BatchUpdateDatabaseException e) {
+                        try {
+                            database.rollback();
+                        } catch (Exception e1) {
+                            throw new MigrationFailedException(this, e);
                         }
-                    }
-                    database.execute(list.toArray(new SqlStatement[list.size()]), sqlVisitors, true);
-                    for (Change change : getChanges()) {
-                        log.debug(change.getConfirmationMessage());
-                        if (listener != null) {
-                            listener.ran(change, this, changeLog, database);
-                        }
-                    }
+                        executeByStatement(databaseChangeLog, listener, database);//exception expected 
+                        throw new UnexpectedLiquibaseException("Unexpected execution status", e);//exception expected calling executeByStatement
+                	}
                 } else {
-                    for (Change change : getChanges()) {
-                        if ((!(change instanceof DbmsTargetedChange))
-                                || DatabaseList.definitionMatches(((DbmsTargetedChange) change).getDbms(), database, true)) {
-                            if (listener != null) {
-                                listener.willRun(change, this, changeLog, database);
-                            }
-                            database.executeStatements(change, databaseChangeLog, sqlVisitors);
-                            log.debug(change.getConfirmationMessage());
-                            if (listener != null) {
-                                listener.ran(change, this, changeLog, database);
-                            }
-                        } else {
-                            log.debug("Change " + change.getSerializedObjectName() + " not included for database " + database.getShortName());
-                        }
-                    }
+                    executeByStatement(databaseChangeLog, listener, database);
                 }
 
                 if (runInTransaction) {
@@ -665,6 +643,47 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
         }
         return execType;
     }
+
+	private void executeByStatement(DatabaseChangeLog databaseChangeLog, ChangeExecListener listener, Database database) throws LiquibaseException {
+		for (Change change : getChanges()) {
+		    if ((!(change instanceof DbmsTargetedChange))
+		            || DatabaseList.definitionMatches(((DbmsTargetedChange) change).getDbms(), database, true)) {
+		        if (listener != null) {
+		            listener.willRun(change, this, changeLog, database);
+		        }
+		        database.executeStatements(change, databaseChangeLog, sqlVisitors);
+		        log.debug(change.getConfirmationMessage());
+		        if (listener != null) {
+		            listener.ran(change, this, changeLog, database);
+		        }
+		    } else {
+		        log.debug("Change " + change.getSerializedObjectName() + " not included for database " + database.getShortName());
+		    }
+		}
+	}
+
+	private void executeByBatch(ChangeExecListener listener, Database database) throws LiquibaseException {
+		List<SqlStatement> list = new ArrayList<SqlStatement>();
+		for (Change change : getChanges()) {
+		    if ((!(change instanceof DbmsTargetedChange))
+		            || DatabaseList.definitionMatches(((DbmsTargetedChange) change).getDbms(), database, true)) {
+		        SqlStatement[] statements = change.generateStatements(database);
+		        list.addAll(Arrays.asList(statements));
+		        if (listener != null) {
+		            listener.willRun(change, this, changeLog, database);
+		        }
+		    } else {
+		        log.debug("Change " + change.getSerializedObjectName() + " not included for database " + database.getShortName());
+		    }
+		}
+		database.execute(list.toArray(new SqlStatement[list.size()]), sqlVisitors, true);
+		for (Change change : getChanges()) {
+		    log.debug(change.getConfirmationMessage());
+		    if (listener != null) {
+		        listener.ran(change, this, changeLog, database);
+		    }
+		}
+	}
 
     private boolean isBatchUpdate() {
         boolean batchUpdate = Liquibase.isBatchUpdate();

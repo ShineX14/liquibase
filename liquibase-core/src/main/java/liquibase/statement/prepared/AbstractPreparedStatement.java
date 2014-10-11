@@ -23,6 +23,7 @@ import liquibase.logging.Logger;
 import liquibase.resource.ResourceAccessor;
 import liquibase.statement.ExecutablePreparedStatement;
 import liquibase.util.StreamUtil;
+import liquibase.util.StringUtils;
 
 public abstract class AbstractPreparedStatement implements
     ExecutablePreparedStatement {
@@ -173,14 +174,16 @@ public abstract class AbstractPreparedStatement implements
   public void execute(PreparedStatementFactory factory)
       throws DatabaseException {
     // create prepared statement
-    PreparedStatement stmt = factory.create(getStatement().sql);
+	PreparedStatement stmt = factory.create(getStatement().sql);
     try {
       setParameter(stmt);
       // trigger execution
       stmt.execute();
       stmt.close();
     } catch (SQLException e) {
-      throw new DatabaseException(e);
+      log.severe(getStatement().sql);
+      log.severe("with parameters: " + getStatement().parameters);
+      throw new DatabaseException("Error executing SQL " + getStatement().sql + " with parameters " + getStatement().parameters, e);
     }
   }
 

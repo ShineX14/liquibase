@@ -31,9 +31,9 @@ public class MigrationFailedException extends LiquibaseException {
     public String getMessage() {
         String message = "Migration failed";
         if (failedChangeSet != null) {
-            message += " for change set "+failedChangeSet.toString(false);
+            message += " for change set " + failedChangeSet.getChangeLog().getPhysicalFilePath() + ": " +failedChangeSet.toString(false);
         }
-        message += ":\n     Reason: "+super.getMessage();
+        //message += ":\n     Reason: "+super.getMessage();
         Throwable cause = this.getCause();
         if (cause instanceof BatchUpdateDatabaseException) {
             message += "Run 'mvn liquibase:update ... -Dliquibase.batchMode=false -DchangeLogFile=" 
@@ -41,7 +41,8 @@ public class MigrationFailedException extends LiquibaseException {
                     + "' to get the SQL details.";
         }
         while (cause != null) {
-            message += ":\n          Caused By: " + cause.getMessage();
+        	//message += ":\n          Caused By: " + cause.getMessage();
+            message += "\n          Caused By: " + cause.getMessage();
             cause = cause.getCause();
         }
 
