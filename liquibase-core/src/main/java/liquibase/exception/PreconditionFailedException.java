@@ -20,7 +20,7 @@ public class PreconditionFailedException extends Exception {
     }
 
     public PreconditionFailedException(FailedPrecondition failedPrecondition) {
-        super("Preconditions Failed");
+        super(failedPrecondition.getMessage());
         this.failedPreconditions = new ArrayList<FailedPrecondition>();
         failedPreconditions.add(failedPrecondition);
     }
