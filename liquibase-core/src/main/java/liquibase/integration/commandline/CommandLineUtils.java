@@ -107,7 +107,12 @@ public class CommandLineUtils {
                 .setCompareControl(compareControl)
                 .setOutputStream(System.out);
         command.setChangeLogFile(changeLogFile)
-                .setDiffOutputControl(diffOutputControl);
+               .setDiffOutputControl(diffOutputControl);
+        
+        EbaoSnapshotControl refSnapshotControl = new EbaoSnapshotControl(referenceDatabase, snapshotTypes, (EbaoDiffOutputControl) diffOutputControl);
+        EbaoSnapshotControl targetSnapshotControl = new EbaoSnapshotControl(targetDatabase, snapshotTypes, (EbaoDiffOutputControl) diffOutputControl);
+        command.setReferenceSnapshotControl(refSnapshotControl)
+               .setTargetSnapshotControl(targetSnapshotControl);
 
         try {
             command.execute();

@@ -300,6 +300,9 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
 
         ClassLoader artifactClassLoader = getMavenArtifactClassLoader();
         configureFieldsAndValues(getFileOpener(artifactClassLoader));
+        if (defaultSchemaName == null) {
+        	defaultSchemaName = username;
+        }
 
         try {
             LogFactory.setLoggingLevel(logging);
@@ -657,7 +660,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             System.setProperty(key, value);
         }
         StreamUtil.setDefaultEncoding(project.getProperties().getProperty("project.build.sourceEncoding", "UTF-8"));
-        if (project.getBuild() != null) {//in unit test
+        if (project.getBuild() != null) {//not in unit test
             Liquibase.setTmpDataDir(project.getBuild().getDirectory());
         }
     }

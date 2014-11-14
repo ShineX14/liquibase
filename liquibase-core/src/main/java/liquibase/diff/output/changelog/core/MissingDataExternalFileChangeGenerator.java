@@ -33,6 +33,9 @@ public class MissingDataExternalFileChangeGenerator extends MissingDataChangeGen
 
     private String dataDir;
 
+    public MissingDataExternalFileChangeGenerator() {
+    }
+    
     public MissingDataExternalFileChangeGenerator(String dataDir) {
         this.dataDir = dataDir;
     }

@@ -17,6 +17,8 @@ import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.exception.LiquibaseException;
 import liquibase.integration.commandline.CommandLineUtils;
+import liquibase.logging.LogFactory;
+import liquibase.logging.Logger;
 import liquibase.resource.ResourceAccessor;
 import liquibase.util.StreamUtil;
 import liquibase.util.StringUtils;
@@ -34,6 +36,8 @@ import com.ebao.tool.liquibase.util.LinkedProperties;
  * @goal diff
  */
 public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
+
+    private final Logger log = LogFactory.getInstance().getLog();
 
     /**
      * The fully qualified name of the driver class to use to connect to the reference database.
@@ -125,6 +129,11 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
     private String diffTypes;
 
     /**
+     * @parameter expression="${liquibase.diffTable}"
+     */
+    protected String diffTable;
+
+    /**
      * @parameter expression="${liquibase.refPropertyFile}"
      */
     protected String refPropertyFile;
@@ -144,6 +153,9 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
         try {
             ClassLoader artifactClassLoader = getMavenArtifactClassLoader();
             configureFieldsAndValues(getFileOpener(artifactClassLoader), refPropertyFile, "reference");
+            if (referenceDefaultSchemaName == null) {
+            	referenceDefaultSchemaName = referenceUsername;
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -177,8 +189,18 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
         if (diffChangeLogFile != null) {
             CommandLineUtils.createParentDir(diffChangeLogFile);
             try {
-                DiffOutputControl diffOutputConfig = loadDiffOutputControl();
-                CommandLineUtils.doDiffToChangeLog(diffChangeLogFile, referenceDatabase, db, diffOutputConfig, StringUtils.trimToNull(diffTypes));
+            	EbaoDiffOutputControl diffControl = loadDiffOutputControl();
+                
+            	String dataDir = CommandLineUtils.createParentDir(diffChangeLogFile);
+                diffControl.setDataDir(dataDir);
+                
+                if (diffTable != null) {
+                    diffTable = diffTable.toUpperCase().trim();
+                    diffControl.addDiffTable(diffTable, null);
+                    log.info("table to be compared is " + diffTable);
+                }
+                
+                CommandLineUtils.doDiffToChangeLog(diffChangeLogFile, referenceDatabase, db, diffControl, StringUtils.trimToNull(diffTypes));
                 getLog().info("Differences written to Change Log File, " + diffChangeLogFile);
             }
             catch (IOException e) {
@@ -192,7 +214,7 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
         }
     }
 
-    private DiffOutputControl loadDiffOutputControl() throws LiquibaseException {
+    private EbaoDiffOutputControl loadDiffOutputControl() throws LiquibaseException {
         EbaoDiffOutputControl diffConfig = new EbaoDiffOutputControl(diffIncludeCatalog, diffIncludeSchema, diffIncludeTablespace);
         diffConfig.addIncludedSchema(new CatalogAndSchema(referenceDefaultCatalogName, referenceDefaultSchemaName));
 

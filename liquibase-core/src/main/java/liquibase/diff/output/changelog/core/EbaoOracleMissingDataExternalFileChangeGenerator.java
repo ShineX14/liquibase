@@ -50,6 +50,7 @@ import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.logging.LogFactory;
 import liquibase.logging.Logger;
+import liquibase.servicelocator.LiquibaseService;
 import liquibase.structure.DatabaseObject;
 import liquibase.structure.core.Column;
 import liquibase.structure.core.Data;
@@ -68,11 +69,13 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
     private static final int ROWS_PER_FILE = 10000;
     private static final int ROWS_LIMIT = 1000;
 
-    private String dataDir;
+    private static String dataDir;
 
-    public EbaoOracleMissingDataExternalFileChangeGenerator(String dataDir) {
-        super(dataDir);
-        this.dataDir = dataDir;
+    public EbaoOracleMissingDataExternalFileChangeGenerator() {
+    }
+    
+    public static void setDataDir(String dataDir) {
+        EbaoOracleMissingDataExternalFileChangeGenerator.dataDir = dataDir;
     }
 
     @Override

@@ -67,7 +67,8 @@ public class DiffOutputControl {
     public DiffOutputControl setDataDir(String dataDir) {
 
         if (dataDir != null) {
-            ChangeGeneratorFactory.getInstance().register(new EbaoOracleMissingDataExternalFileChangeGenerator(dataDir));
+            //ChangeGeneratorFactory.getInstance().register(new EbaoOracleMissingDataExternalFileChangeGenerator(dataDir));
+        	EbaoOracleMissingDataExternalFileChangeGenerator.setDataDir(dataDir);
         }
         return this;
     }

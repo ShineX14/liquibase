@@ -5,6 +5,7 @@ import liquibase.structure.DatabaseObject;
 import liquibase.structure.core.Catalog;
 import liquibase.structure.core.Relation;
 import liquibase.structure.core.Schema;
+import liquibase.structure.core.Sequence;
 
 import java.util.*;
 
@@ -43,8 +44,8 @@ public class SnapshotGeneratorChain {
         }
         
         if (snapshot.getSnapshotControl() instanceof EbaoSnapshotControl) {
-            if (example instanceof Relation) {
-                if (!((EbaoSnapshotControl)snapshot.getSnapshotControl()).isIncluded(((Relation)example).getName())) {
+            if (example instanceof Relation || example instanceof Sequence) {
+                if (!((EbaoSnapshotControl)snapshot.getSnapshotControl()).isIncluded(((DatabaseObject)example).getName())) {
                     return null;
                 }
             }

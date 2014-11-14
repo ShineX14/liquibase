@@ -170,7 +170,7 @@ public class DiffCommand extends AbstractCommand {
         CatalogAndSchema[] schemas;
 
         if (compareControl == null || compareControl.getSchemaComparisons() == null) {
-            schemas = new CatalogAndSchema[]{targetDatabase.getDefaultSchema()};
+            schemas = new CatalogAndSchema[]{referenceDatabase.getDefaultSchema()};
         } else {
             schemas =new CatalogAndSchema[compareControl.getSchemaComparisons().length];
 

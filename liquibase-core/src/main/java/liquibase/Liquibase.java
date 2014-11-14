@@ -1309,7 +1309,7 @@ public class Liquibase {
     }
 
     public static void setTmpDataDir(String tmpDataDir) {
-        tmpDataDir = tmpDataDir;
+        Liquibase.tmpDataDir = tmpDataDir;
     }
 
 }

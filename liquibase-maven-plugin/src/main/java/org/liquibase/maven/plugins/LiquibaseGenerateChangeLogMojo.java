@@ -42,7 +42,7 @@ import com.ebao.tool.liquibase.util.PropertyPath;
 public class LiquibaseGenerateChangeLogMojo extends
         AbstractLiquibaseMojo {
 
-    private final Logger log = LogFactory.getLogger();
+    private final Logger log = LogFactory.getInstance().getLog();
 
     /**
      * List of diff types to include in Change Log expressed as a comma separated list from: tables, views, columns, indexes, foreignkeys, primarykeys, uniqueconstraints, data.
