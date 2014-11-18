@@ -195,9 +195,12 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
                 diffControl.setDataDir(dataDir);
                 
                 if (diffTable != null) {
-                    diffTable = diffTable.toUpperCase().trim();
-                    diffControl.addDiffTable(diffTable, null);
-                    log.info("table to be compared is " + diffTable);
+                	String[] tables = diffTable.split("[,;]");
+                	for (String table : tables) {
+                		table = table.toUpperCase().trim();
+                		diffControl.addDiffTable(table, null);
+                		log.info("table to be compared is " + table);
+					}
                 }
                 
                 CommandLineUtils.doDiffToChangeLog(diffChangeLogFile, referenceDatabase, db, diffControl, StringUtils.trimToNull(diffTypes));

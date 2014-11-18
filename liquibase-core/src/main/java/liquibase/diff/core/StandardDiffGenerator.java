@@ -70,9 +70,9 @@ public class StandardDiffGenerator implements DiffGenerator {
 
     protected <T extends DatabaseObject> void compareObjectType(Class<T> type, DatabaseSnapshot referenceSnapshot, DatabaseSnapshot comparisonSnapshot, DiffResult diffResult) {
 
-        CompareControl.SchemaComparison[] schemaComparisons = diffResult.getCompareControl().getSchemaComparisons();
-        if (schemaComparisons != null) {
-            for (CompareControl.SchemaComparison schemaComparison : schemaComparisons) {
+//        CompareControl.SchemaComparison[] schemaComparisons = diffResult.getCompareControl().getSchemaComparisons();
+//        if (schemaComparisons != null) {
+//            for (CompareControl.SchemaComparison schemaComparison : schemaComparisons) {
                 for (T referenceObject : referenceSnapshot.get(type)) {
                     //                if (referenceObject instanceof Table && referenceSnapshot.getDatabase().isLiquibaseTable(referenceSchema, referenceObject.getName())) {
                     //                    continue;
@@ -97,10 +97,10 @@ public class StandardDiffGenerator implements DiffGenerator {
                     }
                     //            }
                 }
-            }
+//            }
 
             //todo: add logic for when container is missing or unexpected also
-        }
+//        }
 
 //    /**
 //     * Removes duplicate Indexes from the DiffResult object.
