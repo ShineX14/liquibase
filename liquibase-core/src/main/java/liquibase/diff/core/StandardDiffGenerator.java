@@ -4,6 +4,7 @@ import liquibase.CatalogAndSchema;
 import liquibase.database.Database;
 import liquibase.diff.*;
 import liquibase.diff.compare.CompareControl;
+import liquibase.diff.compare.EbaoCompareControl;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.snapshot.DatabaseSnapshot;
@@ -73,15 +74,19 @@ public class StandardDiffGenerator implements DiffGenerator {
 //        CompareControl.SchemaComparison[] schemaComparisons = diffResult.getCompareControl().getSchemaComparisons();
 //        if (schemaComparisons != null) {
 //            for (CompareControl.SchemaComparison schemaComparison : schemaComparisons) {
+                EbaoCompareControl ebaoCompareControl = (EbaoCompareControl) diffResult.getCompareControl();
                 for (T referenceObject : referenceSnapshot.get(type)) {
                     //                if (referenceObject instanceof Table && referenceSnapshot.getDatabase().isLiquibaseTable(referenceSchema, referenceObject.getName())) {
                     //                    continue;
                     //                }
+					if (ebaoCompareControl.isSkipped(referenceObject.getName())) {
+						continue;
+					}
                     T comparisonObject = comparisonSnapshot.get(referenceObject);
                     if (comparisonObject == null) {
                         diffResult.addMissingObject(referenceObject);
                     } else {
-                        ObjectDifferences differences = DatabaseObjectComparatorFactory.getInstance().findDifferences(referenceObject, comparisonObject, comparisonSnapshot.getDatabase(), diffResult.getCompareControl());
+                        ObjectDifferences differences = DatabaseObjectComparatorFactory.getInstance().findDifferences(referenceObject, comparisonObject, comparisonSnapshot.getDatabase(), ebaoCompareControl);
                         if (differences.hasDifferences()) {
                             diffResult.addChangedObject(referenceObject, differences);
                         }
@@ -92,6 +97,9 @@ public class StandardDiffGenerator implements DiffGenerator {
                     //                if (targetObject instanceof Table && comparisonSnapshot.getDatabase().isLiquibaseTable(comparisonSchema, targetObject.getName())) {
                     //                    continue;
                     //                }
+					if (ebaoCompareControl.isSkipped(comparisonObject.getName())) {
+						continue;
+					}
                     if (referenceSnapshot.get(comparisonObject) == null) {
                         diffResult.addUnexpectedObject(comparisonObject);
                     }

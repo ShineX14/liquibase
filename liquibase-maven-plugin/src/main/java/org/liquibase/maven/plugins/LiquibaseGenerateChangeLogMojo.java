@@ -214,8 +214,10 @@ public class LiquibaseGenerateChangeLogMojo extends
             }
 
             String condition = (String) props.get(key);
-            for (String name : params.keySet()) {
-                condition = condition.replaceAll(name, params.get(name));
+            for (String paramName : params.keySet()) {
+            	String paramValue = params.get(paramName);
+				key = ((String)key).replaceAll(paramName, paramValue);
+                condition = condition.replaceAll(paramName, paramValue);
             }
 
             PropertyPath path = parser.parseProperty((String) key);
