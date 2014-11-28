@@ -7,5 +7,5 @@ public class BatchUpdateDatabaseException extends DatabaseException {
   public BatchUpdateDatabaseException(Throwable cause) {
     super("error in batch update.", cause);
   }
-
+  
 }

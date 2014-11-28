@@ -10,6 +10,7 @@ import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -27,23 +28,41 @@ public abstract class AbstractPreparedStatement implements
 
 	private final Logger log = LogFactory.getInstance().getLog();
 
-	protected String getPrimaryKeyWhereClause(String primaryKey, List columns,
-			List<ColumnConfig> cols) {
-		if (primaryKey == null || primaryKey.length() == 0) {
+	protected List<String> getPrimaryKey(String primaryKeys) {
+		if (primaryKeys == null || primaryKeys.length() == 0) {
 			throw new NullPointerException();
 		}
 
-		StringBuilder sql = new StringBuilder(" where ");
-		String[] pknames = primaryKey.split(",");
-		for (int i = 0; i < pknames.length; i++) {
+		String[] pknames = primaryKeys.split(",");
+		return Arrays.asList(pknames);
+	}
+	
+	protected String getPrimaryKeyWhereClause(String primaryKeys, List columns,
+			List<ColumnConfig> cols) {
+		return getPrimaryKeyClause(primaryKeys, columns, cols, "where", null);
+	}
+	
+	protected String getPrimaryKeyOnClause(String primaryKeys, List columns,
+			List<ColumnConfig> cols, String tablePrefix) {
+		return getPrimaryKeyClause(primaryKeys, columns, cols, "on", tablePrefix);
+	}	
+	
+	protected String getPrimaryKeyClause(String primaryKeys, List columns,
+			List<ColumnConfig> cols, String clauseKey, String tablePrefix) {
+		List<String> pknames = getPrimaryKey(primaryKeys);
+		StringBuilder sql = new StringBuilder(clauseKey + " ");
+		for (int i = 0; i < pknames.size(); i++) {
 			if (i > 0) {
 				sql.append(" and ");
 			}
 
-			String pkname = pknames[i];
+			String pkname = pknames.get(i);
 			ColumnConfig pkcolumn = getColumn(columns, pkname);
 			if (pkcolumn == null) {
-				throw new IllegalArgumentException(primaryKey);
+				throw new IllegalArgumentException(primaryKeys);
+			}
+			if (tablePrefix != null) {
+				sql.append(tablePrefix).append(".");
 			}
 			sql.append(pkname + "=?");
 			cols.add(pkcolumn);
@@ -206,7 +225,7 @@ public abstract class AbstractPreparedStatement implements
 		}
 	}
 
-	protected abstract void setParameter(PreparedStatement stmt)
+	public abstract void setParameter(PreparedStatement stmt)
 			throws DatabaseException;
 
 	@Override

@@ -74,7 +74,7 @@ public class LoadUpdateExecutablePreparedStatement extends
   }
 
   @Override
-  protected void setParameter(PreparedStatement stmt) throws DatabaseException {
+  public void setParameter(PreparedStatement stmt) throws DatabaseException {
     update.setParameter(stmt);
     insert.setParameter(stmt, update.getParameterSize() + 1);
   }

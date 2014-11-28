@@ -587,7 +587,7 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
                             throw new MigrationFailedException(this, e);
                         }
                         executeByStatement(databaseChangeLog, listener, database);//exception expected 
-                        throw new UnexpectedLiquibaseException("Unexpected execution status", e);//exception expected calling executeByStatement
+                        throw new UnexpectedLiquibaseException("Exception not thrown in executeByStatement", e);
                 	}
                 } else {
                     executeByStatement(databaseChangeLog, listener, database);

@@ -10,7 +10,7 @@ public class UpdateExecutablePreparedStatement extends
 
   public UpdateExecutablePreparedStatement(Database database,
       InsertExecutablePreparedStatementChange change) {
-    super(database, change, 2);
+    super(database, change, false);
   }
 
 }
