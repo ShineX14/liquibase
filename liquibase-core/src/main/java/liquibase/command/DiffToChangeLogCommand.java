@@ -58,6 +58,7 @@ public class DiffToChangeLogCommand extends DiffCommand {
         if (StringUtils.trimToNull(changeLogFile) == null) {
             new DiffToChangeLog(diffResult, diffOutputControl).print(outputStream);
         } else {
+            new DiffToChangeLog(diffResult, diffOutputControl).print(System.out);
             new DiffToChangeLog(diffResult, diffOutputControl).print(changeLogFile);
         }
         return null;

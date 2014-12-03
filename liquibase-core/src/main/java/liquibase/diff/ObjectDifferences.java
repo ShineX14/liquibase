@@ -8,6 +8,8 @@ import liquibase.structure.core.DataType;
 
 import java.util.*;
 
+import org.apache.commons.lang.StringUtils;
+
 public class ObjectDifferences {
 
     private CompareControl compareControl;
@@ -334,5 +336,36 @@ public class ObjectDifferences {
             return true;
         }
     }
+    
+    public static class NoBlankStringCompareFunction implements CompareFunction {
 
+		@Override
+		public boolean areEqual(Object referenceValue, Object compareToValue) {
+            if (referenceValue == null && compareToValue == null) {
+                return true;
+            }
+            if (referenceValue == null || compareToValue == null) {
+                return false;
+            }
+
+            if (!(referenceValue instanceof String) || (!(compareToValue instanceof String))) {
+                return false;
+            }
+     
+            StringBuffer referenceString = new StringBuffer();
+            for (String line : ((String)referenceValue).split("\n")) {
+            	line = line.trim();
+            	referenceString.append(line).append(" ");
+            }
+            referenceString.deleteCharAt(referenceString.length() - 1);
+            StringBuffer compareToString = new StringBuffer();
+            for (String line : ((String)compareToValue).split("\n")) {
+            	line = line.trim();
+            	compareToString.append(line).append(" ");
+            }
+            compareToString.deleteCharAt(compareToString.length() - 1);
+            
+			return referenceString.toString().equals(compareToString.toString());
+		}
+    }
 }

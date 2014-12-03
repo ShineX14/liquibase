@@ -150,7 +150,7 @@ public class StandardChangeLogHistoryService extends AbstractChangeLogHistorySer
                 if (!md5sum.startsWith(CheckSum.getCurrentVersion() + ":")) {
                     executor.comment("DatabaseChangeLog checksums are an incompatible version.  Setting them to null so they will be updated on next database update");
                     statementsToExecute.add(new RawSqlStatement("UPDATE " + getDatabase().escapeTableName(getLiquibaseCatalogName(), getLiquibaseSchemaName(), getDatabaseChangeLogTableName()) + " SET MD5SUM=null"));
-                    statementsToExecute.add(new RawSqlStatement("DELETE FROM " + getDatabase().escapeTableName(getLiquibaseCatalogName(), getLiquibaseSchemaName(), getDatabaseChangeLogTableName()) + " WHERE (ID LIKE 'PKG%' OR ID LIKE 'pkg%' or ID LIKE 'TRI%' or ID like 'tri%') and ID<>'PKG_PUB_APP_CONTEXT'"));
+                    statementsToExecute.add(new RawSqlStatement("DELETE FROM " + getDatabase().escapeTableName(getLiquibaseCatalogName(), getLiquibaseSchemaName(), getDatabaseChangeLogTableName()) + " WHERE (ID LIKE 'PKG%' OR ID LIKE 'pkg%' or ID LIKE 'TRI%' or ID like 'tri%') and ID not in ('PKG_PUB_APP_CONTEXT','PKG_PUB_PARA','PKG_PUB_PARA_ID','PKG_PUB_ENV')"));
                 }
             }
 
