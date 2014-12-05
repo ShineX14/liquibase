@@ -146,10 +146,14 @@ public class CommandLineUtils {
         command.setAuthor(author)
                 .setContext(context);
 
-        if ("data".equals(snapshotTypes)) {
-            SnapshotControl snapshotControl = new EbaoSnapshotControl(originalDatabase, "table,column,primaryKey,foreignKey,data", (EbaoDiffOutputControl)diffOutputControl);;
-            command.setReferenceSnapshotControl(snapshotControl);
+        String types = "";
+        if (snapshotTypes == null || "".equals(snapshotTypes)) {
+    	    types = "table,view,column,primaryKey,foreignKey,index,uniqueConstraint,sequence";
+        } else if ("data".equals(snapshotTypes)) {
+        	types = "table,column,primaryKey,foreignKey,data";
         }
+        SnapshotControl snapshotControl = new EbaoSnapshotControl(originalDatabase, types, (EbaoDiffOutputControl)diffOutputControl);;
+        command.setReferenceSnapshotControl(snapshotControl);
         
         try {
             command.execute();

@@ -73,6 +73,10 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
   }
 
   public boolean isDiffTable(String tableName) {
+	  if (isSkipped(tableName)) {
+		return false;
+	  }
+	  
       if (diffTableMap.isEmpty()) {
           return true;
       }

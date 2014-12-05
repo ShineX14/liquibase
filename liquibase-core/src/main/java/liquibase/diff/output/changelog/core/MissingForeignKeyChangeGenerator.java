@@ -41,12 +41,17 @@ public class MissingForeignKeyChangeGenerator implements MissingObjectChangeGene
         AddForeignKeyConstraintChange change = new AddForeignKeyConstraintChange();
         change.setConstraintName(fk.getName());
 
-        change.setReferencedTableName(fk.getPrimaryKeyTable().getName());
-        if (!((ForeignKey) missingObject).getPrimaryKeyTable().getSchema().equals(((ForeignKey) missingObject).getForeignKeyTable().getSchema()) || control.getIncludeCatalog()) {
-            change.setReferencedTableCatalogName(fk.getPrimaryKeyTable().getSchema().getCatalogName());
+        Table pkTable = fk.getPrimaryKeyTable();
+        if (pkTable != null) {
+        	change.setReferencedTableName(pkTable.getName());
+		} else {
+		    change.setReferencedTableName(fk.getPrimaryKeyTableName());
+		}
+        if (pkTable != null && !((ForeignKey) missingObject).getPrimaryKeyTable().getSchema().equals(((ForeignKey) missingObject).getForeignKeyTable().getSchema()) || control.getIncludeCatalog()) {
+            change.setReferencedTableCatalogName(pkTable.getSchema().getCatalogName());
         }
-        if (!((ForeignKey) missingObject).getPrimaryKeyTable().getSchema().equals(((ForeignKey) missingObject).getForeignKeyTable().getSchema()) || control.getIncludeSchema()) {
-            change.setReferencedTableSchemaName(fk.getPrimaryKeyTable().getSchema().getName());
+        if (pkTable != null && !((ForeignKey) missingObject).getPrimaryKeyTable().getSchema().equals(((ForeignKey) missingObject).getForeignKeyTable().getSchema()) || control.getIncludeSchema()) {
+            change.setReferencedTableSchemaName(pkTable.getSchema().getName());
         }
         change.setReferencedColumnNames(fk.getPrimaryKeyColumns());
 

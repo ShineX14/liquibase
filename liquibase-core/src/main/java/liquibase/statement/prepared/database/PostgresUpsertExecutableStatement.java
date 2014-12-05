@@ -51,8 +51,7 @@ public class PostgresUpsertExecutableStatement extends
 					change.getTableName(), column.getName());
 
 			fields.append(columnName).append(", ");
-			fieldsSet.append(columnName).append("=nv.").append(columnName)
-					.append(", ");
+			fieldsSet.append(columnName + "=nv." + columnName + ", ");
 
 			if (column.getValueObject() == null
 					&& column.getValueBlobFile() == null
@@ -76,17 +75,14 @@ public class PostgresUpsertExecutableStatement extends
 		fieldsSet.deleteCharAt(fieldsSet.lastIndexOf(","));
 
 		StringBuilder sql = new StringBuilder();
-		sql.append("with new_values( ").append(fields).append(" ) as (");
-		sql.append("values( ").append(params).append(")), ");
-		sql.append("upsert as ( update ").append(tableName).append(" m ");
-		sql.append("set ").append(fieldsSet)
-				.append(" from new_values nv where ").append(where1);
+		sql.append("with new_values( " + fields + " ) as (");
+		sql.append("values( " + params + ")), ");
+		sql.append("upsert as ( update " + tableName + " m ");
+		sql.append("set " + fieldsSet + " from new_values nv where " + where1);
 		sql.append(" returning m.*) ");
-		sql.append("insert into ").append(tableName).append("(").append(fields)
-				.append(") ");
-		sql.append("select ").append(fields).append(" from new_values ");
-		sql.append("where not exists(select 1 from upsert up where ")
-				.append(where2).append(") ");
+		sql.append("insert into " + tableName + "(" + fields + ") ");
+		sql.append("select " + fields + " from new_values ");
+		sql.append("where not exists(select 1 from upsert up where " + where2 + ") ");
 
 		String s = sql.toString();
 		statement = new Info(s, cols, getParameters(cols, change.getChangeSet()

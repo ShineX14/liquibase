@@ -3,12 +3,14 @@ package liquibase.statement.prepared;
 import java.sql.PreparedStatement;
 
 import liquibase.database.Database;
+import liquibase.database.core.DB2Database;
 import liquibase.database.core.MSSQLDatabase;
 import liquibase.database.core.MySQLDatabase;
 import liquibase.database.core.OracleDatabase;
 import liquibase.database.core.PostgresDatabase;
 import liquibase.exception.DatabaseException;
 import liquibase.statement.ExecutablePreparedStatement;
+import liquibase.statement.prepared.database.Db2UpsertExecutableStatement;
 import liquibase.statement.prepared.database.MssqlUpsertExecutableStatement;
 import liquibase.statement.prepared.database.MysqlUpsertExecutablePreparedStatement;
 import liquibase.statement.prepared.database.OracleUpsertExecutablePreparedStatement;
@@ -29,6 +31,8 @@ public class InsertUpdateExecutablePreparedStatement extends
 			upsert = new PostgresUpsertExecutableStatement(database, change);
 		} else if (database instanceof MSSQLDatabase) {
 			upsert = new MssqlUpsertExecutableStatement(database, change);
+		} else if (database instanceof DB2Database) {
+			upsert = new Db2UpsertExecutableStatement(database, change);
 		} else {
 			upsert = new MssqlUpsertExecutableStatement(database, change);
 		}

@@ -58,23 +58,22 @@ public class MssqlUpsertExecutableStatement extends AbstractPreparedStatement {
 					&& column.getValueClobFile() == null) {
 				insertValueSql.append("null,");
 				if (!pkcloum) {
-					updateSql.append(columnName).append("=null,");
+					updateSql.append(columnName + "=null,");
 				}
 			} else if (column.getValueComputed() != null) {
 				String value = column.getValueComputed().getValue();
-				insertValueSql.append(value).append(",");
+				insertValueSql.append(value + ",");
 				if (!pkcloum) {
-					updateSql.append(columnName).append(value).append(",");
+					updateSql.append(columnName + "=" + value + ",");
 				}
 			} else {
-				columnSql.append(columnName).append(",");
+				columnSql.append(columnName + ",");
 				columnValueSql.append("?,");
 				cols.add(column);
 
-				insertValueSql.append("s.").append(columnName).append(",");
+				insertValueSql.append("s." + columnName + ",");
 				if (!pkcloum) {
-					updateSql.append(columnName).append("=s.")
-							.append(columnName).append(",");
+					updateSql.append(columnName + "=s." + columnName + ",");
 				}
 			}
 		}
@@ -85,17 +84,16 @@ public class MssqlUpsertExecutableStatement extends AbstractPreparedStatement {
 		insertValueSql.deleteCharAt(insertValueSql.lastIndexOf(","));
 		updateSql.deleteCharAt(updateSql.lastIndexOf(","));
 
-		StringBuilder mergeSql = new StringBuilder("merge ");
-		mergeSql.append(tableName).append(" t ");
-		mergeSql.append("using (values(").append(columnValueSql)
-				.append(")) as s(").append(columnSql).append(")");
-		String onClause = getPrimaryKeyOnClause(change.getPrimaryKey(),
-				change.getColumns(), cols, "t");
-		mergeSql.append(" " + onClause);
-		mergeSql.append(" when matched then update set ").append(updateSql);
+		StringBuilder mergeSql = new StringBuilder();
+		mergeSql.append("merge" + tableName + " t ");
+		mergeSql.append("using (values(" + columnValueSql + ")) as s("
+				+ columnSql + ")");
+		String onClause = getPrimaryKeyClause(change.getPrimaryKey(), "s", "t");
+		mergeSql.append(" on " + onClause);
+		mergeSql.append(" when matched then update set " + updateSql);
 		mergeSql.append(" when not matched then");
-		mergeSql.append(" insert(").append(insertColumnSql).append(")");
-		mergeSql.append(" values(").append(insertValueSql).append(");");
+		mergeSql.append(" insert(" + insertColumnSql + ")");
+		mergeSql.append(" values(" + insertValueSql + ");");
 
 		String s = mergeSql.toString();
 		statement = new Info(s, cols, getParameters(cols, change.getChangeSet()

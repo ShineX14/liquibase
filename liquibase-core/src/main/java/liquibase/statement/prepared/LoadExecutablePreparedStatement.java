@@ -131,7 +131,7 @@ public class LoadExecutablePreparedStatement extends
 
     sql.append(params);
     if (type == 2) {
-      updateSql.append(" " + getPrimaryKeyWhereClause(change.getPrimaryKey(), cols,
+      updateSql.append(" where " + getPrimaryKeyClause(change.getPrimaryKey(), cols,
           cols));
     }
 

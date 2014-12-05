@@ -11,7 +11,7 @@ import liquibase.exception.DatabaseException;
 import liquibase.statement.prepared.AbstractPreparedStatement;
 import liquibase.statement.prepared.InsertExecutablePreparedStatementChange;
 
-public class MysqlUpsertExecutablePreparedStatement extends AbstractPreparedStatement {
+public class Db2UpsertExecutableStatement extends AbstractPreparedStatement {
 
 	private final Database database;
 	private final InsertExecutablePreparedStatementChange change;
@@ -19,7 +19,7 @@ public class MysqlUpsertExecutablePreparedStatement extends AbstractPreparedStat
 	private Info statement;
 	private final List<ColumnConfig> cols = new ArrayList<ColumnConfig>();
 
-	public MysqlUpsertExecutablePreparedStatement(Database database,
+	public Db2UpsertExecutableStatement(Database database,
 			InsertExecutablePreparedStatementChange change) {
 		this.database = database;
 		this.change = change;
@@ -33,6 +33,8 @@ public class MysqlUpsertExecutablePreparedStatement extends AbstractPreparedStat
 		String tableName = database.escapeTableName(change.getCatalogName(),
 				change.getSchemaName(), change.getTableName());
 
+		StringBuilder columnSql = new StringBuilder();
+		StringBuilder columnValueSql = new StringBuilder();
 		StringBuilder insertColumnSql = new StringBuilder();
 		StringBuilder insertValueSql = new StringBuilder();
 		StringBuilder updateSql = new StringBuilder();
@@ -62,26 +64,37 @@ public class MysqlUpsertExecutablePreparedStatement extends AbstractPreparedStat
 				String value = column.getValueComputed().getValue();
 				insertValueSql.append(value + ",");
 				if (!pkcloum) {
-					updateSql.append(columnName + "=values(" + value + "),");
+					updateSql.append(columnName + "=" + value + ",");
 				}
 			} else {
+				columnSql.append(columnName).append(",");
+				columnValueSql.append("?,");
 				cols.add(column);
 
-				insertValueSql.append("?,");
+				insertValueSql.append("s.").append(columnName).append(",");
 				if (!pkcloum) {
-					updateSql.append(columnName + "=values(" + columnName + "),");
+					updateSql.append(columnName).append("=s.")
+							.append(columnName).append(",");
 				}
 			}
 		}
 
+		columnSql.deleteCharAt(columnSql.lastIndexOf(","));
+		columnValueSql.deleteCharAt(columnValueSql.lastIndexOf(","));
 		insertColumnSql.deleteCharAt(insertColumnSql.lastIndexOf(","));
 		insertValueSql.deleteCharAt(insertValueSql.lastIndexOf(","));
 		updateSql.deleteCharAt(updateSql.lastIndexOf(","));
 
-		StringBuilder mergeSql = new StringBuilder();
-		mergeSql.append("insert into " + tableName + "(" + insertColumnSql + ")");
-		mergeSql.append(" values(" + insertValueSql + ") ");
-		mergeSql.append(" on duplicate key update " + updateSql);
+		StringBuilder mergeSql = new StringBuilder("merge ");
+		mergeSql.append(tableName).append(" t ");
+		mergeSql.append("using (table(values(").append(columnValueSql)
+				.append("))) as s(").append(columnSql).append(")");
+		String onClause = getPrimaryKeyClause(change.getPrimaryKey(), "s", "t");
+		mergeSql.append(" on " + onClause);
+		mergeSql.append(" when matched then update set ").append(updateSql);
+		mergeSql.append(" when not matched then");
+		mergeSql.append(" insert(").append(insertColumnSql).append(")");
+		mergeSql.append(" values(").append(insertValueSql).append(");");
 
 		String s = mergeSql.toString();
 		statement = new Info(s, cols, getParameters(cols, change.getChangeSet()

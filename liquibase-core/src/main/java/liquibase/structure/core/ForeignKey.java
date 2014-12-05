@@ -57,10 +57,19 @@ public class ForeignKey extends AbstractDatabaseObject{
     }
 
 
+    public String getPrimaryKeyTableName() {
+        return getAttribute("primaryKeyTableName", String.class);
+    }
+
     public Table getPrimaryKeyTable() {
         return getAttribute("primaryKeyTable", Table.class);
     }
 
+    public ForeignKey setPrimaryKeyTableName(String primaryKeyTableName) {
+        this.setAttribute("primaryKeyTableName",primaryKeyTableName);
+        return this;
+    }
+    
     public ForeignKey setPrimaryKeyTable(Table primaryKeyTable) {
         this.setAttribute("primaryKeyTable",primaryKeyTable);
         return this;

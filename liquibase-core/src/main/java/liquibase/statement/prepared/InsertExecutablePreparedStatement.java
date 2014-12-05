@@ -97,7 +97,7 @@ public class InsertExecutablePreparedStatement extends
 
         	updateSql.append(" where " + whereClause);
       } else {//insert
-        updateSql.append(" " + getPrimaryKeyWhereClause(change.getPrimaryKey(),
+        updateSql.append(" where " + getPrimaryKeyClause(change.getPrimaryKey(),
             change.getColumns(), cols));
       }
     }

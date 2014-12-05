@@ -355,13 +355,17 @@ public class ObjectDifferences {
             StringBuffer referenceString = new StringBuffer();
             for (String line : ((String)referenceValue).split("\n")) {
             	line = line.trim();
-            	referenceString.append(line).append(" ");
+            	if (line.length() > 0) {
+            		referenceString.append(line).append(" ");
+				}
             }
             referenceString.deleteCharAt(referenceString.length() - 1);
             StringBuffer compareToString = new StringBuffer();
             for (String line : ((String)compareToValue).split("\n")) {
             	line = line.trim();
-            	compareToString.append(line).append(" ");
+            	if (line.length() > 0) {
+                 	compareToString.append(line).append(" ");
+            	}
             }
             compareToString.deleteCharAt(compareToString.length() - 1);
             

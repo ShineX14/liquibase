@@ -426,7 +426,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
                 throw new UnexpectedLiquibaseException(e);
             }
             if (is == null) {
-                throw new MojoFailureException("Failed to resolve the properties file.");
+                throw new MojoFailureException("Failed to resolve the properties file: " + propertyFile);
             }
             parsePropertiesFile(is, prefix);
             getLog().info(MavenUtils.LOG_SEPARATOR);

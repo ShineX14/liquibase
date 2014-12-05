@@ -37,20 +37,10 @@ public abstract class AbstractPreparedStatement implements
 		return Arrays.asList(pknames);
 	}
 	
-	protected String getPrimaryKeyWhereClause(String primaryKeys, List columns,
-			List<ColumnConfig> cols) {
-		return getPrimaryKeyClause(primaryKeys, columns, cols, "where", null);
-	}
-	
-	protected String getPrimaryKeyOnClause(String primaryKeys, List columns,
-			List<ColumnConfig> cols, String tablePrefix) {
-		return getPrimaryKeyClause(primaryKeys, columns, cols, "on", tablePrefix);
-	}	
-	
 	protected String getPrimaryKeyClause(String primaryKeys, List columns,
-			List<ColumnConfig> cols, String clauseKey, String tablePrefix) {
+			List<ColumnConfig> cols) {
 		List<String> pknames = getPrimaryKey(primaryKeys);
-		StringBuilder sql = new StringBuilder(clauseKey + " ");
+		StringBuilder sql = new StringBuilder();
 		for (int i = 0; i < pknames.size(); i++) {
 			if (i > 0) {
 				sql.append(" and ");
@@ -61,11 +51,29 @@ public abstract class AbstractPreparedStatement implements
 			if (pkcolumn == null) {
 				throw new IllegalArgumentException(primaryKeys);
 			}
-			if (tablePrefix != null) {
-				sql.append(tablePrefix).append(".");
-			}
 			sql.append(pkname + "=?");
 			cols.add(pkcolumn);
+		}
+		return sql.toString();
+	}
+	
+	protected String getPrimaryKeyClause(String primaryKeys, String sourceTablePrefix, String targetTablePrefix) {
+		List<String> pknames = getPrimaryKey(primaryKeys);
+		StringBuilder sql = new StringBuilder();
+		for (int i = 0; i < pknames.size(); i++) {
+			if (i > 0) {
+				sql.append(" and ");
+			}
+
+			String pkname = pknames.get(i);
+			if (targetTablePrefix != null) {
+				sql.append(targetTablePrefix + ".");
+			}
+			sql.append(pkname + "=");
+			if (sourceTablePrefix != null) {
+				sql.append(sourceTablePrefix + ".");
+			}
+			sql.append(pkname);
 		}
 		return sql.toString();
 	}

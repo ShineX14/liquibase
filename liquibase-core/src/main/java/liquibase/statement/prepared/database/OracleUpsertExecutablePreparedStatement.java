@@ -1,59 +1,110 @@
 package liquibase.statement.prepared.database;
 
 import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
+import liquibase.change.ColumnConfig;
 import liquibase.database.Database;
-import liquibase.database.core.PostgresDatabase;
 import liquibase.exception.DatabaseException;
-import liquibase.statement.ExecutablePreparedStatement;
 import liquibase.statement.prepared.AbstractPreparedStatement;
-import liquibase.statement.prepared.InsertExecutablePreparedStatement;
 import liquibase.statement.prepared.InsertExecutablePreparedStatementChange;
-import liquibase.statement.prepared.UpdateExecutablePreparedStatement;
 
 public class OracleUpsertExecutablePreparedStatement extends
-    AbstractPreparedStatement implements ExecutablePreparedStatement {
+		AbstractPreparedStatement {
 
-  private final Database database;
-  private final InsertExecutablePreparedStatement insert;
-  private final InsertExecutablePreparedStatement update;
-  private final InsertExecutablePreparedStatementChange change;
-  private Info statement;
+	private final Database database;
+	private final InsertExecutablePreparedStatementChange change;
 
-  public OracleUpsertExecutablePreparedStatement(Database database,
-      InsertExecutablePreparedStatementChange change) {
-    this.database = database;
-    this.insert = new InsertExecutablePreparedStatement(database, change);
-  	this.update = new UpdateExecutablePreparedStatement(database, change);
-    this.change = change;
-  }
+	private Info statement;
+	private final List<ColumnConfig> cols = new ArrayList<ColumnConfig>();
 
-  @Override
-  public Info getStatement() {
-    if (statement != null) {
-      return statement;
-    }
+	public OracleUpsertExecutablePreparedStatement(Database database,
+			InsertExecutablePreparedStatementChange change) {
+		this.database = database;
+		this.change = change;
+	}
 
-    StringBuilder sql = new StringBuilder();
-    sql.append("BEGIN\n  ");
-    sql.append(update.getStatement().sql).append(";\n  ");
-    sql.append("IF SQL%ROWCOUNT=0 THEN\n    ");
-    sql.append(insert.getStatement().sql).append(";\n  ");
-    sql.append("END IF;\n");
-    sql.append("END;");
+	public Info getStatement() {
+		if (statement != null) {
+			return statement;
+		}
 
-    statement = new Info(sql.toString(), update.getStatement().columns,
-        getParameters(update.getStatement().columns, change.getChangeSet()
-            .getFilePath()));
-    return statement;
-  }
+		String tableName = database.escapeTableName(change.getCatalogName(),
+				change.getSchemaName(), change.getTableName());
 
-  @Override
-  public void setParameter(PreparedStatement stmt) throws DatabaseException {
-    update.setParameter(stmt);
-    if(!(database instanceof PostgresDatabase)){
-      insert.setParameter(stmt, update.getParameterSize() + 1);
-    }
-  }
+		StringBuilder columnSql = new StringBuilder();
+		StringBuilder insertColumnSql = new StringBuilder();
+		StringBuilder insertValueSql = new StringBuilder();
+		StringBuilder updateSql = new StringBuilder();
 
+		List<String> primaryKeys = getPrimaryKey(change.getPrimaryKey());
+		for (ColumnConfig column : change.getColumns()) {
+			if (database.supportsAutoIncrement()
+					&& Boolean.TRUE.equals(column.isAutoIncrement())) {
+				continue;
+			}
+
+			String columnName = database.escapeColumnName(
+					change.getCatalogName(), change.getSchemaName(),
+					change.getTableName(), column.getName());
+
+			insertColumnSql.append(columnName + ",");
+
+			boolean pkcloum = primaryKeys.contains(columnName);
+			if (column.getValueObject() == null
+					&& column.getValueBlobFile() == null
+					&& column.getValueClobFile() == null) {
+				insertValueSql.append("null,");
+				if (!pkcloum) {
+					updateSql.append(columnName + "=null,");
+				}
+			} else if (column.getValueComputed() != null) {
+				String value = column.getValueComputed().getValue();
+				insertValueSql.append(value + ",");
+				if (!pkcloum) {
+					updateSql.append(columnName + "=" +  value + ",");
+				}
+			} else {
+				columnSql.append("? " + columnName + ",");
+				cols.add(column);
+
+				insertValueSql.append("s." + columnName + ",");
+				if (!pkcloum) {
+					updateSql.append(columnName + "=s." + columnName + ",");
+				}
+			}
+		}
+
+		columnSql.deleteCharAt(columnSql.lastIndexOf(","));
+		insertColumnSql.deleteCharAt(insertColumnSql.lastIndexOf(","));
+		insertValueSql.deleteCharAt(insertValueSql.lastIndexOf(","));
+		updateSql.deleteCharAt(updateSql.lastIndexOf(","));
+
+		StringBuilder mergeSql = new StringBuilder();
+		mergeSql.append("merge into " + tableName + " t ");
+		mergeSql.append("using (select " + columnSql + " from dual) s");
+		String onClause = getPrimaryKeyClause(change.getPrimaryKey(), "s", "t");
+		mergeSql.append(" on (" + onClause + ")");
+		mergeSql.append(" when matched then update set " + updateSql);
+		mergeSql.append(" when not matched then");
+		mergeSql.append(" insert(" + insertColumnSql + ")");
+		mergeSql.append(" values(" + insertValueSql + ")");
+
+		String s = mergeSql.toString();
+		statement = new Info(s, cols, getParameters(cols, change.getChangeSet()
+				.getFilePath()));
+		return statement;
+	}
+
+	@Override
+	public void setParameter(PreparedStatement stmt) throws DatabaseException {
+		try {
+			setParameter(stmt, 1, cols, change.getChangeSet().getChangeLog()
+					.getPhysicalFilePath(), change.getResourceAccessor());
+		} catch (SQLException e) {
+			throw new DatabaseException(e);
+		}
+	}
 }
