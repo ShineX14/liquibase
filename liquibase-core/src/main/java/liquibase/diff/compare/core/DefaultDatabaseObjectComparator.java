@@ -72,6 +72,8 @@ public final class DefaultDatabaseObjectComparator implements DatabaseObjectComp
             } else {
             	if (databaseObject1 instanceof View && "definition".equals(attribute)) {
 					compareFunction = new ObjectDifferences.NoBlankStringCompareFunction();
+				} else if (databaseObject1 instanceof Column && attribute.startsWith("defaultValue")) {
+					compareFunction = new ObjectDifferences.DefaultValueCompareFunction();
 				} else {
                     compareFunction = new ObjectDifferences.StandardCompareFunction(accordingTo);
 				}

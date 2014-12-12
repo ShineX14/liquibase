@@ -10,7 +10,6 @@
 
   <target name="init">
     <echo>
-ant clean: to clean up the workspace
 ant build: to build the package
 ant deploy: to deploy the package into maven-repository    
     </echo>
@@ -26,7 +25,7 @@ ant deploy: to deploy the package into maven-repository
 mvn liquibase:releaseLocks -s settings.xml -Doracle.net.tns_admin=C:\oraclexe\app\oracle\product\11.2.0\server\network\ADMIN -Durl=jdbc:oracle:thin:@mydb -Dusername=willy_zhuo -Dpassword=willy_zhuo
 mvn liquibase:update2 -s settings.xml -Doracle.net.tns_admin=C:\oraclexe\app\oracle\product\11.2.0\server\network\ADMIN -Durl=jdbc:oracle:thin:@mydb -Dusername=willy_zhuo -Dpassword=willy_zhuo -DchangeLogFile=test-package/upgrade-db.xml -U
   -->
-  <target name="build">
+  <target name="build" depends="clean">
     <delete dir="local-maven-repository/com/ebao"/>
     
     <exec executable="mvn.bat" failonerror="true">

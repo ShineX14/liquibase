@@ -58,15 +58,16 @@ public class ObjectDifferences {
         Object referenceValue = referenceObject.getAttribute(attribute, Object.class);
         Object compareValue = compareToObject.getAttribute(attribute, Object.class);
 
-        boolean different;
-        if (referenceValue == null && compareValue == null) {
-            different = false;
-        } else if ((referenceValue == null && compareValue != null) || (referenceValue != null && compareValue == null)) {
-            different = true;
-        } else {
-            different = !compareFunction.areEqual(referenceValue, compareValue);
-        }
+//        boolean different;
+//        if (referenceValue == null && compareValue == null) {
+//            different = false;
+//        } else if ((referenceValue == null && compareValue != null) || (referenceValue != null && compareValue == null)) {
+//            different = true;
+//        } else {
+//            different = !compareFunction.areEqual(referenceValue, compareValue);
+//        }
 
+        boolean different = !compareFunction.areEqual(referenceValue, compareValue);
         if (different) {
             addDifference(message, attribute, referenceValue, compareValue);
         }
@@ -371,5 +372,31 @@ public class ObjectDifferences {
             
 			return referenceString.toString().equals(compareToString.toString());
 		}
+    }
+    
+    public static class DefaultValueCompareFunction implements CompareFunction {
+
+		@Override
+		public boolean areEqual(Object referenceValue, Object compareToValue) {
+            if (referenceValue == null && compareToValue == null) {
+                return true;
+            }
+            if (referenceValue == null && "null".equalsIgnoreCase(compareToValue.toString())) {
+                return true;
+            }
+            if (compareToValue == null && "null".equalsIgnoreCase(referenceValue.toString())) {
+                return true;
+            }
+            if (referenceValue == null || compareToValue == null) {
+                return false;
+            }
+            
+            if ("sysdate".equalsIgnoreCase(referenceValue.toString()) && "sysdate".equalsIgnoreCase(compareToValue.toString())) {
+            	return true;
+            }
+            
+            return referenceValue.equals(compareToValue);
+		}
+    	
     }
 }
