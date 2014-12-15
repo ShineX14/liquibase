@@ -77,17 +77,19 @@ public class OracleUpsertExecutablePreparedStatement extends
 			}
 		}
 
-		columnSql.deleteCharAt(columnSql.lastIndexOf(","));
-		insertColumnSql.deleteCharAt(insertColumnSql.lastIndexOf(","));
-		insertValueSql.deleteCharAt(insertValueSql.lastIndexOf(","));
-		updateSql.deleteCharAt(updateSql.lastIndexOf(","));
+		deleteLastSeperator(columnSql);
+		deleteLastSeperator(insertColumnSql);
+		deleteLastSeperator(insertValueSql);
+		deleteLastSeperator(updateSql);
 
 		StringBuilder mergeSql = new StringBuilder();
 		mergeSql.append("merge into " + tableName + " t ");
 		mergeSql.append("using (select " + columnSql + " from dual) s");
 		String onClause = getPrimaryKeyClause(change.getPrimaryKey(), "s", "t");
 		mergeSql.append(" on (" + onClause + ")");
-		mergeSql.append(" when matched then update set " + updateSql);
+		if (updateSql.length() > 0) {
+			mergeSql.append(" when matched then update set " + updateSql);
+		}
 		mergeSql.append(" when not matched then");
 		mergeSql.append(" insert(" + insertColumnSql + ")");
 		mergeSql.append(" values(" + insertValueSql + ")");

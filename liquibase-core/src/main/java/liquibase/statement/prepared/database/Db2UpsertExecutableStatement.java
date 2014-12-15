@@ -79,11 +79,11 @@ public class Db2UpsertExecutableStatement extends AbstractPreparedStatement {
 			}
 		}
 
-		columnSql.deleteCharAt(columnSql.lastIndexOf(","));
-		columnValueSql.deleteCharAt(columnValueSql.lastIndexOf(","));
-		insertColumnSql.deleteCharAt(insertColumnSql.lastIndexOf(","));
-		insertValueSql.deleteCharAt(insertValueSql.lastIndexOf(","));
-		updateSql.deleteCharAt(updateSql.lastIndexOf(","));
+		deleteLastSeperator(columnSql);
+		deleteLastSeperator(columnValueSql);
+		deleteLastSeperator(insertColumnSql);
+		deleteLastSeperator(insertValueSql);
+		deleteLastSeperator(updateSql);
 
 		StringBuilder mergeSql = new StringBuilder("merge ");
 		mergeSql.append(tableName).append(" t ");
@@ -91,7 +91,9 @@ public class Db2UpsertExecutableStatement extends AbstractPreparedStatement {
 				.append("))) as s(").append(columnSql).append(")");
 		String onClause = getPrimaryKeyClause(change.getPrimaryKey(), "s", "t");
 		mergeSql.append(" on " + onClause);
-		mergeSql.append(" when matched then update set ").append(updateSql);
+		if (updateSql.length() > 0) {
+		    mergeSql.append(" when matched then update set ").append(updateSql);
+		}
 		mergeSql.append(" when not matched then");
 		mergeSql.append(" insert(").append(insertColumnSql).append(")");
 		mergeSql.append(" values(").append(insertValueSql).append(");");

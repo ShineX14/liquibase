@@ -240,5 +240,12 @@ public abstract class AbstractPreparedStatement implements
 	public boolean skipOnUnsupported() {
 		return false;
 	}
+	
+	public void deleteLastSeperator(StringBuilder s) {
+		int index = s.length() - 1;
+		if (index >= 0 && s.charAt(index) == ',') {
+			s.deleteCharAt(index);
+		}
+	}
 
 }

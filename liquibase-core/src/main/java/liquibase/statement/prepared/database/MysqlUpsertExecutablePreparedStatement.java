@@ -74,14 +74,16 @@ public class MysqlUpsertExecutablePreparedStatement extends AbstractPreparedStat
 			}
 		}
 
-		insertColumnSql.deleteCharAt(insertColumnSql.lastIndexOf(","));
-		insertValueSql.deleteCharAt(insertValueSql.lastIndexOf(","));
-		updateSql.deleteCharAt(updateSql.lastIndexOf(","));
+		deleteLastSeperator(insertColumnSql);
+		deleteLastSeperator(insertValueSql);
+		deleteLastSeperator(updateSql);
 
 		StringBuilder mergeSql = new StringBuilder();
 		mergeSql.append("insert into " + tableName + "(" + insertColumnSql + ")");
 		mergeSql.append(" values(" + insertValueSql + ") ");
-		mergeSql.append(" on duplicate key update " + updateSql);
+		if (updateSql.length() > 0) {
+		    mergeSql.append(" on duplicate key update " + updateSql);
+		}
 
 		String s = mergeSql.toString();
 		statement = new Info(s, cols, getParameters(cols, change.getChangeSet()

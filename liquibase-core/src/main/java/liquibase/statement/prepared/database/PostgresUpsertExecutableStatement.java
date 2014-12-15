@@ -50,29 +50,26 @@ public class PostgresUpsertExecutableStatement extends
 					change.getCatalogName(), change.getSchemaName(),
 					change.getTableName(), column.getName());
 
-			fields.append(columnName).append(", ");
-			fieldsSet.append(columnName + "=nv." + columnName + ", ");
+			fields.append(columnName).append(",");
+			fieldsSet.append(columnName + "=nv." + columnName + ",");
 
 			if (column.getValueObject() == null
 					&& column.getValueBlobFile() == null
 					&& column.getValueClobFile() == null) {
-				params.append("null, ");
+				params.append("null,");
 			} else {
 				if (column.getValueDate() != null) {
-					params.append("date(?), ");
+					params.append("date(?),");
 				} else {
-					params.append("?, ");
+					params.append("?,");
 				}
 				cols.add(column);
 			}
 		}
 
-		params.deleteCharAt(params.lastIndexOf(" "));
-		params.deleteCharAt(params.lastIndexOf(","));
-		fields.deleteCharAt(fields.lastIndexOf(" "));
-		fields.deleteCharAt(fields.lastIndexOf(","));
-		fieldsSet.deleteCharAt(fieldsSet.lastIndexOf(" "));
-		fieldsSet.deleteCharAt(fieldsSet.lastIndexOf(","));
+		deleteLastSeperator(params);
+		deleteLastSeperator(fields);
+		deleteLastSeperator(fieldsSet);
 
 		StringBuilder sql = new StringBuilder();
 		sql.append("with new_values( " + fields + " ) as (");
@@ -82,7 +79,7 @@ public class PostgresUpsertExecutableStatement extends
 		sql.append(" returning m.*) ");
 		sql.append("insert into " + tableName + "(" + fields + ") ");
 		sql.append("select " + fields + " from new_values ");
-		sql.append("where not exists(select 1 from upsert up where " + where2 + ") ");
+		sql.append("where not exists(select 1 from upsert up where " + where2 + ")");
 
 		String s = sql.toString();
 		statement = new Info(s, cols, getParameters(cols, change.getChangeSet()
