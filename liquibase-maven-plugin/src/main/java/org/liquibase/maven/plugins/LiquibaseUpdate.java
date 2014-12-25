@@ -36,10 +36,10 @@ public class LiquibaseUpdate extends AbstractLiquibaseUpdateMojo {
     protected String markChangeSetRan;
 
     /**
-   * Mark next DDl changeSet ran if it's fixed and ran manually.
-   * @parameter expression="${liquibase.markNextDdlChangeSetRan}" default-value="false"
-   */
-    protected boolean markNextDdlChangeSetRan;
+     * Mark next DDl changeSet ran if it's fixed and ran manually.
+     * @parameter expression="${liquibase.markNextDdlRan}" default-value="false"
+     */
+    protected boolean markNextDdlRan;
     
     /**
      * Whether or not to skip DDL SQL file.
@@ -67,7 +67,7 @@ public class LiquibaseUpdate extends AbstractLiquibaseUpdateMojo {
         if (changesToApply > 0) {
             liquibase.update(changesToApply, new Contexts(contexts), new LabelExpression(labels));
         } else {
-            if (markNextDdlChangeSetRan) {
+            if (markNextDdlRan) {
                 Liquibase.setMarkNextDdlChangeSetRan();
             }
             liquibase.update(new Contexts(contexts), new LabelExpression(labels));
