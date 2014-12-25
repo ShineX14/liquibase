@@ -89,8 +89,8 @@ public class LiquibaseUpdate extends AbstractLiquibaseUpdateMojo {
         if (markChangeSetRan != null) {
             getLog().info(indent + "markChangeSetRan: " + markChangeSetRan);
         }
-        if (markNextDdlChangeSetRan) {
-            getLog().info(indent + "markNextDdlChangeSetRan: " + markNextDdlChangeSetRan);
+        if (markNextDdlRan) {
+            getLog().info(indent + "markNextDdlRan: " + markNextDdlRan);
         }
 
     }
