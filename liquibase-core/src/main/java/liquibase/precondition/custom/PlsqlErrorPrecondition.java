@@ -27,7 +27,7 @@ public class PlsqlErrorPrecondition implements CustomPrecondition {
 			+ "   and e.type = s.type"//
 			+ "   and e.line = s.line"//
 			+ "   and e.attribute = 'ERROR'"//
-			+ "   and e.name not like 'BIN$/%'"//
+			+ "   and e.name not like 'BIN$%'"//
 			+ " order by e.name, e.type, e.sequence";
 
 	@Override

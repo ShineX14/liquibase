@@ -11,15 +11,13 @@
   <target name="init">
     <echo>
 ant build: to build the package
-ant deploy: to deploy the package into maven-repository    
+ant deploy: to build the package and deploy it into maven-repository    
     </echo>
   </target>
 
   <target name="clean">
     <delete dir="local-maven-repository"/>
   </target>
-  
-  <target name="all" depends="build, deploy" />
   
   <!--
 mvn liquibase:releaseLocks -s settings.xml -Doracle.net.tns_admin=C:\oraclexe\app\oracle\product\11.2.0\server\network\ADMIN -Durl=jdbc:oracle:thin:@mydb -Dusername=willy_zhuo -Dpassword=willy_zhuo
@@ -36,7 +34,7 @@ mvn liquibase:update2 -s settings.xml -Doracle.net.tns_admin=C:\oraclexe\app\ora
     </exec>
   </target>
 
-  <target name="deploy">
+  <target name="deploy" depends="build">
     <exec executable="mvn.bat" failonerror="true">
       <arg line="deploy"/>
     </exec>
