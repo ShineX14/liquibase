@@ -16,6 +16,10 @@
     <relativePath></relativePath>
   </parent>
 
+  <properties>
+    <driver>oracle.jdbc.OracleDriver</driver>
+  </properties>
+  
   <build>
     <plugins>
       <plugin>
@@ -47,7 +51,7 @@
           <propertyFileWillOverride>true</propertyFileWillOverride>
           <propertyFile>${propertyFile}</propertyFile>
           <contexts>${contexts}</contexts>
-          <driver>oracle.jdbc.OracleDriver</driver>
+          <driver>${driver}</driver>
           <url>${url}</url>
           <username>${username}</username>
           <password>${password}</password>
@@ -65,6 +69,16 @@
             <groupId>oracle.jdbc</groupId>
             <artifactId>ojdbc6</artifactId>
             <version>11.2.0.2.0</version>
+          </dependency>
+          <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.30</version>
+          </dependency>
+          <dependency>
+            <groupId>com.microsoft</groupId>
+            <artifactId>sqljdbc4</artifactId>
+            <version>20120206</version>
           </dependency>
         </dependencies>
       </plugin>

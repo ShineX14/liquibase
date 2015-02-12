@@ -38,6 +38,17 @@ public class NetUtil {
     }
 
     public static String getLocalHostName() throws UnknownHostException, SocketException {
-        return InetAddress.getLocalHost().getHostName();
+        try {
+			return InetAddress.getLocalHost().getHostName();
+		} catch (UnknownHostException e) {
+			String host = e.getMessage(); // e.g., hostname: hostname
+			if (host != null) {
+				int colon = host.indexOf(':');
+				if (colon > 0) {
+					return host.substring(0, colon);
+				}
+			}
+			throw e;
+	    }
     }
 }

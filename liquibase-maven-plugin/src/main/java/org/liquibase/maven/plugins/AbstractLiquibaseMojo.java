@@ -569,6 +569,9 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             String key = (String) it.next();
             String value = (String) props.get(key);
             try {
+                if ("DRIVER_CLASS".equals(key)) {
+                    key = "driver";
+                }
                 if ("NON_POOL_DB_URL".equals(key)) {
                     key = "url";
                 }
