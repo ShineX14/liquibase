@@ -3,4 +3,31 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
 
+  <!--data of a view is possible to run before view ddl; virtual view exists, e.g., T_SUB_ROLE_TYPE -->                   
+  <changeSet id="disable-T_STRING_RESOURCE-trigger" author="generated" runOnChange="true" runAlways="true" dbms="oracle">
+    <preConditions onFail="CONTINUE" onFailMessage="TRI_STRING_RESOURCE__BIU_CHK does not exist and skipped">
+      <sqlCheck expectedResult="1">select count(1) from user_objects where object_name='TRI_STRING_RESOURCE__BIU_CHK' and status='VALID'</sqlCheck>
+    </preConditions>
+    <sql>alter trigger TRI_STRING_RESOURCE__BIU_CHK disable</sql>
+  </changeSet>  
+
+  <!--in case that there's some online or batch operation ongoing-->
+  <changeSet id="ddl-lock-timeout" author="generated" runOnChange="true" runAlways="true" dbms="oracle">
+    <preConditions onFail="CONTINUE" onFailMessage="Oracle 10g is found and skipped">
+      <sqlCheck expectedResult="0">select count(1) from v$version where banner like 'Oracle Database 10g%'</sqlCheck>
+    </preConditions>
+    <sql>alter session set ddl_lock_timeout=60</sql>
+  </changeSet>  
+
+  <changeSet id="cast-format" author="generated" runOnChange="true" runAlways="true" dbms="oracle">
+    <sql>alter session set NLS_DATE_FORMAT='yyyyMMdd'</sql>
+  </changeSet>  
+
+  <changeSet id="init-user" author="generated" runOnChange="true" runAlways="true" dbms="oracle">
+    <preConditions onFail="CONTINUE" onFailMessage="PKG_PUB_APP_CONTEXT is not available and user will not be set in the context">
+      <sqlCheck expectedResult="2">select count(1) from user_objects where object_name='PKG_PUB_APP_CONTEXT' and status='VALID'</sqlCheck>
+    </preConditions>
+    <sql>CALL PKG_PUB_APP_CONTEXT.P_SET_APP_USER_ID(400)</sql>
+  </changeSet>  
+  
 </databaseChangeLog>

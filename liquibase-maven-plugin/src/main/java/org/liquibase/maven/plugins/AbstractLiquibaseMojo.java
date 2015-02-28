@@ -300,9 +300,6 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
 
         ClassLoader artifactClassLoader = getMavenArtifactClassLoader();
         configureFieldsAndValues(getFileOpener(artifactClassLoader));
-        if (defaultSchemaName == null) {
-        	defaultSchemaName = username;
-        }
 
         try {
             LogFactory.setLoggingLevel(logging);

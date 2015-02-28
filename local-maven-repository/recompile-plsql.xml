@@ -3,4 +3,26 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
 
+  <changeSet id="enable-T_STRING_RESOURCE-trigger" author="generated" runOnChange="true" runAlways="true" dbms="oracle">
+    <preConditions onFail="CONTINUE" onFailMessage="TRI_STRING_RESOURCE__BIU_CHK does not exist and skipped">
+      <sqlCheck expectedResult="1">select count(1) from user_objects where object_name='TRI_STRING_RESOURCE__BIU_CHK' and status='VALID'</sqlCheck>
+    </preConditions>
+    <sql>alter trigger TRI_STRING_RESOURCE__BIU_CHK enable</sql>
+  </changeSet>  
+
+  <changeSet id="grant-privilege-and-recompile-plsql" author="generated" runOnChange="true" runAlways="true" dbms="oracle" failOnError="false">
+    <preConditions onFail="CONTINUE" onFailMessage="PKG_LS_DB_TOOLS is not available and skipped">
+      <sqlCheck expectedResult="2">select count(1) from user_objects t where t.OBJECT_NAME='PKG_LS_DB_TOOLS' and t.status='VALID'</sqlCheck>
+    </preConditions>
+    <sql>CALL PKG_LS_DB_TOOLS.P_GRANT_PRIVI()</sql>
+    <sql>CALL PKG_LS_DB_TOOLS.P_RECOMPILE_INVALID_OBJECT()</sql>
+  </changeSet>  
+  
+  <changeSet id="check-plsql-compilation-error" author="generated" runOnChange="true" runAlways="true" dbms="oracle">
+    <preConditions onFailMessage="PL/SQL compilation error found. Check out the log for details.">
+      <customPrecondition className="liquibase.precondition.custom.PlsqlErrorPrecondition">
+      </customPrecondition>
+    </preConditions>
+  </changeSet>  
+  
 </databaseChangeLog>

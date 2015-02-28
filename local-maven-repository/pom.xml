@@ -78,7 +78,7 @@
           <dependency>
             <groupId>com.microsoft</groupId>
             <artifactId>sqljdbc4</artifactId>
-            <version>20120206</version>
+            <version>4.1</version>
           </dependency>
         </dependencies>
       </plugin>

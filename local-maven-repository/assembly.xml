@@ -12,6 +12,8 @@
       <includes>
         <include>pom.xml</include>
         <include>settings.xml</include>
+        <include>init-user.xml</include>
+        <include>recompile-plsql.xml</include>
         <include>local-maven-repository/**</include>
       </includes>
       <outputDirectory>db</outputDirectory>
