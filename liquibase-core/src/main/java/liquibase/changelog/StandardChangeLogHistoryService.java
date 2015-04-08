@@ -63,9 +63,6 @@ public class StandardChangeLogHistoryService extends AbstractChangeLogHistorySer
     }
 
     public boolean hasDatabaseChangeLogTable() throws DatabaseException {
-        if (ranChangeSetList != null) {
-            return true;
-        }
         try {
             return SnapshotGeneratorFactory.getInstance().hasDatabaseChangeLogTable(getDatabase());
         } catch (LiquibaseException e) {

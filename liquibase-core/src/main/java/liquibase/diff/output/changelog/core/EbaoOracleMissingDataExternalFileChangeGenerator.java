@@ -185,7 +185,7 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
             }
             throw new IllegalStateException(sql);
         } catch (Exception e) {
-            throw new UnexpectedLiquibaseException(e);
+            throw new UnexpectedLiquibaseException(sql, e);
         } finally {
             close(stmt, rs);
         }
@@ -218,7 +218,7 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
     
             return list;
         } catch (Exception e) {
-            throw new UnexpectedLiquibaseException(e);
+            throw new UnexpectedLiquibaseException(sql, e);
         } finally {
             close(stmt, rs);
         }

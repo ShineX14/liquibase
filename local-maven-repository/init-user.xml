@@ -20,7 +20,7 @@
   </changeSet>  
 
   <changeSet id="cast-format" author="generated" runOnChange="true" runAlways="true" dbms="oracle">
-    <sql>alter session set NLS_DATE_FORMAT='yyyyMMdd'</sql>
+    <sql>alter session set NLS_DATE_FORMAT='yyyymmddhh24miss'</sql>
   </changeSet>  
 
   <changeSet id="init-user" author="generated" runOnChange="true" runAlways="true" dbms="oracle">

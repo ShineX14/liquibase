@@ -2,8 +2,8 @@
 
   
   <property name="db.url" value="-Durl=jdbc:oracle:thin:@172.25.12.193:1521:ora11g2" />
-  <property name="db.user" value="-Dusername=willy_zhuo" />
-  <property name="db.password" value="-Dpassword=willy_zhuo" />
+  <property name="db.user" value="-Dusername=build_admin" />
+  <property name="db.password" value="-Dpassword=build_admin" />
   
   <property name="maven.settings" value="--settings settings.xml" />
   <property name="liquibase.changeLogFile" value="-DchangeLogFile=db/upgrade-db.xml" />

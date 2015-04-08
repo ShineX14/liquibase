@@ -154,9 +154,15 @@ public class SnapshotGeneratorFactory {
         }
     }
 
+    private Boolean hasDatabaseChangeLogTable;
+    private Boolean hasDatabaseChangeLogLockTable;
+    
     public boolean hasDatabaseChangeLogTable(Database database) throws DatabaseException {
         try {
-            return has(new Table().setName(database.getDatabaseChangeLogTableName()).setSchema(new Schema(database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName())), database);
+        	if (hasDatabaseChangeLogTable == null) {
+                hasDatabaseChangeLogTable = has(new Table().setName(database.getDatabaseChangeLogTableName()).setSchema(new Schema(database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName())), database);
+        	}
+			return hasDatabaseChangeLogTable;
         } catch (InvalidExampleException e) {
             throw new UnexpectedLiquibaseException(e);
         }
@@ -164,7 +170,10 @@ public class SnapshotGeneratorFactory {
 
     public boolean hasDatabaseChangeLogLockTable(Database database) throws DatabaseException {
         try {
-            return has(new Table().setName(database.getDatabaseChangeLogLockTableName()).setSchema(new Schema(database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName())), database);
+        	if (hasDatabaseChangeLogLockTable == null) {
+        		hasDatabaseChangeLogLockTable = has(new Table().setName(database.getDatabaseChangeLogLockTableName()).setSchema(new Schema(database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName())), database);
+        	}
+        	return hasDatabaseChangeLogLockTable;
         } catch (InvalidExampleException e) {
             throw new UnexpectedLiquibaseException(e);
         }
