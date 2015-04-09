@@ -564,7 +564,7 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
                 execType = ExecType.MARK_RAN;
                 skipChange = true;
 
-                log.info("Marking ChangeSet: " + toString() + " ran due to markChangeSetRan");
+                log.info("MARK_RAN due to markChangeSetRan");
             }
 
             if (!skipChange) {

@@ -12,9 +12,11 @@ import liquibase.logging.LogFactory;
 import liquibase.resource.CompositeResourceAccessor;
 import liquibase.resource.FileSystemResourceAccessor;
 import liquibase.resource.ResourceAccessor;
+import liquibase.util.FileUtil;
 import liquibase.util.StreamUtil;
 import liquibase.util.ui.UIFactory;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.artifact.manager.WagonManager;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -647,7 +649,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
     }
     
     @SuppressWarnings("unchecked")
-    private void processSystemProperties() {
+    protected void processSystemProperties() {
         if (systemProperties == null)
         {
             systemProperties = new Properties();
@@ -661,7 +663,10 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
         }
         StreamUtil.setDefaultEncoding(project.getProperties().getProperty("project.build.sourceEncoding", "UTF-8"));
         if (project.getBuild() != null) {//not in unit test
-            Liquibase.setTmpDataDir(project.getBuild().getDirectory());
+            String path = project.getBuild().getDirectory();
+            File dir = new File(path);
+            dir.mkdirs();
+			Liquibase.setTmpDataDir(path);
         }
     }
 

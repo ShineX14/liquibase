@@ -306,7 +306,7 @@ public class Liquibase {
         filters.add(new ContextChangeSetFilter(contexts));
         filters.add(new LabelChangeSetFilter(labelExpression));
         filters.add(new DbmsChangeSetFilter(database));
-        if (isMarkNextDdlChangeSetRan()) {
+        if (isMarkNextChangeSetRan()) {
           filters.add(new CountDdlChangeSetFilter());
         }
         return filters.toArray(new ChangeSetFilter[filters.size()]);
@@ -1272,11 +1272,11 @@ public class Liquibase {
         }
     }
 
-    public static boolean isMarkNextDdlChangeSetRan() {
+    public static boolean isMarkNextChangeSetRan() {
         return markNextDdlChangeSetRan;
     }
 
-    public static void setMarkNextDdlChangeSetRan() {
+    public static void setMarkNextChangeSetRan() {
         markNextDdlChangeSetRan = true;
     }
 

@@ -188,6 +188,9 @@ public class SQLFileChange extends AbstractSQLChange {
             char lastchar = sql.charAt(index);
             while (lastchar == '\n' || lastchar == '\r' || lastchar == ' ' || lastchar == '\t') {
                 index--;
+                if (index < 0 ) {
+					return;
+				}
                 lastchar = sql.charAt(index);
             }
             if (lastchar == '/') {// oracle package/trigger/view
