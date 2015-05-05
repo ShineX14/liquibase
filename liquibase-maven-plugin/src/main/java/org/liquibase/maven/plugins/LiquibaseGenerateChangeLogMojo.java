@@ -231,7 +231,9 @@ public class LiquibaseGenerateChangeLogMojo extends
 		super.printSettings(indent);
         getLog().info(indent + "defaultSchemaName: " + defaultSchemaName);
         getLog().info(indent + "diffTypes: " + diffTypes);
-        getLog().info(indent + "dataDir: " + dataDir);
+        if (dataDir != null) {
+        	getLog().info(indent + "dataDir: " + dataDir);
+		}
 	}
 
 }

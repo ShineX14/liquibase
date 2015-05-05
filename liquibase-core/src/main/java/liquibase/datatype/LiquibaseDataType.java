@@ -184,7 +184,7 @@ public abstract class LiquibaseDataType implements PrioritizedService {
         if (value == null) {
             return null;
         }
-        return value.replaceFirst("\\.0+$", "");
+        return value;//value.replaceFirst("\\.0+$", "");
     }
 
 

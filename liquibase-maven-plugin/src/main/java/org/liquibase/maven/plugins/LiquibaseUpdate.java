@@ -37,23 +37,23 @@ public class LiquibaseUpdate extends AbstractLiquibaseUpdateMojo {
 
     /**
      * Mark next DDl changeSet ran if it's fixed and ran manually.
-     * @parameter expression="${liquibase.markNextDdlRan}" default-value="false"
+     * @parameter expression="${liquibase.markNextChangeSetRan}" default-value="false"
      */
     protected boolean markNextChangeSetRan;
     
     /**
-     * Whether or not to skip DDL SQL file.
-     * @parameter expression="${liquibase.skipDdlSqlFile}" default-value="false"
+     * Whether or not to skip SQL file.
+     * @parameter expression="${liquibase.skipSqlFile}" default-value="false"
      */
-    protected boolean skipDdlSqlFile;
+    protected boolean skipSqlFile;
 
     @Override
     protected void doUpdate(Liquibase liquibase) throws LiquibaseException {
         if (dropFirst) {
             liquibase.dropAll();
         }
-        if (skipDdlSqlFile) {
-            ChangeSet.setSkipDdlSqlFile();
+        if (skipSqlFile) {
+            ChangeSet.setSkipSqlFile();
         }
         if (markChangeSetRan != null) {
             ChangeSet.setChangeSetMarkedRan(markChangeSetRan);
@@ -83,14 +83,14 @@ public class LiquibaseUpdate extends AbstractLiquibaseUpdateMojo {
         if (batchMode) {
             getLog().info(indent + "batch mode? " + batchMode);
         }
-        if (skipDdlSqlFile) {
-            getLog().info(indent + "skip DDL SQL file? " + skipDdlSqlFile);
+        if (skipSqlFile) {
+            getLog().info(indent + "skip SQL file? " + skipSqlFile);
         }
         if (markChangeSetRan != null) {
             getLog().info(indent + "markChangeSetRan: " + markChangeSetRan);
         }
         if (markNextChangeSetRan) {
-            getLog().info(indent + "markNextDdlRan: " + markNextChangeSetRan);
+            getLog().info(indent + "markNextChangeSetRan: " + markNextChangeSetRan);
         }
 
     }

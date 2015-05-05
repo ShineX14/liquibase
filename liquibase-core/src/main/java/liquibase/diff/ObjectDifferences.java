@@ -1,8 +1,10 @@
 package liquibase.diff;
 
 import liquibase.database.Database;
+import liquibase.database.core.OracleDatabase;
 import liquibase.diff.compare.CompareControl;
 import liquibase.diff.compare.DatabaseObjectComparatorFactory;
+import liquibase.statement.DatabaseFunction;
 import liquibase.structure.DatabaseObject;
 import liquibase.structure.core.DataType;
 
@@ -104,10 +106,6 @@ public class ObjectDifferences {
             } else {
                 return referenceValue.equals(compareToValue);
             }
-
-
-
-
         }
     }
 
@@ -224,6 +222,23 @@ public class ObjectDifferences {
             DataType referenceType = (DataType) referenceValue;
             DataType compareToType = (DataType) compareToValue;
 
+            //oracle cases
+            if (accordingTo instanceof OracleDatabase) {
+                if (referenceType.getTypeName().startsWith("TIMESTAMP") && "DATE".equals(compareToType.getTypeName())) {
+    				return true;
+    			}
+                if ("CHAR".equals(referenceType.getTypeName()) && "CHAR".equals(compareToType.getTypeName())) {
+    				if (referenceType.getColumnSize().equals(compareToType.getColumnSize())) {
+						return true;//ignore char(1 char)
+					}
+    			}
+                if ("VARCHAR".equals(referenceType.getTypeName()) && "VARCHAR".equals(compareToType.getTypeName())) {
+    				if (referenceType.getColumnSize().equals(compareToType.getColumnSize())) {
+						return true;//ignore varchar2(1 char)
+					}
+                }
+			}
+            
             if (!referenceType.getTypeName().equalsIgnoreCase(compareToType.getTypeName())) {
                 return false;
             }
@@ -233,9 +248,6 @@ public class ObjectDifferences {
             } else {
                 return true;
             }
-
-
-
         }
     }
 
@@ -391,8 +403,12 @@ public class ObjectDifferences {
                 return false;
             }
             
+            //oracle cases
             if ("sysdate".equalsIgnoreCase(referenceValue.toString()) && "sysdate".equalsIgnoreCase(compareToValue.toString())) {
             	return true;
+            }
+            if (referenceValue instanceof DatabaseFunction || compareToValue instanceof DatabaseFunction) {
+            	return referenceValue.toString().equals(compareToValue.toString());
             }
             
             return referenceValue.equals(compareToValue);

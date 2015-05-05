@@ -135,7 +135,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
 
                         String jdbcSchemaName = ((AbstractJdbcDatabase) database).getJdbcSchemaName(catalogAndSchema);
 
-                        String sql = "SELECT /*+ leading(p) */ " +
+                        String sql = "SELECT " + ///*+ leading(p) */
                                 "  NULL AS pktable_cat,  " +
                                 "  p.owner as pktable_schem,  " +
                                 "  p.table_name as pktable_name,  " +
@@ -155,14 +155,14 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                                 "INNER JOIN all_cons_columns pc " +
                                 "ON pc.owner = p.owner " +
                                 "AND pc.constraint_name = p.constraint_name " +
-                                "AND pc.table_name = p.table_name " +
+                                //"AND pc.table_name = p.table_name " +
                                 "INNER JOIN all_constraints f " +
                                 "ON p.owner = f.r_owner " +
                                 "AND p.constraint_name = f.r_constraint_name " +
                                 "INNER JOIN all_cons_columns fc " +
                                 "ON fc.owner = f.owner " +
                                 "AND fc.constraint_name = f.constraint_name " +
-                                "AND fc.table_name = f.table_name " +
+                                //"AND fc.table_name = f.table_name " +
                                 "AND fc.position = pc.position " +
                                 "WHERE p.owner = '" +jdbcSchemaName+"' "+
                                 "AND p.constraint_type in ('P', 'U') " +

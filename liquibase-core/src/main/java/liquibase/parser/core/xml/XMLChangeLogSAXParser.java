@@ -12,6 +12,7 @@ import liquibase.changelog.ChangeLogParameters;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.exception.ChangeLogParseException;
 import liquibase.logging.LogFactory;
+import liquibase.logging.Logger;
 import liquibase.parser.core.ParsedNode;
 import liquibase.resource.UtfBomStripperInputStream;
 import liquibase.resource.ResourceAccessor;
@@ -28,6 +29,7 @@ import org.xml.sax.XMLReader;
 
 public class XMLChangeLogSAXParser extends AbstractChangeLogParser {
 
+	private Logger logger=LogFactory.getInstance().getLog();
     protected SAXParserFactory saxParserFactory;
 
     public XMLChangeLogSAXParser() {

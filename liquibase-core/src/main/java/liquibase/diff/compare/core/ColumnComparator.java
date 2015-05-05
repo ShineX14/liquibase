@@ -56,7 +56,7 @@ public class ColumnComparator implements DatabaseObjectComparator {
         ObjectDifferences differences = chain.findDifferences(databaseObject1, databaseObject2, accordingTo, compareControl, exclude);
 
         differences.compare("name", databaseObject1, databaseObject2, new ObjectDifferences.DatabaseObjectNameCompareFunction(Column.class, accordingTo));
-        differences.compare("type", databaseObject1, databaseObject2, new ObjectDifferences.DatabaseObjectNameCompareFunction(Column.class, accordingTo));
+        differences.compare("type", databaseObject1, databaseObject2, new ObjectDifferences.DataTypeCompareFunction(accordingTo));
 
         return differences;
     }
