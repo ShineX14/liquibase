@@ -80,6 +80,7 @@ public class StringUtils {
         return strings.toArray(new String[strings.size()]);
     }
 
+    private static final Pattern commentPattern20 = Pattern.compile("^\\s*\\-\\-.*\\n", Pattern.MULTILINE);
     private static final Pattern commentPattern2 = Pattern.compile("^\\s*\\-\\-.*$", Pattern.MULTILINE);
     private static final Pattern commentPattern3 = Pattern.compile("/\\*.*?\\*/", Pattern.DOTALL);
 
@@ -93,7 +94,8 @@ public class StringUtils {
      */
     public static String stripComments(String multiLineSQL) {
         //String strippedSingleLines = Pattern.compile("\\s*\\-\\-.*\\n").matcher(multiLineSQL).replaceAll("\n");
-        String strippedSingleLines = commentPattern2.matcher(multiLineSQL).replaceAll("");
+        String strippedSingleLines0 = commentPattern20.matcher(multiLineSQL).replaceAll("");
+        String strippedSingleLines = commentPattern2.matcher(strippedSingleLines0).replaceAll("");
         return commentPattern3.matcher(strippedSingleLines).replaceAll("").trim();
     }
 
