@@ -219,7 +219,7 @@ public abstract class AbstractPreparedStatement implements
 		} catch (SQLException e) {
 			log.severe(getStatement().sql);
 			log.severe("with parameters: " + getStatement().parameters);
-			throw new DatabaseException("Error executing SQL " + getStatement().sql + " with parameters " + getStatement().parameters + " on " + url, e);
+			throw new DatabaseException("Error executing JDBC SQL: " + getStatement().sql + " with parameters " + getStatement().parameters + " on " + url, e);
 		}
 	}
 

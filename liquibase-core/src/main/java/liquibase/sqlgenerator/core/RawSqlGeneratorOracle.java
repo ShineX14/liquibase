@@ -27,7 +27,7 @@ public class RawSqlGeneratorOracle extends RawSqlGenerator {
   public Sql[] generateSql(RawSqlStatement statement, Database database,
       SqlGeneratorChain sqlGeneratorChain) {
     String sql = statement.getSql();
-    while (sql.startsWith("prompt ")) {
+    while (sql.startsWith("prompt ") || sql.startsWith("PROMPT ")) {
       int index = sql.indexOf("\n");
       if (index < 0) {
         logger.info(sql);
@@ -36,7 +36,7 @@ public class RawSqlGeneratorOracle extends RawSqlGenerator {
       logger.info(sql.substring(0, index));
       sql = sql.substring(index + 1);
     }
-    if (sql.startsWith("exec ")) {
+    if (sql.startsWith("exec ") || sql.startsWith("EXEC ")) {
       sql = "call " + sql.substring("exec ".length());
       if (!sql.endsWith(")")) {
         sql = sql + "()";
