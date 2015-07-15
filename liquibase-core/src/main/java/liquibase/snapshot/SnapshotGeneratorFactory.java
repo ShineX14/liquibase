@@ -154,12 +154,12 @@ public class SnapshotGeneratorFactory {
         }
     }
 
-    private Boolean hasDatabaseChangeLogTable;
-    private Boolean hasDatabaseChangeLogLockTable;
+    private boolean hasDatabaseChangeLogTable = false;
+    private boolean hasDatabaseChangeLogLockTable = false;
     
     public boolean hasDatabaseChangeLogTable(Database database) throws DatabaseException {
         try {
-        	if (hasDatabaseChangeLogTable == null) {
+        	if (!hasDatabaseChangeLogTable) {
                 hasDatabaseChangeLogTable = has(new Table().setName(database.getDatabaseChangeLogTableName()).setSchema(new Schema(database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName())), database);
         	}
 			return hasDatabaseChangeLogTable;
@@ -170,7 +170,7 @@ public class SnapshotGeneratorFactory {
 
     public boolean hasDatabaseChangeLogLockTable(Database database) throws DatabaseException {
         try {
-        	if (hasDatabaseChangeLogLockTable == null) {
+        	if (!hasDatabaseChangeLogLockTable) {
         		hasDatabaseChangeLogLockTable = has(new Table().setName(database.getDatabaseChangeLogLockTableName()).setSchema(new Schema(database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName())), database);
         	}
         	return hasDatabaseChangeLogLockTable;

@@ -201,10 +201,8 @@ public class LiquibaseGenerateChangeLogMojo extends
             ResourceAccessor fo = getFileOpener(getMavenArtifactClassLoader());
             InputStream in = StreamUtil.singleInputStream(propertyFile, fo);
             props.load(in);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (MojoExecutionException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(propertyFile, e);
         }
 
         PropertyParser parser = new PropertyParser();
