@@ -6,10 +6,15 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
 
+import liquibase.logging.LogFactory;
+import liquibase.logging.Logger;
+
 /**
  * A @{link ResourceAccessor} implementation which finds Files in the File System.
  */
 public class FileSystemResourceAccessor extends AbstractResourceAccessor {
+
+	private static final Logger log = LogFactory.getInstance().getLog();
 
     private File baseDirectory;
 
@@ -37,8 +42,10 @@ public class FileSystemResourceAccessor extends AbstractResourceAccessor {
 
         InputStream fileStream = null;
         if (absoluteFile.exists() && absoluteFile.isFile() && absoluteFile.isAbsolute()) {
+        	checkFileNameCase(absoluteFile, path);
             fileStream = new BufferedInputStream(new FileInputStream(absoluteFile));
         } else if (relativeFile.exists() && relativeFile.isFile()) {
+        	checkFileNameCase(relativeFile, path);
             fileStream = new BufferedInputStream(new FileInputStream(relativeFile));
         }
         if (fileStream == null) {
@@ -49,6 +56,13 @@ public class FileSystemResourceAccessor extends AbstractResourceAccessor {
             return returnSet;
         }
     }
+
+	private void checkFileNameCase(File f, String path)
+			throws IOException {
+		if (!f.getName().equals(f.getCanonicalFile().getName())) {
+		  throw new IllegalArgumentException("Wrong lower/upper case filename in " + path);
+		}
+	}
 
     @Override
     public Set<String> list(String relativeTo, String path, boolean includeFiles, boolean includeDirectories, boolean recursive) throws IOException {
