@@ -1,5 +1,7 @@
 package liquibase.sqlgenerator.core;
 
+import org.apache.commons.lang.StringUtils;
+
 import liquibase.database.Database;
 import liquibase.database.core.OracleDatabase;
 import liquibase.logging.LogFactory;
@@ -23,6 +25,8 @@ public class RawSqlGeneratorOracle extends RawSqlGenerator {
     return database instanceof OracleDatabase;
   }
 
+  private static final String[] EXEC_KEYS = new String[] {"exec ", "execute "};
+  
   @Override
   public Sql[] generateSql(RawSqlStatement statement, Database database,
       SqlGeneratorChain sqlGeneratorChain) {
@@ -36,13 +40,17 @@ public class RawSqlGeneratorOracle extends RawSqlGenerator {
       logger.info(sql.substring(0, index));
       sql = sql.substring(index + 1);
     }
-    if (sql.startsWith("exec ") || sql.startsWith("EXEC ")) {
-      sql = "call " + sql.substring("exec ".length());
-      if (!sql.endsWith(")")) {
-        sql = sql + "()";
+    
+    for (String key : EXEC_KEYS) {
+      if (StringUtils.startsWithIgnoreCase(sql, key)) {
+        sql = "call " + sql.substring(key.length());
+        if (!sql.endsWith(")")) {
+          sql = sql + "()";
+        }
+        logger.debug(sql);
+        break;
       }
-      logger.debug(sql);
-    }
+	}
 
     return new Sql[] { new UnparsedSql(sql, statement.getEndDelimiter()) };
   }
