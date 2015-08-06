@@ -155,7 +155,6 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
         if (!f.exists()) {
           throw new IllegalArgumentException(jars[i] + " not found");
         }
-        f = f.getCanonicalFile();
         addResourceJar(f, urls);
       }
       getLog().info("");
