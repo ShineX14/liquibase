@@ -73,7 +73,7 @@
           <!--update-->
           <relativeToChangelogFile>true</relativeToChangelogFile>
           <resourceJars>${resourceJars}</resourceJars>
-          <resourceJarPath>ls,gs</resourceJarPath>
+          <resourceJarPath>.</resourceJarPath>
           <localFileFirst>${localFileFirst}</localFileFirst>
         </configuration>
         <dependencies>

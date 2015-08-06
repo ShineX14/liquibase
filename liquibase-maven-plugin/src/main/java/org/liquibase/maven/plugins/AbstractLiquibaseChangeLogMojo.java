@@ -142,7 +142,7 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
     return cachedFileOpener;
   }
 
-  private static final String[] RESOURCE_FILE_EXT = new String[] { "jar", "zip" };
+  private static final String[] RESOURCE_FILE_EXT = new String[] { "zip" };
 
   private ResourceAccessor getResourceJarsLoader() throws MalformedURLException {
     List<URL> urls = new ArrayList<URL>();
@@ -155,6 +155,7 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
         if (!f.exists()) {
           throw new IllegalArgumentException(jars[i] + " not found");
         }
+        f = f.getCanonicalFile();
         addResourceJar(f, urls);
       }
       getLog().info("");
