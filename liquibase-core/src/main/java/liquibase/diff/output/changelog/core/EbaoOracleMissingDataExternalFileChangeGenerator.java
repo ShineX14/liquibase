@@ -39,6 +39,7 @@ import liquibase.change.core.LoadUpdateDataChange;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.IncludedFile;
 import liquibase.database.Database;
+import liquibase.database.core.OracleDatabase;
 import liquibase.database.core.PostgresDatabase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.diff.output.ChangeSetToChangeLog;
@@ -80,7 +81,11 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
 
     @Override
     public int getPriority(Class<? extends DatabaseObject> objectType, Database database) {
-        int priority = super.getPriority(objectType, database);
+    	if (!(database instanceof OracleDatabase)) {
+    		return PRIORITY_NONE;
+    	}
+
+    	int priority = super.getPriority(objectType, database);
         if (PRIORITY_NONE != priority) {
             priority = priority + 1;
         }

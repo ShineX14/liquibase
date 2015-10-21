@@ -626,7 +626,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 List<CachedRow> crs = (List<CachedRow>) oos.readObject();
                 return crs;
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Error in loading " + f.getPath() + ", run 'mvn clean' please.", e);
             } finally {
                 try {
                     oos.close();
