@@ -809,6 +809,7 @@ public class Liquibase {
         LockServiceFactory.getInstance().resetAll();
         ChangeLogHistoryServiceFactory.getInstance().resetAll();
         ExecutorService.getInstance().reset();
+        SnapshotGeneratorFactory.reset();
     }
 
     /**

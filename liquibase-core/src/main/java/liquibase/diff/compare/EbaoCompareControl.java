@@ -1,6 +1,9 @@
 package liquibase.diff.compare;
 
+import java.util.Set;
+
 import liquibase.diff.output.EbaoDiffOutputControl;
+import liquibase.structure.DatabaseObject;
 
 public class EbaoCompareControl extends CompareControl {
 
@@ -10,9 +13,13 @@ public class EbaoCompareControl extends CompareControl {
         super(schemaComparison, compareTypes);
         this.diffOutputControl = diffOutputControl;
     };
-    
+
     public boolean isSkipped(String name) {
-        return diffOutputControl.isSkipped(name);
+        return diffOutputControl != null ? diffOutputControl.isSkipped(name) : false;
+    }
+    
+    public EbaoCompareControl(Set<Class<? extends DatabaseObject>> compareTypes) {
+    	super(compareTypes);
     }
     
 }
