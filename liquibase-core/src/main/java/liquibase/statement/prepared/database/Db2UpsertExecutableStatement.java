@@ -85,8 +85,8 @@ public class Db2UpsertExecutableStatement extends AbstractPreparedStatement {
 		deleteLastSeperator(insertValueSql);
 		deleteLastSeperator(updateSql);
 
-		StringBuilder mergeSql = new StringBuilder("merge ");
-		mergeSql.append(tableName).append(" t ");
+		StringBuilder mergeSql = new StringBuilder();
+		mergeSql.append("merge " + tableName + " t ");
 		mergeSql.append("using (table(values(").append(columnValueSql)
 				.append("))) as s(").append(columnSql).append(")");
 		String onClause = getPrimaryKeyClause(change.getPrimaryKey(), "s", "t");

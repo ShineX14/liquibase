@@ -8,6 +8,7 @@ import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.exception.ChangeLogParseException;
 import liquibase.logging.LogFactory;
+import liquibase.logging.Logger;
 import liquibase.parser.ChangeLogParser;
 import liquibase.precondition.core.PreconditionContainer;
 import liquibase.precondition.core.SqlPrecondition;
@@ -21,6 +22,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class FormattedSqlChangeLogParser implements ChangeLogParser {
+
+	private Logger logger=LogFactory.getInstance().getLog();
 
     @Override
     public boolean supports(String changeLogFile, ResourceAccessor resourceAccessor) {
@@ -78,6 +81,7 @@ public class FormattedSqlChangeLogParser implements ChangeLogParser {
             ChangeSet changeSet = null;
             RawSQLChange change = null;
             Pattern changeSetPattern = Pattern.compile("\\-\\-[\\s]*changeset\\s+([^:]+):(\\S+).*", Pattern.CASE_INSENSITIVE);
+            Pattern changeSetKeyWordPattern = Pattern.compile("\\-\\-[\\s]*changeset\\s+.*", Pattern.CASE_INSENSITIVE);
             Pattern rollbackPattern = Pattern.compile("\\s*\\-\\-[\\s]*rollback (.*)", Pattern.CASE_INSENSITIVE);
             Pattern preconditionsPattern = Pattern.compile("\\s*\\-\\-[\\s]*preconditions(.*)", Pattern.CASE_INSENSITIVE);
             Pattern preconditionPattern = Pattern.compile("\\s*\\-\\-[\\s]*precondition\\-([a-zA-Z0-9-]+) (.*)", Pattern.CASE_INSENSITIVE);
@@ -161,6 +165,12 @@ public class FormattedSqlChangeLogParser implements ChangeLogParser {
                     currentSql = new StringBuffer();
                     currentRollbackSql = new StringBuffer();
                 } else {
+                	Matcher matcher = changeSetKeyWordPattern.matcher(line);
+                	if (matcher.matches()) {
+                		String error = "Invalid author:id in changeset: " + line;
+                		logger.severe(error);
+						throw new ChangeLogParseException(error);
+                	}
                     if (changeSet != null) {
                         Matcher commentMatcher = commentPattern.matcher(line);
                         Matcher rollbackMatcher = rollbackPattern.matcher(line);

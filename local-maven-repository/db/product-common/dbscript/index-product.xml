@@ -6,5 +6,6 @@
   <changeSet author="generated" id="test" runOnChange="true">
     <sqlFile path="test.sql"/>
   </changeSet>
+  <include file="index.sql"/>
   
 </databaseChangeLog>
