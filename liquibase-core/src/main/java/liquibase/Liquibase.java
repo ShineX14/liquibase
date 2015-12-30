@@ -215,14 +215,17 @@ public class Liquibase {
             DatabaseChangeLog changeLog = getDatabaseChangeLog();
             checkLiquibaseTables(false, null, null, null);
 
+            UpdateVisitor visitor = createUpdateVisitor();
+    		ChangeSetFilter[] filter = getStandardChangeSetFilter(contexts, labelExpression);
+    		run(changeLog, contexts, labelExpression, visitor, filter);
             if (changeLogFileBefore != null && !"".equals(changeLogFileBefore)) {
                 DatabaseChangeLog changeLogBefore = getDatabaseChangeLogBefore();
-                _update(changeLogBefore, contexts, labelExpression);
+                run(changeLogBefore, contexts, labelExpression, visitor, filter);
             }
-            _update(changeLog, contexts, labelExpression);
+            run(changeLog, contexts, labelExpression, visitor, filter);
             if (changeLogFileAfter != null && !"".equals(changeLogFileAfter)) {
                 DatabaseChangeLog changeLogAfter = getDatabaseChangeLogAfter();
-                _update(changeLogAfter, contexts, labelExpression);
+                run(changeLogAfter, contexts, labelExpression, visitor, filter);
             }
         } finally {
             database.setObjectQuotingStrategy(ObjectQuotingStrategy.LEGACY);
@@ -235,14 +238,22 @@ public class Liquibase {
         }
     }
 
-    private void _update(DatabaseChangeLog changeLog, Contexts contexts, LabelExpression labelExpression) throws LiquibaseException, DatabaseException {
-        _update(changeLog, contexts, labelExpression, getStandardChangeSetFilter(contexts, labelExpression));
-    }
-    
-    public void _update(DatabaseChangeLog changeLog, Contexts contexts, LabelExpression labelExpression, ChangeSetFilter[] changeSetFilters) throws LiquibaseException, DatabaseException {
+    public void run(DatabaseChangeLog changeLog, Contexts contexts, LabelExpression labelExpression, ChangeSetVisitor visitor, ChangeSetFilter[] changeSetFilters) throws LiquibaseException, DatabaseException {
         upgradeChecksums(changeLog, contexts, labelExpression);
 
-        try {
+        validate(changeLog, contexts, labelExpression, visitor);
+
+        ChangeLogIterator changeLogIterator = getChangelogIterator(changeLog, contexts, changeSetFilters);
+
+        changeLogIterator.run(visitor, new RuntimeEnvironment(database, contexts, labelExpression));
+    }
+
+	private void validate(DatabaseChangeLog changeLog, Contexts contexts, LabelExpression labelExpression, ChangeSetVisitor visitor)
+			throws LiquibaseException, ValidationFailedException {
+		if (visitor instanceof StatusVisitor) {
+			return;
+		}
+		try {
             changeLog.validate(database, contexts, labelExpression);
         } catch (ValidationFailedException e) {
             if (changeLog instanceof IncludedDatabaseChangeLog && e.skipChangeLog()) {
@@ -251,11 +262,7 @@ public class Liquibase {
             }
             throw e;
         }
-
-        ChangeLogIterator changeLogIterator = getChangelogIterator(changeLog, contexts, changeSetFilters);
-
-        changeLogIterator.run(createUpdateVisitor(), new RuntimeEnvironment(database, contexts, labelExpression));
-    }
+	}
 
     public DatabaseChangeLog getDatabaseChangeLog() throws LiquibaseException {
         if (databaseChangeLog == null) {

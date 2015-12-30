@@ -1,8 +1,5 @@
 package com.ebao.tool.liquibase;
 
-import liquibase.Liquibase;
-import liquibase.exception.LiquibaseException;
-
 import org.liquibase.maven.plugins.LiquibaseUpdate;
 
 /**
@@ -11,7 +8,6 @@ import org.liquibase.maven.plugins.LiquibaseUpdate;
  * @goal markNextChangeSetRan
  */
 public class LiquibaseUpdateAndMarkNextChangeSetRan extends LiquibaseUpdate {
-
 	
 	@Override
 	protected void processSystemProperties() {

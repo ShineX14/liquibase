@@ -137,9 +137,13 @@ public class LiquibaseEntityResolver implements EntityResolver2 {
         return null;
     }
 
+    private static boolean isEntityResolver2Detected = false;
     @Override
     public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-        log.warning("Current XML parsers seems to not support EntityResolver2. External entities won't be correctly loaded");
+    	if (!isEntityResolver2Detected) {
+            log.warning("Current XML parsers seems to not support EntityResolver2. External entities won't be correctly loaded");
+            isEntityResolver2Detected = true;
+		}
         return tryResolveLiquibaseSchema(systemId, publicId);
     }
 

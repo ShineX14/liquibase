@@ -61,7 +61,7 @@ public class IncludedChangeLogIterator extends ChangeLogIterator {
         runnableChangeLog.setLogicalFilePath(includedChangeLog.getLogicalFilePath());
    		liquibase.getIncludedDatabaseChangeLog(runnableChangeLog);
         
-        liquibase._update(runnableChangeLog, env.getContexts(), env.getLabels(), changeSetFilters);
+        liquibase.run(runnableChangeLog, env.getContexts(), env.getLabels(), visitor, changeSetFilters);
     }
 
 }
