@@ -10,6 +10,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import liquibase.Liquibase;
 import liquibase.database.Database;
+import liquibase.diff.output.DataInterceptor;
 import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.exception.DatabaseException;
@@ -107,6 +108,11 @@ public class LiquibaseGenerateChangeLogMojo extends
   protected String diffParameter;
 
   /**
+   * @parameter expression="${liquibase.userColumnPropertyFile}" default-value="liquibase/diff/output/ls.properties"
+   */
+  protected String userColumnPropertyFile;
+
+  /**
    * @parameter expression="${liquibase.insertUpdate}" default-value="false"
    */
   protected boolean insertUpdate = false;
@@ -129,6 +135,13 @@ public class LiquibaseGenerateChangeLogMojo extends
         getLog().info("Generating Change Log from database " + database.toString());
         try {
             DiffOutputControl diffOutputControl = loadDiffProperty(liquibase);
+            try {
+                ResourceAccessor fo = getFileOpener(getMavenArtifactClassLoader());
+                InputStream in = StreamUtil.singleInputStream(userColumnPropertyFile, fo);
+                DataInterceptor.initUserColumnProperty(in);
+            } catch (Exception e) {
+                throw new IllegalArgumentException(userColumnPropertyFile, e);
+            }
             CommandLineUtils.doGenerateChangeLog(outputChangeLogFile, database, defaultCatalogName, defaultSchemaName, StringUtils.trimToNull(diffTypes),
                     StringUtils.trimToNull(changeSetAuthor), StringUtils.trimToNull(changeSetContext), StringUtils.trimToNull(dataDir), diffOutputControl);
             getLog().info("Output written to Change Log file, " + outputChangeLogFile);
@@ -232,6 +245,7 @@ public class LiquibaseGenerateChangeLogMojo extends
         if (dataDir != null) {
         	getLog().info(indent + "dataDir: " + dataDir);
 		}
+        getLog().info(indent + "diffUserColumnPropertyFile: " + userColumnPropertyFile);
 	}
 
 }

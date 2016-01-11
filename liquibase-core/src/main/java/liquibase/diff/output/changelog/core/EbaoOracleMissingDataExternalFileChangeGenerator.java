@@ -265,7 +265,7 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
         for (Column column : table.getColumns()) {
             columnNames.add(column.getName());
         }
-        updateUserId(rs, columnNames);
+        updateUserId(table.getName(), columnNames, rs);
 
         String id = table.getName() + ".DATA";
         ChangeSet changeSet = ChangeSetUtils.generateChangeSet(id);
@@ -468,14 +468,15 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
         return change;
     }
 
-    private void updateUserId(List<Map<String, Object>> rs, List<String> columnNames) {
+    private void updateUserId(String tableName, List<String> columnNames, List<Map<String, Object>> rs) {
         for (String column : columnNames) {
             String key = column.toUpperCase();
-            if (DataInterceptor.getUserIdColumnNames().contains(key)) {
-                for (Map row : rs) {
+            Long userIdValue = DataInterceptor.getUserIdColumnValue(tableName, column);
+			if (userIdValue != null) {
+                for (Map<String, Object> row : rs) {
                     Object value = row.get(key);
                     if (value != null && value instanceof Number) {
-                        row.put(key, 401L);
+                        row.put(key, userIdValue);
                     }
                 }
             }

@@ -2,32 +2,54 @@ package liquibase.diff.output;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class DataInterceptor {
 
-  private static List<String> userIdColumnNames;
+	private static Map<String, Long> userIdColumns;
+	private static Map<String, Map<String, Long>> userIdTableColumns;
 
-  public static List<String> getUserIdColumnNames() {
-    if (userIdColumnNames == null) {
-      userIdColumnNames = new ArrayList<String>();
-      try {
-        InputStream in = DataInterceptor.class.getResourceAsStream("ls.properties");
-        if (in == null) {
-          throw new RuntimeException("ls.properties not found in " + DataInterceptor.class.getPackage());
-        }
-        Properties props = new Properties();
-        props.load(in);
-        for (Object key : props.keySet()) {
-          userIdColumnNames.add((String) key);
-        }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return userIdColumnNames;
-  }
+	public static void initUserColumnProperty(InputStream in) throws IOException {
+		if (userIdColumns == null) {
+			userIdColumns = new HashMap<String, Long>();
+			userIdTableColumns = new HashMap<String, Map<String, Long>>();
+			
+			Properties props = new Properties();
+			props.load(in);
+			for (Object key : props.keySet()) {
+				String name = (String) key;
+				Long value = Long.parseLong(props.getProperty(name));
+				String[] names = name.toUpperCase().split("\\.");
+				if (names.length == 1) {
+					userIdColumns.put(name.toUpperCase(), value);
+				} else if (names.length == 2) {
+					Map<String, Long> map = userIdTableColumns.get(names[0]);
+					if (map == null) {
+						map = new HashMap<String, Long>();
+						userIdTableColumns.put(names[0], map);
+					}
+					Long put = map.put(names[1], value);
+					if (put != null) {
+						throw new IllegalArgumentException("Duplicated column found: " + names[0] + "." + names[1]);
+					}
+				} else {
+					throw new IllegalArgumentException(name);
+				}
+			}
+		}
+	}
+
+	public static Long getUserIdColumnValue(String tableName, String columnName) {
+		Map<String, Long> map = userIdTableColumns.get(tableName);
+		if (map != null) {
+			Long value = map.get(columnName);
+			if (value != null) {
+				return value;
+			}
+		}
+		return userIdColumns.get(columnName);
+	}
 
 }
