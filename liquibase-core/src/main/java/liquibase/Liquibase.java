@@ -217,7 +217,6 @@ public class Liquibase {
 
             UpdateVisitor visitor = createUpdateVisitor();
     		ChangeSetFilter[] filter = getStandardChangeSetFilter(contexts, labelExpression);
-    		run(changeLog, contexts, labelExpression, visitor, filter);
             if (changeLogFileBefore != null && !"".equals(changeLogFileBefore)) {
                 DatabaseChangeLog changeLogBefore = getDatabaseChangeLogBefore();
                 run(changeLogBefore, contexts, labelExpression, visitor, filter);

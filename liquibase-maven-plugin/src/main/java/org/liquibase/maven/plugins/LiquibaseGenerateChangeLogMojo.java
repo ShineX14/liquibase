@@ -245,7 +245,7 @@ public class LiquibaseGenerateChangeLogMojo extends
         if (dataDir != null) {
         	getLog().info(indent + "dataDir: " + dataDir);
 		}
-        getLog().info(indent + "diffUserColumnPropertyFile: " + userColumnPropertyFile);
+        getLog().info(indent + "userColumnPropertyFile: " + userColumnPropertyFile);
 	}
 
 }
