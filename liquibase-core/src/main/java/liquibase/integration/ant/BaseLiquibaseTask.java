@@ -1,17 +1,26 @@
 package liquibase.integration.ant;
 
-import liquibase.Liquibase;
-import liquibase.configuration.LiquibaseConfiguration;
-import liquibase.configuration.GlobalConfiguration;
-import liquibase.database.Database;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.exception.DatabaseException;
-import liquibase.logging.LogFactory;
-import liquibase.logging.Logger;
-import liquibase.resource.CompositeResourceAccessor;
-import liquibase.resource.FileSystemResourceAccessor;
-import liquibase.resource.ResourceAccessor;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.io.Writer;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+
 import org.apache.tools.ant.AntClassLoader;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -19,17 +28,21 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.types.Path;
 import org.apache.tools.ant.types.Reference;
 
-import java.io.*;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.sql.Connection;
-import java.sql.Driver;
-import java.util.*;
-import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.LogRecord;
+import liquibase.Liquibase;
+import liquibase.configuration.GlobalConfiguration;
+import liquibase.configuration.LiquibaseConfiguration;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.DatabaseException;
+import liquibase.logging.LogFactory;
+import liquibase.logging.Logger;
+import liquibase.logging.core.StringBufferLogger;
+import liquibase.parser.core.xml.XMLIncludedChangeLogSAXParser;
+import liquibase.resource.CompositeResourceAccessor;
+import liquibase.resource.FileSystemResourceAccessor;
+import liquibase.resource.ResourceAccessor;
+import liquibase.util.StreamUtil;
 
 /**
  * Base class for all Ant Liquibase tasks.  This class sets up Liquibase and defines parameters
@@ -37,6 +50,8 @@ import java.util.logging.LogRecord;
  */
 public abstract class BaseLiquibaseTask extends Task {
     private String changeLogFile;
+    private String databasePropertyFile;
+    private String databasePropertyPrefix;
     private String driver;
     private String url;
     private String username;
@@ -56,7 +71,7 @@ public abstract class BaseLiquibaseTask extends Task {
     private boolean outputDefaultSchema = true; // Default based on setting in AbstractJdbcDatabase
     private boolean outputDefaultCatalog = true;
 
-
+    private Logger logger = LogFactory.getInstance().getLog();
     private Map<String, Object> changeLogProperties = new HashMap<String, Object>();
 
     public BaseLiquibaseTask() {
@@ -73,13 +88,56 @@ public abstract class BaseLiquibaseTask extends Task {
         loader.setThreadContextLoader();
 
         try {
+        	initDatabasePropertyFile();
             executeWithLiquibaseClassloader();
         } finally {
             loader.resetThreadContextLoader();
         }
     }
 
-    protected abstract void executeWithLiquibaseClassloader() throws BuildException;
+    private void initDatabasePropertyFile() {
+    	if (getDatabasePropertyFile() == null) {
+			return;
+		}
+		
+    	try {
+    		logger.info("database property file: " + databasePropertyFile);
+			InputStream is = StreamUtil.singleInputStream(databasePropertyFile, createResourceAccesor());
+			if (is == null) {
+				throw new IllegalArgumentException(databasePropertyFile + " not found");
+			}
+			Properties p = new Properties();
+			p.load(is);
+			String prefix = "";
+			if (databasePropertyPrefix != null) {
+				prefix = databasePropertyPrefix;
+				logger.info("database property prefix: " + databasePropertyPrefix);
+			}
+			this.driver = getPropertyValue(p, prefix + "jdbc.driverClass");
+			this.url = getPropertyValue(p, prefix + "jdbc.url");
+			this.username = getPropertyValue(p, prefix + "jdbc.username");
+			this.password = getPropertyValue(p, prefix + "jdbc.password");
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+    	
+        Liquibase.setRelativeToChangelogFile();
+        Liquibase.setBatchUpdate();
+        Liquibase.setPreparedStatementPreferred();
+        XMLIncludedChangeLogSAXParser.setHighPriority();
+        StreamUtil.setDefaultEncoding("UTF-8");
+        //StringBufferLogger.enable();
+	}
+
+	private String getPropertyValue(Properties p, String key) {
+		String v = p.getProperty(key);
+		if (v.startsWith("${") && v.endsWith("}")) {
+			v = p.getProperty(key.substring(2, key.length() - 1));
+		}
+		return v;
+	}
+
+	protected abstract void executeWithLiquibaseClassloader() throws BuildException;
 
     public boolean isPromptOnNonLocalDatabase() {
         return promptOnNonLocalDatabase;
@@ -89,7 +147,23 @@ public abstract class BaseLiquibaseTask extends Task {
         this.promptOnNonLocalDatabase = promptOnNonLocalDatabase;
     }
 
-    public String getDriver() {
+    public String getDatabasePropertyFile() {
+		return databasePropertyFile;
+	}
+
+	public void setDatabasePropertyFile(String databasePropertyFile) {
+		this.databasePropertyFile = databasePropertyFile;
+	}
+
+	public String getDatabasePropertyPrefix() {
+		return databasePropertyPrefix;
+	}
+
+	public void setDatabasePropertyPrefix(String databasePropertyPrefix) {
+		this.databasePropertyPrefix = databasePropertyPrefix;
+	}
+
+	public String getDriver() {
         return driver;
     }
 
@@ -191,8 +265,7 @@ public abstract class BaseLiquibaseTask extends Task {
     }
 
     protected Liquibase createLiquibase() throws Exception {
-        ResourceAccessor antFO = new AntResourceAccessor(getProject(), classpath);
-        ResourceAccessor fsFO = new FileSystemResourceAccessor();
+        CompositeResourceAccessor resourceAccessor = createResourceAccesor();
 
         Database database = createDatabaseObject(getDriver(), getUrl(), getUsername(), getPassword(), getDefaultCatalogName(), getDefaultSchemaName(), getDatabaseClass());
 
@@ -200,7 +273,7 @@ public abstract class BaseLiquibaseTask extends Task {
         if (getChangeLogFile() != null) {
             changeLogFile = getChangeLogFile().trim();
         }
-        Liquibase liquibase = new Liquibase(changeLogFile, new CompositeResourceAccessor(antFO, fsFO), database);
+		Liquibase liquibase = new Liquibase(changeLogFile, resourceAccessor, database);
         liquibase.setCurrentDateTimeFunction(currentDateTimeFunction);
         for (Map.Entry<String, Object> entry : changeLogProperties.entrySet()) {
             liquibase.setChangeLogParameter(entry.getKey(), entry.getValue());
@@ -209,6 +282,13 @@ public abstract class BaseLiquibaseTask extends Task {
         return liquibase;
     }
 
+	private CompositeResourceAccessor createResourceAccesor() {
+		ResourceAccessor antFO = new AntResourceAccessor(getProject(), classpath);
+        ResourceAccessor fsFO = new FileSystemResourceAccessor();
+        CompositeResourceAccessor resourceAccessor = new CompositeResourceAccessor(fsFO, antFO);
+		return resourceAccessor;
+	}
+
     protected Database createDatabaseObject(String driverClassName,
                                             String databaseUrl,
                                             String username,
@@ -216,13 +296,15 @@ public abstract class BaseLiquibaseTask extends Task {
                                             String defaultCatalogName,
                                             String defaultSchemaName,
                                             String databaseClass) throws Exception {
-        String[] strings = classpath.list();
 
         final List<URL> taskClassPath = new ArrayList<URL>();
-        for (String string : strings) {
-            URL url = new File(string).toURL();
-            taskClassPath.add(url);
-        }
+        if (classpath != null) {
+            String[] strings = classpath.list();
+            for (String string : strings) {
+                URL url = new File(string).toURL();
+                taskClassPath.add(url);
+            }
+		}
 
         URLClassLoader loader = AccessController.doPrivileged(new PrivilegedAction<URLClassLoader>() {
             @Override
@@ -259,6 +341,10 @@ public abstract class BaseLiquibaseTask extends Task {
         if (password != null) {
             info.put("password", password);
         }
+        logger.info("driverClass: "  + driverClassName);
+        logger.info("url: "  + databaseUrl);
+        logger.info("username: "  + username);
+        logger.info("password: ***");
         Connection connection = driver.connect(databaseUrl, info);
 
         if (connection == null) {
