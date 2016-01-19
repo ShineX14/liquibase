@@ -75,9 +75,10 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
   protected String resourceJarPath;
 
   /**
-   * @parameter expression="${liquibase.localFileFirst}" default-value="false"
+   * @parameter expression="${liquibase.localFileFirst}"
    */
-  protected boolean localFileFirst = false;
+  @Deprecated
+  protected boolean localFileFirst;
   
   @Override
   protected void checkRequiredParametersAreSpecified() throws MojoFailureException {
@@ -114,9 +115,6 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
     if (labels != null && labels.length() > 0) {
         getLog().info(indent + "label(s): " + labels);
     }
-    if (localFileFirst) {
-        getLog().info(indent + "localFileFirst: " + localFileFirst);
-    }
   }
 
   private ResourceAccessor cachedFileOpener;
@@ -131,11 +129,7 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
     ResourceAccessor fsFO = new FileSystemResourceAccessor(project.getBasedir().getAbsolutePath());
     //return new CompositeResourceAccessor(mFO, fsFO);
     try {
-        if (localFileFirst) {
-            cachedFileOpener = new CompositeResourceAccessor(getResourceJarsLoader(), fsFO, mFO);
-        } else {
-            cachedFileOpener = new CompositeResourceAccessor(getResourceJarsLoader(), mFO, fsFO);
-        }
+        cachedFileOpener = new CompositeResourceAccessor(getResourceJarsLoader(), fsFO, mFO);
     } catch (MalformedURLException e) {
         throw new IllegalArgumentException(e);
     }

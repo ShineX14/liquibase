@@ -33,6 +33,18 @@ public class CompositeResourceAccessor implements ResourceAccessor {
         return null;
     }
 
+	@Override
+	public InputStream getSingleResourceAsStream(String path) throws IOException {
+		InputStream is = null;
+        for (ResourceAccessor accessor : resourceAccessors) {
+            is = accessor.getSingleResourceAsStream(path);
+            if (is != null) {
+				return is;
+			}
+        }
+        return is;
+	}
+    
     @Override
     public Set<String> list(String relativeTo, String path, boolean includeFiles, boolean includeDirectories, boolean recursive) throws IOException {
         for (ResourceAccessor accessor : resourceAccessors) {

@@ -6,6 +6,7 @@ import liquibase.util.SystemUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -131,5 +132,18 @@ public abstract class AbstractResourceAccessor implements ResourceAccessor {
         }
     }
 
+	@Override
+	public InputStream getSingleResourceAsStream(String path) throws IOException {
+		Set<InputStream> set = getResourcesAsStream(path);
+		if (set == null || set.size() == 0) {
+			return null;
+		} else if (set.size() > 1) {
+			for (InputStream is : set) {
+				is.close();
+			}
+			throw new IllegalArgumentException(set.size() + " resources are found for " + path);
+		}
+		return set.iterator().next();
+	}
 
 }

@@ -29,14 +29,13 @@ public class ClassLoaderResourceAccessor extends AbstractResourceAccessor {
         init(); //init needs to be called after classloader is set
     }
 
-    @Override
-    public Set<InputStream> getResourcesAsStream(String path) throws IOException {
+    private Set<InputStream> getResourcesAsStream(String path, boolean single) throws IOException {
         Enumeration<URL> resources = classLoader.getResources(path);
         if (resources == null || !resources.hasMoreElements()) {
             return null;
         }
-        Set<String> seenUrls = new HashSet<String>();
-        Set<InputStream> returnSet = new HashSet<InputStream>();
+        List<String> seenUrls = new ArrayList<String>();
+        List<InputStream> returnSet = new ArrayList<InputStream>();
         while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
             if (seenUrls.contains(url.toExternalForm())) {
@@ -44,16 +43,49 @@ public class ClassLoaderResourceAccessor extends AbstractResourceAccessor {
             }
             seenUrls.add(url.toExternalForm());
             InputStream resourceAsStream = url.openStream();
-            if (resourceAsStream != null) {
-                returnSet.add(resourceAsStream);
+            if (resourceAsStream == null) {
+            	throw new IllegalArgumentException(url.toExternalForm());
             }
+            returnSet.add(resourceAsStream);
         }
 
         if (seenUrls.size() > 1 && !"META-INF/MANIFEST.MF".equals(path)) {
             logger.warning(seenUrls.toString());
         }
-        return returnSet;
+        Set<InputStream> set = new HashSet<InputStream>();
+        if (single && returnSet.size() > 1) {
+        	if (returnSet.size() > 2) {
+				throw new IllegalArgumentException(returnSet.size() + " resources are found for " +  path);
+			}
+        	
+        	String url1 = seenUrls.get(0);
+        	String url2 = seenUrls.get(1);
+        	if (url1.startsWith("file:") && url2.startsWith("jar:")) {
+				set.add(returnSet.get(0));
+			} else {
+        	    throw new IllegalArgumentException(returnSet.size() + " resources are found for " +  path);
+			}
+		} else {
+            set.addAll(returnSet);
+		}
+        return set;
     }
+
+    @Override
+    public Set<InputStream> getResourcesAsStream(String path) throws IOException {
+    	return getResourcesAsStream(path, false);
+    }
+    
+	@Override
+	public InputStream getSingleResourceAsStream(String path) throws IOException {
+		Set<InputStream> set = getResourcesAsStream(path, true);
+		if (set == null || set.size() == 0) {
+			return null;
+		} else if (set.size() > 1) {
+			throw new IllegalArgumentException(set.size() + " resources are found for " + path);
+		}
+		return set.iterator().next();
+	}
 
     @Override
     public Set<String> list(String relativeTo, String path, boolean includeFiles, boolean includeDirectories, boolean recursive) throws IOException {

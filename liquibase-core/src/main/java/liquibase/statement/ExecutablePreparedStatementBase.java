@@ -242,22 +242,11 @@ public abstract class ExecutablePreparedStatementBase implements ExecutablePrepa
 	}
 	
 	private InputStream getResourceAsStream(String valueLobFile) throws IOException {
-		String fileName = getFileName(valueLobFile);
-        Set<InputStream> streams = this.resourceAccessor.getResourcesAsStream(fileName);
-        if (streams == null || streams.size() == 0) {
-            return null;
-        }
-        if (streams.size() > 1) {
-            for (InputStream stream : streams) {
-                stream.close();
-            }
-
-            throw new IOException(streams.size()+ " matched "+valueLobFile);
-        }
-        return streams.iterator().next();
+		String filePath = getFilePath(valueLobFile);
+        return StreamUtil.singleInputStream(filePath, resourceAccessor);
 	}
 
-	private String getFileName(String fileName) {
+	private String getFilePath(String fileName) {
 		//  Most of this method were copy-pasted from XMLChangeLogSAXHandler#handleIncludedChangeLog()
 		
 		String relativeBaseFileName = changeSet.getChangeLog().getPhysicalFilePath();

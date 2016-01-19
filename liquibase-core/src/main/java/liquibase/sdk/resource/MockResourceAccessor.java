@@ -33,6 +33,17 @@ public class MockResourceAccessor implements ResourceAccessor {
         }
     }
 
+	@Override
+	public InputStream getSingleResourceAsStream(String path) throws IOException {
+		Set<InputStream> set = getResourcesAsStream(path);
+		if (set == null || set.size() == 0) {
+			return null;
+		} else if (set.size() > 1) {
+			throw new IllegalArgumentException(set.size() + " resources are found for " + path);
+		}
+		return set.iterator().next();
+	}
+
     @Override
     public Set<String> list(String relativeTo, String path, boolean includeFiles, boolean includeDirectories, boolean recursive) throws IOException {
         Set<String> returnSet = new HashSet<String>();

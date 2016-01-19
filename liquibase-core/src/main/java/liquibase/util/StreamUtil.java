@@ -191,18 +191,7 @@ public class StreamUtil {
     }
 
     public static InputStream singleInputStream(String path, ResourceAccessor resourceAccessor) throws IOException {
-        Set<InputStream> streams = resourceAccessor.getResourcesAsStream(path);
-        if (streams == null || streams.size() == 0) {
-            return null;
-        }
-        if (streams.size() != 1) {
-            for (InputStream stream : streams) {
-                stream.close();
-            }
-            throw new IOException("Found "+streams.size()+" files that match "+path);
-        }
-
-        return streams.iterator().next();
+        return resourceAccessor.getSingleResourceAsStream(path);
     }
 
     /**
