@@ -6,6 +6,12 @@
   <changeSet author="generated" id="test" runOnChange="true">
     <sqlFile path="test.sql"/>
   </changeSet>
+  <changeSet author="generated" id="test-set-prompt" runOnChange="true">
+    <sqlFile path="test-set-prompt.sql"/>
+  </changeSet>
+  <changeSet author="generated" id="test-stored-procedure" runOnChange="true">
+    <sqlFile path="test-stored-procedure.sql"/>
+  </changeSet>
   <include file="index.sql"/>
   
 </databaseChangeLog>

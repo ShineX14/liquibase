@@ -23,13 +23,14 @@ public class RawSqlGeneratorOracle extends RawSqlGenerator {
     return database instanceof OracleDatabase;
   }
 
+  private static final String[] PROMPT_KEYS = new String[] {"prompt ", "PROMPT ", "set define off", "set feedback off"};
   private static final String[] EXEC_KEYS = new String[] {"exec ", "EXEC ", "execute ", "EXECUTE "};
   
   @Override
   public Sql[] generateSql(RawSqlStatement statement, Database database,
       SqlGeneratorChain sqlGeneratorChain) {
     String sql = statement.getSql();
-    while (sql.startsWith("prompt ") || sql.startsWith("PROMPT ")) {
+    while (isPromptStatement(sql)) {
       int index = sql.indexOf("\n");
       if (index < 0) {
         logger.info(sql);
@@ -52,4 +53,14 @@ public class RawSqlGeneratorOracle extends RawSqlGenerator {
 
     return new Sql[] { new UnparsedSql(sql, statement.getEndDelimiter()) };
   }
+
+  private boolean isPromptStatement(String sql) {
+    for (String key : PROMPT_KEYS) {
+	  if (sql.startsWith(key)) {
+		return true;
+      }
+	}
+    return false;
+  }
+
 }
