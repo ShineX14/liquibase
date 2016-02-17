@@ -568,16 +568,16 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             String key = (String) it.next();
             String value = (String) props.get(key);
             try {
-                if ("DRIVER_CLASS".equals(key)) {
+                if ("DRIVER_CLASS".equals(key) || "jdbc.driver".equals(key)) {
                     key = "driver";
                 }
-                if ("NON_POOL_DB_URL".equals(key)) {
+                if ("NON_POOL_DB_URL".equals(key) || "jdbc.url".equals(key)) {
                     key = "url";
                 }
-                if ("NON_POOL_DB_USERNAME".equals(key)) {
+                if ("NON_POOL_DB_USERNAME".equals(key) || "jdbc.username".equals(key)) {
                     key = "username";
                 }
-                if ("NON_POOL_DB_PASSWORD".equals(key)) {
+                if ("NON_POOL_DB_PASSWORD".equals(key) || "jdbc.password".equals(key)) {
                     key = "password";
                 }
                 if (prefix != null) {

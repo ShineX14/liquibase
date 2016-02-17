@@ -62,6 +62,8 @@ public class ClassLoaderResourceAccessor extends AbstractResourceAccessor {
         	String url2 = seenUrls.get(1);
         	if (url1.startsWith("file:") && url2.startsWith("jar:")) {
 				set.add(returnSet.get(0));
+        	} else if (url1.startsWith("jar:") && url2.startsWith("file:")) {
+				set.add(returnSet.get(1));
 			} else {
         	    throw new IllegalArgumentException(returnSet.size() + " resources are found for " +  path);
 			}

@@ -37,7 +37,6 @@ import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
 import liquibase.logging.LogFactory;
 import liquibase.logging.Logger;
-import liquibase.logging.core.StringBufferLogger;
 import liquibase.parser.core.xml.XMLIncludedChangeLogSAXParser;
 import liquibase.resource.CompositeResourceAccessor;
 import liquibase.resource.FileSystemResourceAccessor;
@@ -51,7 +50,6 @@ import liquibase.util.StreamUtil;
 public abstract class BaseLiquibaseTask extends Task {
     private String changeLogFile;
     private String databasePropertyFile;
-    private String databasePropertyPrefix;
     private String driver;
     private String url;
     private String username;
@@ -108,15 +106,10 @@ public abstract class BaseLiquibaseTask extends Task {
 			}
 			Properties p = new Properties();
 			p.load(is);
-			String prefix = "";
-			if (databasePropertyPrefix != null) {
-				prefix = databasePropertyPrefix;
-				logger.info("database property prefix: " + databasePropertyPrefix);
-			}
-			this.driver = getPropertyValue(p, prefix + "jdbc.driverClass");
-			this.url = getPropertyValue(p, prefix + "jdbc.url");
-			this.username = getPropertyValue(p, prefix + "jdbc.username");
-			this.password = getPropertyValue(p, prefix + "jdbc.password");
+			this.driver = p.getProperty("jdbc.driver");
+			this.url = p.getProperty("jdbc.url");
+			this.username = p.getProperty("jdbc.username");
+			this.password = p.getProperty("jdbc.password");
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -127,14 +120,6 @@ public abstract class BaseLiquibaseTask extends Task {
         XMLIncludedChangeLogSAXParser.setHighPriority();
         StreamUtil.setDefaultEncoding("UTF-8");
         //StringBufferLogger.enable();
-	}
-
-	private String getPropertyValue(Properties p, String key) {
-		String v = p.getProperty(key);
-		if (v.startsWith("${") && v.endsWith("}")) {
-			v = p.getProperty(key.substring(2, key.length() - 1));
-		}
-		return v;
 	}
 
 	protected abstract void executeWithLiquibaseClassloader() throws BuildException;
@@ -153,14 +138,6 @@ public abstract class BaseLiquibaseTask extends Task {
 
 	public void setDatabasePropertyFile(String databasePropertyFile) {
 		this.databasePropertyFile = databasePropertyFile;
-	}
-
-	public String getDatabasePropertyPrefix() {
-		return databasePropertyPrefix;
-	}
-
-	public void setDatabasePropertyPrefix(String databasePropertyPrefix) {
-		this.databasePropertyPrefix = databasePropertyPrefix;
 	}
 
 	public String getDriver() {
@@ -341,7 +318,7 @@ public abstract class BaseLiquibaseTask extends Task {
         if (password != null) {
             info.put("password", password);
         }
-        logger.info("driverClass: "  + driverClassName);
+        logger.info("driver: "  + driverClassName);
         logger.info("url: "  + databaseUrl);
         logger.info("username: "  + username);
         logger.info("password: ***");
