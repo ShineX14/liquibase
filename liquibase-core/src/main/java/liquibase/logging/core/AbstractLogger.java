@@ -40,11 +40,16 @@ public abstract class AbstractLogger implements Logger {
     protected String buildMessage(String message) {
         StringBuilder msg = new StringBuilder();
         if(databaseChangeLog != null) {
-            msg.append(databaseChangeLog.getPhysicalFilePath()).append(": ");
+            String name = databaseChangeLog.getPhysicalFilePath();
+            if (message == null || !message.contains(name)) {
+            	msg.append(name).append(": ");
+			}
         }
         if(changeSet != null) {
-            String changeSetName = changeSet.toString(false);
-            msg.append(changeSetName.replace(changeSetName + "::", "")).append(": ");
+            String name = changeSet.toString(false);
+            if (message == null || !message.contains(name)) {
+            	msg.append(name.replace(name + "::", "")).append(": ");
+			}
         }
         msg.append(message);
         return msg.toString();
