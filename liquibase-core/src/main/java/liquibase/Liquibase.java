@@ -239,11 +239,16 @@ public class Liquibase {
 
     public void run(DatabaseChangeLog changeLog, Contexts contexts, LabelExpression labelExpression, ChangeSetVisitor visitor, ChangeSetFilter[] changeSetFilters) throws LiquibaseException, DatabaseException {
         upgradeChecksums(changeLog, contexts, labelExpression);
-
-        validate(changeLog, contexts, labelExpression, visitor);
-
+		try {
+            validate(changeLog, contexts, labelExpression, visitor);
+        } catch (ValidationFailedException e) {
+            if (changeLog instanceof IncludedDatabaseChangeLog && e.skipChangeLog()) {
+                LogFactory.getLogger().info(changeLog.getPhysicalFilePath() + " is skipped.");
+                return;
+            }
+            throw e;
+        }
         ChangeLogIterator changeLogIterator = getChangelogIterator(changeLog, contexts, changeSetFilters);
-
         changeLogIterator.run(visitor, new RuntimeEnvironment(database, contexts, labelExpression));
     }
 
@@ -252,15 +257,7 @@ public class Liquibase {
 		if (visitor instanceof StatusVisitor) {
 			return;
 		}
-		try {
-            changeLog.validate(database, contexts, labelExpression);
-        } catch (ValidationFailedException e) {
-            if (changeLog instanceof IncludedDatabaseChangeLog && e.skipChangeLog()) {
-                LogFactory.getLogger().info(changeLog.getPhysicalFilePath() + " is skipped.");
-                return;
-            }
-            throw e;
-        }
+        changeLog.validate(database, contexts, labelExpression);
 	}
 
     public DatabaseChangeLog getDatabaseChangeLog() throws LiquibaseException {

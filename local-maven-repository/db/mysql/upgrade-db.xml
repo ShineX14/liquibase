@@ -1,9 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
 
-  <include file="mysql/upgrade-db.xml"/>                   
-  <include file="product-common/index-product-common.xml"/>                   
-  
+  <preConditions onFail="CONTINUE" onFailMessage="mysql procedure">
+    <dbms type="mysql"/>
+  </preConditions>
+                   
+  <changeSet author="generated" id="test" runOnChange="true">
+    <sqlFile path="test.sql"/>
+  </changeSet>
+
 </databaseChangeLog>
