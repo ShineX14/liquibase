@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.sql.Blob;
 import java.sql.Clob;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -40,7 +39,6 @@ import liquibase.changelog.ChangeSet;
 import liquibase.changelog.IncludedFile;
 import liquibase.database.Database;
 import liquibase.database.core.OracleDatabase;
-import liquibase.database.core.PostgresDatabase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.diff.output.ChangeSetToChangeLog;
 import liquibase.diff.output.DataInterceptor;
@@ -51,12 +49,10 @@ import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.logging.LogFactory;
 import liquibase.logging.Logger;
-import liquibase.servicelocator.LiquibaseService;
 import liquibase.structure.DatabaseObject;
 import liquibase.structure.core.Column;
 import liquibase.structure.core.Data;
 import liquibase.structure.core.PrimaryKey;
-import liquibase.structure.core.Schema;
 import liquibase.structure.core.Table;
 import liquibase.util.ISODateFormat;
 import liquibase.util.csv.CSVWriter;
@@ -68,7 +64,6 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
     private static final String sqlPrefix = "select * from ( select /*+ FIRST_ROWS(n) */ a.*, ROWNUM rnum from (";
     private static final String sqlSuffix = ") a where ROWNUM <= :MAX ) where rnum  >= :MIN";
     private static final int ROWS_PER_FILE = 10000;
-    private static final int ROWS_LIMIT = 1000;
 
     private static String dataDir;
 
@@ -149,7 +144,7 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
             }
 
             logger.info("loading data of " + table + "(" + rowCount + ")");
-            if (rowCount <= ROWS_LIMIT) {
+            if (rowCount <= ((EbaoDiffOutputControl)outputControl).getXmlCsvRowLimit()) {
                 List<Map<String, Object>> rs = executeQuery(connection, sql);
                 String filename = filter.getFilename() != null ? filter.getFilename() : table.getName();
                 ChangeSet changeSet = addInsertDataChanges(outputControl, table, rs, dataDir, filter.getSubdir(), filename, false);
@@ -300,7 +295,7 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
             ParserConfigurationException {
         List<InsertDataChange> changes = new ArrayList<InsertDataChange>();
         for (Map row : rs) {
-            InsertDataChange change = newInsertDataChange(table);
+            InsertDataChange change = newInsertDataChange(table, ((EbaoDiffOutputControl)outputControl).isInsertUpdatePreferred());
             if (outputControl.getIncludeCatalog()) {
                 change.setCatalogName(table.getSchema().getCatalogName());
             }
@@ -445,7 +440,7 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
         outputFile.flush();
         outputFile.close();
 
-        LoadDataChange change = newLoadDataChange(table);
+        LoadDataChange change = newLoadDataChange(table, ((EbaoDiffOutputControl)outputControl).isInsertUpdatePreferred());
         change.setFile(fileName);
         change.setEncoding("UTF-8");
         if (outputControl.getIncludeCatalog()) {
@@ -483,8 +478,8 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
         }
     }
 
-    private InsertDataChange newInsertDataChange(Table table) {
-        if (EbaoDiffOutputControl.isInsertUpdatePreferred()) {
+    private InsertDataChange newInsertDataChange(Table table, boolean insertUpdatePreferred) {
+    	if (insertUpdatePreferred) {
             InsertUpdateDataChange change = new InsertUpdateDataChange();
             change.setPrimaryKey(table.getPrimaryKey().getColumnNames());
             return change;
@@ -493,8 +488,8 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
         }
     }
 
-    private LoadDataChange newLoadDataChange(Table table) {
-        if (EbaoDiffOutputControl.isInsertUpdatePreferred()) {
+    private LoadDataChange newLoadDataChange(Table table, boolean insertUpdatePreferred) {
+        if (insertUpdatePreferred) {
             LoadUpdateDataChange change = new LoadUpdateDataChange();
             change.setPrimaryKey(table.getPrimaryKey().getColumnNames());
             return change;

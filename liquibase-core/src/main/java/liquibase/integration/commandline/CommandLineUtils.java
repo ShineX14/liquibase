@@ -175,7 +175,7 @@ public class CommandLineUtils {
 
     public static String createParentDir(String changeLogFile) {
         if (!changeLogFile.contains("/")) {
-            return null;
+            return ".";
         }
 
         String dataDir = changeLogFile.substring(0, changeLogFile.lastIndexOf("/"));

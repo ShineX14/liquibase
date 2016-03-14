@@ -117,6 +117,11 @@ public class LiquibaseGenerateChangeLogMojo extends
    */
   protected boolean insertUpdate = false;
 
+  /**
+   * @parameter expression="${liquibase.xmlCsvRowLimit}" default-value="100"
+   */
+  protected int xmlCsvRowLimit = 100;
+  
 	@Override
 	protected void performLiquibaseTask(Liquibase liquibase)
 			throws LiquibaseException {
@@ -159,7 +164,8 @@ public class LiquibaseGenerateChangeLogMojo extends
 
         log.info("loading " + diffTypes + " from schema '" + defaultSchemaName + "'");
         EbaoDiffOutputControl diffControl = new EbaoDiffOutputControl(outputDefaultCatalog, outputDefaultSchema, true);
-        EbaoDiffOutputControl.setInsertUpdatePreferred(insertUpdate);
+        diffControl.setInsertUpdatePreferred(insertUpdate);
+        diffControl.setXmlCsvRowLimit(xmlCsvRowLimit);
         String dataDir = CommandLineUtils.createParentDir(outputChangeLogFile);
         diffControl.setDataDir(dataDir);
 
@@ -242,10 +248,12 @@ public class LiquibaseGenerateChangeLogMojo extends
 		super.printSettings(indent);
         getLog().info(indent + "defaultSchemaName: " + defaultSchemaName);
         getLog().info(indent + "diffTypes: " + diffTypes);
-        if (dataDir != null) {
-        	getLog().info(indent + "dataDir: " + dataDir);
-		}
+        getLog().info(indent + "outputChangeLogFile: " + outputChangeLogFile);
+       	getLog().info(indent + "dataDir: " + dataDir);
         getLog().info(indent + "userColumnPropertyFile: " + userColumnPropertyFile);
+        if (xmlCsvRowLimit != 1000) {
+        	getLog().info(indent + "xmlCsvRowLimit: " + xmlCsvRowLimit);
+		}
 	}
 
 }

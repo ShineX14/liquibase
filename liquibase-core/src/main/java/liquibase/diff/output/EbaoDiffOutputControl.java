@@ -11,7 +11,8 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
   private final Map<String, List<TableCondition>> diffTableMap = new LinkedHashMap<String, List<TableCondition>>();
 
   //generate change log
-  private static boolean insertUpdatePreferred = false;
+  private boolean insertUpdatePreferred = false;
+  private int xmlCsvRowLimit = 1000;
 
   //compare
   private final List<String> skippedObjects = new ArrayList<String>();
@@ -32,12 +33,20 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
         return skippedObjects.contains(name);
     }
 
-  public static boolean isInsertUpdatePreferred() {
+  public boolean isInsertUpdatePreferred() {
     return insertUpdatePreferred;
   }
 
-  public static void setInsertUpdatePreferred(boolean insertUpdatePreferred) {
-    EbaoDiffOutputControl.insertUpdatePreferred = insertUpdatePreferred;
+  public void setInsertUpdatePreferred(boolean insertUpdatePreferred) {
+    this.insertUpdatePreferred = insertUpdatePreferred;
+  }
+
+  public int getXmlCsvRowLimit() {
+	return xmlCsvRowLimit;
+  }
+
+  public void setXmlCsvRowLimit(int xmlCsvRowLimit) {
+	this.xmlCsvRowLimit = xmlCsvRowLimit;
   }
 
   public void addDiffTable(String diffTable, String condition) {
