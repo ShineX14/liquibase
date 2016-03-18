@@ -118,9 +118,9 @@ public class LiquibaseGenerateChangeLogMojo extends
   protected boolean insertUpdate = false;
 
   /**
-   * @parameter expression="${liquibase.xmlCsvRowLimit}" default-value="100"
+   * @parameter expression="${liquibase.xmlCsvRowLimit}" default-value="1000"
    */
-  protected int xmlCsvRowLimit = 100;
+  protected int xmlCsvRowLimit = 1000;
   
 	@Override
 	protected void performLiquibaseTask(Liquibase liquibase)
