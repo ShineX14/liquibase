@@ -375,6 +375,10 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
         }
         return "lob/" + filename;
     }
+    
+    private String resolveColumnType(Table table, int i) {
+		return table.getColumns().get(i).getType().getTypeName();
+	}
 
     private LoadDataChange addInsertDataChangesCsv(DiffOutputControl outputControl, Table table, List<String> columnNames,
             List<Map<String, Object>> rs, String dataDir, String fileName) throws IOException {
@@ -385,36 +389,26 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
         }
 
         CSVWriter outputFile = new CSVWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath), "UTF-8")));
-        String[] dataTypes = new String[columnNames.size()];
         String[] line = new String[columnNames.size()];
         for (int i = 0; i < columnNames.size(); i++) {
             line[i] = columnNames.get(i);
         }
         outputFile.writeNext(line);
-
+       
+    
         for (Map row : rs) {
             line = new String[columnNames.size()];
 
             for (int i = 0; i < columnNames.size(); i++) {
                 Object value = row.get(columnNames.get(i).toUpperCase());
-                if (dataTypes[i] == null && value != null) {
-                    if (value instanceof Number) {
-                        dataTypes[i] = "NUMERIC";
-                    } else if (value instanceof Boolean) {
-                        dataTypes[i] = "BOOLEAN";
-                    } else if (value instanceof Date) {
-                        dataTypes[i] = "DATE";
-                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().equals("BLOB")) {
-                        dataTypes[i] = "BLOB";
-                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().equals("CLOB")) {
-                        dataTypes[i] = "CLOB";
-                    } else {
-                        dataTypes[i] = "STRING";
-                    }
-                }
+                String columnType=resolveColumnType(table,i);
                 if (value == null) {
-                    // line[i] = "NULL";
-                    line[i] = null;
+                	if("NUMBER".equals(columnType))
+                	{
+                		line[i] ="NULL";
+                	}else{
+                		line[i] = null;
+                	}
                 } else {
                     if (value instanceof Date) {
                         line[i] = new ISODateFormat().format(((Date) value));
@@ -456,14 +450,15 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
             LoadDataColumnConfig columnConfig = new LoadDataColumnConfig();
             columnConfig.setHeader(colName);
             columnConfig.setName(colName);
-            columnConfig.setType(dataTypes[i]);
-
+            columnConfig.setType(resolveColumnType(table, i));
             change.addColumn(columnConfig);
         }
         return change;
     }
 
-    private void updateUserId(String tableName, List<String> columnNames, List<Map<String, Object>> rs) {
+   
+
+	private void updateUserId(String tableName, List<String> columnNames, List<Map<String, Object>> rs) {
         for (String column : columnNames) {
             String key = column.toUpperCase();
             Long userIdValue = DataInterceptor.getUserIdColumnValue(tableName, column);
