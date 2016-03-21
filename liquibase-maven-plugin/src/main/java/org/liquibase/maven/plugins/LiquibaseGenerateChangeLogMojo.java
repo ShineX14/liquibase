@@ -122,6 +122,11 @@ public class LiquibaseGenerateChangeLogMojo extends
    */
   protected int xmlCsvRowLimit = 1000;
   
+  /**
+   * @parameter expression="${liquibase.exportDateFormat}" default-value="yyyyMMddHHmmss";
+   */
+  protected String exportDateFormat = "yyyyMMddHHmmss";
+  
 	@Override
 	protected void performLiquibaseTask(Liquibase liquibase)
 			throws LiquibaseException {
@@ -136,7 +141,7 @@ public class LiquibaseGenerateChangeLogMojo extends
         }
 
         Database database = liquibase.getDatabase();
-
+        System.setProperty(ISODateFormat.class.getName(), exportDateFormat);
         getLog().info("Generating Change Log from database " + database.toString());
         try {
             DiffOutputControl diffOutputControl = loadDiffProperty(liquibase);
@@ -160,8 +165,6 @@ public class LiquibaseGenerateChangeLogMojo extends
 	}
 
     private DiffOutputControl loadDiffProperty(Liquibase liquibase) {
-        System.setProperty(ISODateFormat.class.getName(), "yyyyMMddHHmmss");
-
         log.info("loading " + diffTypes + " from schema '" + defaultSchemaName + "'");
         EbaoDiffOutputControl diffControl = new EbaoDiffOutputControl(outputDefaultCatalog, outputDefaultSchema, true);
         diffControl.setInsertUpdatePreferred(insertUpdate);
