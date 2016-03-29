@@ -130,6 +130,13 @@
 		        <artifactId>commons-io</artifactId>
 		        <version>2.1</version>
 		    </dependency>
+
+        <dependency>
+          <groupId>org.postgresql</groupId>
+          <artifactId>postgresql</artifactId>
+          <version>9.4.1208P1.jre7</version>
+          <scope>test</scope>
+        </dependency>
     </dependencies>
 
 

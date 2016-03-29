@@ -252,7 +252,9 @@ public class LiquibaseGenerateChangeLogMojo extends
         getLog().info(indent + "defaultSchemaName: " + defaultSchemaName);
         getLog().info(indent + "diffTypes: " + diffTypes);
         getLog().info(indent + "outputChangeLogFile: " + outputChangeLogFile);
-       	getLog().info(indent + "dataDir: " + dataDir);
+        if (dataDir != null) {
+        	getLog().info(indent + "dataDir: " + dataDir);
+		}
         getLog().info(indent + "userColumnPropertyFile: " + userColumnPropertyFile);
         if (xmlCsvRowLimit != 1000) {
         	getLog().info(indent + "xmlCsvRowLimit: " + xmlCsvRowLimit);
