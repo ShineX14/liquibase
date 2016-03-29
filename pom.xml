@@ -18,7 +18,7 @@
     </licenses>
 
     <scm>
-      <connection>scm:svn:https://oss.ebaotech.com/willy.zhuo/liquibase.git</connection>
+      <connection>scm:svn:https://github.com/eBaoTech/liquibase.git</connection>
     </scm>
 
     <properties>
