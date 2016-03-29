@@ -8,7 +8,7 @@ import liquibase.database.Database;
 import liquibase.database.InternalDatabase;
 import liquibase.database.core.H2Database;
 import liquibase.diff.output.changelog.ChangeGeneratorFactory;
-import liquibase.diff.output.changelog.core.EbaoOracleMissingDataExternalFileChangeGenerator;
+import liquibase.diff.output.changelog.core.EbaoMissingDataExternalFileChangeGenerator;
 import liquibase.structure.DatabaseObject;
 import liquibase.structure.DatabaseObjectCollection;
 import liquibase.structure.core.Schema;
@@ -68,7 +68,7 @@ public class DiffOutputControl {
 
         if (dataDir != null) {
             //ChangeGeneratorFactory.getInstance().register(new EbaoOracleMissingDataExternalFileChangeGenerator(dataDir));
-        	EbaoOracleMissingDataExternalFileChangeGenerator.setDataDir(dataDir);
+        	EbaoMissingDataExternalFileChangeGenerator.setDataDir(dataDir);
         }
         return this;
     }

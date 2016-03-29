@@ -169,6 +169,9 @@ public class LiquibaseGenerateChangeLogMojo extends
         EbaoDiffOutputControl diffControl = new EbaoDiffOutputControl(outputDefaultCatalog, outputDefaultSchema, true);
         diffControl.setInsertUpdatePreferred(insertUpdate);
         diffControl.setXmlCsvRowLimit(xmlCsvRowLimit);
+        if (outputChangeLogFile == null) {
+			throw new IllegalArgumentException("outputChangeLogFile not set");
+		}
         String dataDir = CommandLineUtils.createParentDir(outputChangeLogFile);
         diffControl.setDataDir(dataDir);
 

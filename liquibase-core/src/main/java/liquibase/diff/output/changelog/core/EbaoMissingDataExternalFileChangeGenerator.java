@@ -57,29 +57,23 @@ import liquibase.structure.core.Table;
 import liquibase.util.ISODateFormat;
 import liquibase.util.csv.CSVWriter;
 
-public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDataExternalFileChangeGenerator {
+public abstract class EbaoMissingDataExternalFileChangeGenerator extends MissingDataExternalFileChangeGenerator {
 
     private final Logger logger = LogFactory.getInstance().getLog();
 
-    private static final String sqlPrefix = "select * from ( select /*+ FIRST_ROWS(n) */ a.*, ROWNUM rnum from (";
-    private static final String sqlSuffix = ") a where ROWNUM <= :MAX ) where rnum  >= :MIN";
-    private static final int ROWS_PER_FILE = 10000;
+    protected static final int ROWS_PER_FILE = 10000;
 
     private static String dataDir;
 
-    public EbaoOracleMissingDataExternalFileChangeGenerator() {
+    public EbaoMissingDataExternalFileChangeGenerator() {
     }
     
     public static void setDataDir(String dataDir) {
-        EbaoOracleMissingDataExternalFileChangeGenerator.dataDir = dataDir;
+        EbaoMissingDataExternalFileChangeGenerator.dataDir = dataDir;
     }
 
     @Override
     public int getPriority(Class<? extends DatabaseObject> objectType, Database database) {
-    	if (!(database instanceof OracleDatabase)) {
-    		return PRIORITY_NONE;
-    	}
-
     	int priority = super.getPriority(objectType, database);
         if (PRIORITY_NONE != priority) {
             priority = priority + 1;
@@ -112,6 +106,8 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
         return changes.toArray(new ChangeSet[changes.size()]);
     }
 
+    protected abstract String getPagedSql(String sql, int i);
+    
     public List<ChangeSet> fixMissing(DiffOutputControl outputControl, Database referenceDatabase, Table table,
             EbaoDiffOutputControl.TableCondition filter) throws DatabaseException, IOException, ParserConfigurationException {
             String escapedTableName = referenceDatabase.escapeTableName(table.getSchema().getCatalogName(), table.getSchema().getName(),
@@ -153,10 +149,7 @@ public class EbaoOracleMissingDataExternalFileChangeGenerator extends MissingDat
                 }
             } else {
                 for (int i = 0; i <= (rowCount - 1) / ROWS_PER_FILE; i++) {
-                    String prefix = sqlPrefix;
-                    String suffix = sqlSuffix.replace(":MIN", String.valueOf(i * ROWS_PER_FILE + 1))//
-                            .replace(":MAX", String.valueOf((i + 1) * ROWS_PER_FILE));
-                    String sqlRowBlock = prefix + sql + suffix;
+                    String sqlRowBlock = getPagedSql(sql, i);
                     List<Map<String, Object>> rs = executeQuery(connection, sqlRowBlock);
 
                     String filename = filter.getFilename() != null ? filter.getFilename() : table.getName();
