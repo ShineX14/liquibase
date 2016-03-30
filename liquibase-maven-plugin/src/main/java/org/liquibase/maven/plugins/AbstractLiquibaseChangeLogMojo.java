@@ -65,6 +65,11 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
   protected String labels;
 
   /**
+   * @parameter expression="${liquibase.resourcePath}" default-value=""
+   */
+  protected String resourcePath;
+
+  /**
    * @parameter expression="${liquibase.resourceJars}" default-value=""
    */
   protected String resourceJars;
@@ -169,6 +174,18 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
       }
     }
 
+    if (resourcePath != null) {
+      getLog().info("resourcePath: " + resourcePath);
+      String[] dirs = resourcePath.split("[,;]");
+      for (int i = 0; i < dirs.length; i++) {
+        File dir = new File(dirs[i]);
+        if (!dir.exists()) {
+          continue;
+        }
+        addResourceJar(dir, urls);
+      }
+	}
+    
     return new ClassLoaderResourceAccessor(new URLClassLoader(urls.toArray(new URL[urls.size()])));
   }
 
