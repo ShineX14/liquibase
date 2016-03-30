@@ -20,6 +20,7 @@ import liquibase.serializer.ChangeLogSerializer;
 import liquibase.serializer.ChangeLogSerializerFactory;
 import liquibase.serializer.core.xml.XMLChangeLogSerializer;
 import liquibase.util.StringUtils;
+import liquibase.util.xml.XmlWriter;
 
 public class ChangeSetToChangeLog {
 
@@ -75,25 +76,15 @@ public class ChangeSetToChangeLog {
             }
             fileReader.close();
 
-            fileReader = new BufferedReader(new FileReader(file));
-            fileReader.skip(offset);
-
-            fileReader.close();
-
-            // System.out.println("resulting XML: " + xml.trim());
-
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
             randomAccessFile.seek(offset);
-            randomAccessFile.writeBytes("    ");
+            for (int i = 0; i < XmlWriter.INDENT_NUMBER; i++) {
+              randomAccessFile.writeBytes(" ");
+            }
             randomAccessFile.write(xml.getBytes());
             randomAccessFile.writeBytes(lineSeparator);
             randomAccessFile.writeBytes("</databaseChangeLog>" + lineSeparator);
             randomAccessFile.close();
-
-            // BufferedWriter fileWriter = new BufferedWriter(new
-            // FileWriter(file));
-            // fileWriter.append(xml);
-            // fileWriter.close();
         }
     }
 
