@@ -1,7 +1,9 @@
 package org.liquibase.maven.plugins;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -27,6 +29,7 @@ import liquibase.util.ISODateFormat;
 import liquibase.util.StreamUtil;
 import liquibase.util.StringUtils;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.maven.plugin.MojoExecutionException;
 
 import com.ebao.tool.liquibase.util.LinkedProperties;
@@ -101,6 +104,11 @@ public class LiquibaseGenerateChangeLogMojo extends
    * @parameter expression="${liquibase.diffPropertyFile}"
    */
   protected String diffPropertyFile;
+
+  /**
+   * @parameter expression="${liquibase.diffPropertyString}"
+   */
+  protected String diffPropertyString;
 
   /**
    * @parameter expression="${liquibase.diffParameter}"
@@ -214,6 +222,10 @@ public class LiquibaseGenerateChangeLogMojo extends
                 loadDiffPropertyFile(propertyFile, params, diffControl);
             }
         }
+        
+        if (diffPropertyString != null && !"".equals(diffPropertyString)) {
+          loadDiffPropertyString(diffPropertyString, params, diffControl);
+        }
 
         return diffControl;
     }
@@ -222,31 +234,58 @@ public class LiquibaseGenerateChangeLogMojo extends
         log.info("loading " + propertyFile + " with parameters[" + params + "]");
 
         Properties props = new LinkedProperties();
+        InputStream in = null;
         try {
             ResourceAccessor fo = getFileOpener(getMavenArtifactClassLoader());
-            InputStream in = StreamUtil.singleInputStream(propertyFile, fo);
+            in = StreamUtil.singleInputStream(propertyFile, fo);
+            if (in == null) {
+              throw new FileNotFoundException(propertyFile);
+            }
             props.load(in);
         } catch (Exception e) {
             throw new IllegalArgumentException(propertyFile, e);
+        } finally {
+            IOUtils.closeQuietly(in);
         }
 
-        PropertyParser parser = new PropertyParser();
-        for (Object key : props.keySet()) {
-            if ("".equals(key)) {
-                throw new IllegalArgumentException("empty property name");
-            }
+        loadDiffProperties(props, params, diffControl);
+    }
 
-            String condition = (String) props.get(key);
-            for (String paramName : params.keySet()) {
-            	String paramValue = params.get(paramName);
-				key = ((String)key).replaceAll(paramName, paramValue);
-                condition = condition.replaceAll(paramName, paramValue);
-            }
+    private void loadDiffPropertyString(String s, Map<String, String> params, EbaoDiffOutputControl diffControl) {
+      log.info("loading\n" + s + "\nwith parameters[" + params + "]");
 
-            PropertyPath path = parser.parseProperty((String) key);
-            diffControl.addDiffTable(path.table, condition, path.dir, path.filename);
-            log.info("table to be exported " + path.table + "[" + condition + "]");
-        }
+      StringReader r = new StringReader(s);
+      Properties props = new LinkedProperties();
+      try {
+          props.load(r);
+      } catch (Exception e) {
+          throw new IllegalArgumentException(propertyFile, e);
+      } finally {
+          IOUtils.closeQuietly(r);
+      }
+      
+      loadDiffProperties(props, params, diffControl);
+    }
+    
+    private void loadDiffProperties(Properties props, Map<String, String> params,
+        EbaoDiffOutputControl diffControl) {
+      PropertyParser parser = new PropertyParser();
+      for (Object key : props.keySet()) {
+          if ("".equals(key)) {
+              throw new IllegalArgumentException("empty property name");
+          }
+
+          String condition = (String) props.get(key);
+          for (String paramName : params.keySet()) {
+              String paramValue = params.get(paramName);
+              key = ((String)key).replaceAll(paramName, paramValue);
+              condition = condition.replaceAll(paramName, paramValue);
+          }
+
+          PropertyPath path = parser.parseProperty((String) key);
+          diffControl.addDiffTable(path.table, condition, path.dir, path.filename);
+          log.info("table to be exported " + path.table + "[" + condition + "]");
+      }
     }
 	
 	@Override
