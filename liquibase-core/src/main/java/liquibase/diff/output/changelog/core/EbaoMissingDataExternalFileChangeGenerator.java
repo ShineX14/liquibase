@@ -113,12 +113,13 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
             String escapedTableName = referenceDatabase.escapeTableName(table.getSchema().getCatalogName(), table.getSchema().getName(),
                     table.getName());
             String sql = "SELECT * FROM " + escapedTableName;
-            String sqlRowCount = "SELECT count(*) FROM " + escapedTableName;
+            String sqlRowCount = "SELECT count(1) FROM " + escapedTableName;
 
             String condition = filter.getCondition();
             if (condition != null && !"".equals(condition)) {
                 sql = sql + " " + condition;
-                sqlRowCount = sqlRowCount + " " + condition;
+                int i = condition.indexOf("order by");
+                sqlRowCount = sqlRowCount + " " + (i < 0 ? condition : condition.substring(0, i));
             }
             if (condition != null && !condition.contains("order by") && !condition.contains("connect by")) {
                 PrimaryKey primaryKey = table.getPrimaryKey();
