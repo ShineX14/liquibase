@@ -34,7 +34,11 @@ public abstract class AbstractPreparedStatement implements
 		}
 
 		String[] pknames = primaryKeys.split(",");
-		return Arrays.asList(pknames);
+		List<String> list = new ArrayList<String>();
+		for (String pk : pknames) {
+          list.add(pk.trim());
+        }
+		return list;
 	}
 	
 	protected String getPrimaryKeyClause(String primaryKeys, List columns,
