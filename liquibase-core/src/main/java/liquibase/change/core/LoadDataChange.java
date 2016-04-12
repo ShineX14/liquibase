@@ -48,7 +48,7 @@ public class LoadDataChange extends AbstractChange implements ChangeWithColumns<
     private String encoding = null;
     private String separator = liquibase.util.csv.opencsv.CSVReader.DEFAULT_SEPARATOR + "";
 	private String quotchar = liquibase.util.csv.opencsv.CSVReader.DEFAULT_QUOTE_CHARACTER + "";
-
+	private boolean relativeToChangelogFile=true;
 
     private List<LoadDataColumnConfig> columns = new ArrayList<LoadDataColumnConfig>();
 
@@ -98,7 +98,19 @@ public class LoadDataChange extends AbstractChange implements ChangeWithColumns<
         return file;
     }
 
-    public String getResourceFile() {
+    
+    
+    public boolean isRelativeToChangelogFile() {
+		return relativeToChangelogFile;
+	}
+    
+	public void setRelativeToChangelogFile(boolean relativeToChangelogFile) {
+		this.relativeToChangelogFile = relativeToChangelogFile;
+	}
+
+
+
+	public String getResourceFile() {
         if (getChangeSet() != null) {
             String parentFilePath = getChangeSet().getChangeLog().getPhysicalFilePath();
             if (parentFilePath.contains("/")) {

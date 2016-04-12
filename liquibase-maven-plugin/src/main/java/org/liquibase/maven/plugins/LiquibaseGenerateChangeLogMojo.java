@@ -123,9 +123,9 @@ public class LiquibaseGenerateChangeLogMojo extends
   protected int xmlCsvRowLimit = 1000;
   
   /**
-   * @parameter expression="${liquibase.exportDateFormat}" default-value="yyyyMMddHHmmss";
+   * @parameter expression="${liquibase.exportDateFormat}" default-value="yyyy-MM-dd HH:mm:ss";
    */
-  protected String exportDateFormat = "yyyyMMddHHmmss";
+  protected String exportDateFormat = "yyyy-MM-dd HH:mm:ss";
   
 	@Override
 	protected void performLiquibaseTask(Liquibase liquibase)
