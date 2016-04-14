@@ -20,6 +20,7 @@ public interface ExecutablePreparedStatement extends SqlStatement {
     void execute(PreparedStatement statement) throws DatabaseException;    
 
     Info getStatement();
+    void setParameter(PreparedStatement stmt) throws DatabaseException;
     
     class Info {
         public final String sql;

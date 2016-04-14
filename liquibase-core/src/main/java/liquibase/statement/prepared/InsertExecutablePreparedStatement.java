@@ -110,13 +110,8 @@ public class InsertExecutablePreparedStatement extends
 
   @Override
   public void setParameter(PreparedStatement stmt) throws DatabaseException {
-    setParameter(stmt, 1);
-  }
-
-  public void setParameter(PreparedStatement stmt, int paramStartAt)
-      throws DatabaseException {
     try {
-      setParameter(stmt, paramStartAt, cols, change.getChangeSet().getChangeLog()
+      setParameter(stmt, 1, cols, change.getChangeSet().getChangeLog()
           .getPhysicalFilePath(), change.getResourceAccessor());
     } catch (SQLException e) {
       throw new DatabaseException(e);

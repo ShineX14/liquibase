@@ -256,13 +256,14 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
         }
         updateUserId(table.getName(), columnNames, rs);
 
+        EbaoDiffOutputControl ebaoDiffOutputControl = (EbaoDiffOutputControl)outputControl;
         String id = table.getName() + ".DATA";
-        ChangeSet changeSet = ChangeSetUtils.generateChangeSet(id);
+        ChangeSet changeSet = ChangeSetUtils.generateChangeSet(id, ebaoDiffOutputControl.isInsertUpdatePreferred());
         if (csv) {
-            LoadDataChange change = addInsertDataChangesCsv(outputControl, table, columnNames, rs, dataDir, fileName + ".csv");
+            LoadDataChange change = addInsertDataChangesCsv(ebaoDiffOutputControl, table, columnNames, rs, dataDir, fileName + ".csv");
             changeSet.addChange(change);
         } else {
-            List<InsertDataChange> list = addInsertDataChangesXml(outputControl, table, columnNames, rs, dataDir);
+            List<InsertDataChange> list = addInsertDataChangesXml(ebaoDiffOutputControl, table, columnNames, rs, dataDir);
             for (InsertDataChange change : list) {
                 changeSet.addChange(change);
             }
@@ -284,12 +285,12 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
         return includedFile;
     }
 
-    private List<InsertDataChange> addInsertDataChangesXml(DiffOutputControl outputControl, Table table, List<String> columnNames,
+    private List<InsertDataChange> addInsertDataChangesXml(EbaoDiffOutputControl outputControl, Table table, List<String> columnNames,
             List<Map<String, Object>> rs, String dataDir) throws FileNotFoundException, IOException, DatabaseException,
             ParserConfigurationException {
         List<InsertDataChange> changes = new ArrayList<InsertDataChange>();
         for (Map row : rs) {
-            InsertDataChange change = newInsertDataChange(table, ((EbaoDiffOutputControl)outputControl).isInsertUpdatePreferred());
+            InsertDataChange change = newInsertDataChange(table, outputControl.isInsertUpdatePreferred());
             if (outputControl.getIncludeCatalog()) {
                 change.setCatalogName(table.getSchema().getCatalogName());
             }
@@ -370,7 +371,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
         return "lob/" + filename;
     }
 
-    private LoadDataChange addInsertDataChangesCsv(DiffOutputControl outputControl, Table table, List<String> columnNames,
+    private LoadDataChange addInsertDataChangesCsv(EbaoDiffOutputControl outputControl, Table table, List<String> columnNames,
             List<Map<String, Object>> rs, String dataDir, String fileName) throws IOException {
         // String fileName = table.getName().toLowerCase() + ".csv";
         String filePath = fileName;
@@ -434,7 +435,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
         outputFile.flush();
         outputFile.close();
 
-        LoadDataChange change = newLoadDataChange(table, ((EbaoDiffOutputControl)outputControl).isInsertUpdatePreferred());
+        LoadDataChange change = newLoadDataChange(table, outputControl.isInsertUpdatePreferred());
         change.setFile(fileName);
         change.setEncoding("UTF-8");
         if (outputControl.getIncludeCatalog()) {

@@ -6,7 +6,11 @@ import liquibase.database.ObjectQuotingStrategy;
 public final class ChangeSetUtils {
 
     static ChangeSet generateChangeSet(String id) {
-        return new ChangeSet(id, "generated", false, false, null, null, null, ObjectQuotingStrategy.QUOTE_ALL_OBJECTS, null);
+        return generateChangeSet(id, false);
+    }
+
+    static ChangeSet generateChangeSet(String id, boolean runOnChange) {
+      return new ChangeSet(id, "generated", false, runOnChange, null, null, null, ObjectQuotingStrategy.QUOTE_ALL_OBJECTS, null);
     }
 
 }
