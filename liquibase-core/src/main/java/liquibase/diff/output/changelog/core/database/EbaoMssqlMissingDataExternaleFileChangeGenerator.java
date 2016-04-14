@@ -16,6 +16,6 @@ public class EbaoMssqlMissingDataExternaleFileChangeGenerator extends EbaoMissin
     }
 
     public String getPagedSql(String sql, int i) {
-      return sql + "OFFSET " + (i * ROWS_PER_FILE) +" ROWS FETCH NEXT " + ROWS_PER_FILE + " ROWS ONLY";
+      return sql + " OFFSET " + (i * ROWS_PER_FILE) +" ROWS FETCH NEXT " + ROWS_PER_FILE + " ROWS ONLY";
     }
 }
