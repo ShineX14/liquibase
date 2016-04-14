@@ -291,7 +291,6 @@ public class LiquibaseGenerateChangeLogMojo extends
 	@Override
 	protected void printSettings(String indent) {
 		super.printSettings(indent);
-        getLog().info(indent + "defaultSchemaName: " + defaultSchemaName);
         getLog().info(indent + "diffTypes: " + diffTypes);
         getLog().info(indent + "outputChangeLogFile: " + outputChangeLogFile);
         if (dataDir != null) {

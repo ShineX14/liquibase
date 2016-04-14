@@ -580,6 +580,9 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
                 if ("NON_POOL_DB_PASSWORD".equals(key) || "jdbc.password".equals(key)) {
                     key = "password";
                 }
+                if ("jdbc.schema".equals(key)) {
+                  key = "defaultSchemaName";
+                }
                 if (prefix != null) {
                     key = prefix + key.substring(0, 1).toUpperCase() + key.substring(1);
                 }
@@ -648,7 +651,6 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
         }
     }
     
-    @SuppressWarnings("unchecked")
     protected void processSystemProperties() {
         if (systemProperties == null)
         {
