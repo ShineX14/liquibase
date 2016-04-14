@@ -153,6 +153,9 @@ public abstract class DatabaseSnapshot implements LiquibaseSerializable{
         T object = chain.snapshot(example, this);
 
         if (object == null) {
+//            if (example instanceof Schema) {
+//                throw new IllegalArgumentException(example.getName() + " schema is expected but not found in database");
+//            }
             Set<DatabaseObject> collection = knownNull.get(example.getClass());
             if (collection == null) {
                 collection = new HashSet<DatabaseObject>();
