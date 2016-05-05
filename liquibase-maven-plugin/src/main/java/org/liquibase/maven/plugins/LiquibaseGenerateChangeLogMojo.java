@@ -174,7 +174,7 @@ public class LiquibaseGenerateChangeLogMojo extends
 
     private DiffOutputControl loadDiffProperty(Liquibase liquibase) {
         log.info("loading " + diffTypes + " from schema '" + defaultSchemaName + "'");
-        EbaoDiffOutputControl diffControl = new EbaoDiffOutputControl(outputDefaultCatalog, outputDefaultSchema, true);
+        EbaoDiffOutputControl diffControl = new EbaoDiffOutputControl(outputDefaultCatalog, outputDefaultSchema, true, liquibase.getDatabase());
         diffControl.setInsertUpdatePreferred(insertUpdate);
         diffControl.setXmlCsvRowLimit(xmlCsvRowLimit);
         if (outputChangeLogFile == null) {

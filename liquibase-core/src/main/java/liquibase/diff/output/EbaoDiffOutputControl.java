@@ -6,19 +6,26 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import liquibase.database.Database;
+import liquibase.database.core.MSSQLDatabase;
+import liquibase.database.core.MySQLDatabase;
+import liquibase.database.core.OracleDatabase;
+
 public class EbaoDiffOutputControl extends DiffOutputControl {
 
   private final Map<String, List<TableCondition>> diffTableMap = new LinkedHashMap<String, List<TableCondition>>();
 
   //generate change log
+  private Database database;
   private boolean insertUpdatePreferred = false;
   private int xmlCsvRowLimit = 1000;
 
   //compare
   private final List<String> skippedObjects = new ArrayList<String>();
 
-  public EbaoDiffOutputControl(boolean includeCatalog, boolean includeSchema, boolean includeTablespace) {
+  public EbaoDiffOutputControl(boolean includeCatalog, boolean includeSchema, boolean includeTablespace, Database database) {
       super(includeCatalog, includeSchema, includeTablespace);
+      this.database = database;
   }
   
     public void addSkippedObject(String name) {
@@ -54,7 +61,11 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
   }
 
   public void addDiffTable(String diffTable, String condition, String subdir, String filename) {
-    diffTable = diffTable.toUpperCase();
+    if (database instanceof MySQLDatabase) {
+      diffTable = diffTable.toLowerCase();
+    } else {
+      diffTable = diffTable.toUpperCase();
+    }
     if (condition != null) {
       condition = condition.trim();
       if (!"".equals(condition)

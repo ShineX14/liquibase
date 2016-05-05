@@ -189,7 +189,7 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
         if (diffChangeLogFile != null) {
             CommandLineUtils.createParentDir(diffChangeLogFile);
             try {
-            	EbaoDiffOutputControl diffControl = loadDiffOutputControl();
+            	EbaoDiffOutputControl diffControl = loadDiffOutputControl(db);
                 
             	String dataDir = CommandLineUtils.createParentDir(diffChangeLogFile);
                 diffControl.setDataDir(dataDir);
@@ -217,8 +217,8 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
         }
     }
 
-    private EbaoDiffOutputControl loadDiffOutputControl() throws LiquibaseException {
-        EbaoDiffOutputControl diffConfig = new EbaoDiffOutputControl(diffIncludeCatalog, diffIncludeSchema, diffIncludeTablespace);
+    private EbaoDiffOutputControl loadDiffOutputControl(Database database) throws LiquibaseException {
+        EbaoDiffOutputControl diffConfig = new EbaoDiffOutputControl(diffIncludeCatalog, diffIncludeSchema, diffIncludeTablespace, database);
         diffConfig.addIncludedSchema(new CatalogAndSchema(referenceDefaultCatalogName, referenceDefaultSchemaName));
 
         if (skipPropertyFile != null && !"".equals(skipPropertyFile)) {
