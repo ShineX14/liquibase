@@ -134,7 +134,7 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
     ResourceAccessor fsFO = new FileSystemResourceAccessor(project.getBasedir().getAbsolutePath());
     //return new CompositeResourceAccessor(mFO, fsFO);
     try {
-        cachedFileOpener = new CompositeResourceAccessor(getResourceJarsLoader(), fsFO, mFO);
+        cachedFileOpener = new CompositeResourceAccessor(getResourcesLoader(), fsFO, mFO);
     } catch (MalformedURLException e) {
         throw new IllegalArgumentException(e);
     }
@@ -143,9 +143,21 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
 
   private static final String[] RESOURCE_FILE_EXT = new String[] { "zip" };
 
-  private ResourceAccessor getResourceJarsLoader() throws MalformedURLException {
+  private ResourceAccessor getResourcesLoader() throws MalformedURLException {
     List<URL> urls = new ArrayList<URL>();
 
+    if (resourcePath != null) {
+      getLog().info("resourcePath: " + resourcePath);
+      String[] dirs = resourcePath.split("[,;]");
+      for (int i = 0; i < dirs.length; i++) {
+        File dir = new File(project.getBasedir(), dirs[i]);
+        if (!dir.exists()) {
+          continue;
+        }
+        addResourceJar(dir, urls);
+      }
+    }
+    
     if (resourceJars != null) {
       getLog().info("resourceJar(s): " + resourceJars);
       String[] jars = resourceJars.split("[,;]");
@@ -174,18 +186,6 @@ public abstract class AbstractLiquibaseChangeLogMojo extends AbstractLiquibaseMo
       }
     }
 
-    if (resourcePath != null) {
-      getLog().info("resourcePath: " + resourcePath);
-      String[] dirs = resourcePath.split("[,;]");
-      for (int i = 0; i < dirs.length; i++) {
-        File dir = new File(dirs[i]);
-        if (!dir.exists()) {
-          continue;
-        }
-        addResourceJar(dir, urls);
-      }
-	}
-    
     return new ClassLoaderResourceAccessor(new URLClassLoader(urls.toArray(new URL[urls.size()])));
   }
 

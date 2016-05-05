@@ -137,6 +137,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
 
             int rowCount = executeQueryRowCount(connection, sqlRowCount);
             if (rowCount == 0) {
+                logger.info("no data found in " + escapedTableName);
                 return changeSets;
             }
 
