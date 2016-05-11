@@ -477,7 +477,11 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
     private InsertDataChange newInsertDataChange(Table table, boolean insertUpdatePreferred) {
     	if (insertUpdatePreferred) {
             InsertUpdateDataChange change = new InsertUpdateDataChange();
-            change.setPrimaryKey(table.getPrimaryKey().getColumnNames());
+            PrimaryKey primaryKey = table.getPrimaryKey();
+            if (primaryKey == null) {
+              throw new IllegalArgumentException("No primary key found in " + table.getName());
+            }
+            change.setPrimaryKey(primaryKey.getColumnNames());
             return change;
         } else {
             return new InsertDataChange();
@@ -487,7 +491,11 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
     private LoadDataChange newLoadDataChange(Table table, boolean insertUpdatePreferred) {
         if (insertUpdatePreferred) {
             LoadUpdateDataChange change = new LoadUpdateDataChange();
-            change.setPrimaryKey(table.getPrimaryKey().getColumnNames());
+            PrimaryKey primaryKey = table.getPrimaryKey();
+            if (primaryKey == null) {
+              throw new IllegalArgumentException("No primary key found in " + table.getName());
+            }
+            change.setPrimaryKey(primaryKey.getColumnNames());
             return change;
         } else {
             return new LoadDataChange();
