@@ -79,7 +79,8 @@ public class MysqlUpsertExecutablePreparedStatement extends AbstractPreparedStat
 		deleteLastSeperator(updateSql);
 
 		StringBuilder mergeSql = new StringBuilder();
-		mergeSql.append("insert into " + tableName + "(" + insertColumnSql + ")");
+		mergeSql.append(updateSql.length() > 0 ? "insert into " : "insert ignore into ");
+		mergeSql.append(tableName + "(" + insertColumnSql + ")");
 		mergeSql.append(" values(" + insertValueSql + ") ");
 		if (updateSql.length() > 0) {
 		    mergeSql.append(" on duplicate key update " + updateSql);
