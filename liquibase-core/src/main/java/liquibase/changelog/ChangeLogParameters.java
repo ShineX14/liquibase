@@ -1,25 +1,25 @@
 package liquibase.changelog;
 
-import liquibase.ContextExpression;
-import liquibase.Contexts;
-import liquibase.LabelExpression;
-import liquibase.Labels;
-import liquibase.configuration.LiquibaseConfiguration;
-import liquibase.parser.ChangeLogParserCofiguration;
-import liquibase.database.Database;
-import liquibase.database.DatabaseList;
-import liquibase.exception.DatabaseException;
-import liquibase.util.StringUtils;
-
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import liquibase.ContextExpression;
+import liquibase.Contexts;
+import liquibase.LabelExpression;
+import liquibase.Labels;
+import liquibase.configuration.LiquibaseConfiguration;
+import liquibase.database.Database;
+import liquibase.database.DatabaseList;
+import liquibase.exception.DatabaseException;
+import liquibase.parser.ChangeLogParserCofiguration;
+import liquibase.util.StringUtils;
+
 public class ChangeLogParameters {
 	
-    private List<ChangeLogParameter> changeLogParameters = new ArrayList<ChangeLogParameter>();
+    private Map<String, ChangeLogParameter> changeLogParameters = new HashMap<String, ChangeLogParameter>();
     private ExpressionExpander expressionExpander;
     private Database currentDatabase;
     private Contexts currentContexts;
@@ -31,7 +31,7 @@ public class ChangeLogParameters {
 
     public ChangeLogParameters(Database database) {
         for (Map.Entry entry : System.getProperties().entrySet()) {
-            changeLogParameters.add(new ChangeLogParameter(entry.getKey().toString(), entry.getValue()));
+            changeLogParameters.put((String)entry.getKey(), new ChangeLogParameter(entry.getKey().toString(), entry.getValue()));
         }
 
         if (database != null) {
@@ -87,15 +87,16 @@ public class ChangeLogParameters {
         return currentContexts;
     }
 
-    public void set(String paramter, Object value) {
-        changeLogParameters.add(new ChangeLogParameter(paramter, value));
+    public void set(String parameter, Object value) {
+        changeLogParameters.put(parameter, new ChangeLogParameter(parameter, value));
     }
 
     public void set(String key, String value, String contexts, String labels, String databases) {
         set(key, value, new ContextExpression(contexts), new Labels(labels), databases);
     }
     public void set(String key, String value, ContextExpression contexts, Labels labels, String databases) {
-        changeLogParameters.add(new ChangeLogParameter(key, value, contexts, labels, databases));
+        String mapKey = key + contexts + labels + databases;
+        changeLogParameters.put(mapKey, new ChangeLogParameter(key, value, contexts, labels, databases));
     }
 
     /**
@@ -111,10 +112,10 @@ public class ChangeLogParameters {
     }
 
     private ChangeLogParameter findParameter(String key) {
-        for (ChangeLogParameter param : changeLogParameters) {
-            if (param.getKey().equalsIgnoreCase(key) && param.isValid()) {
-                return param;
-            }
+        for (ChangeLogParameter param : changeLogParameters.values()) {
+          if (param.getKey().equalsIgnoreCase(key) && param.isValid()) {
+              return param;
+          }
         }
         return null;
     }
