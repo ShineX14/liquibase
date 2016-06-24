@@ -2,6 +2,7 @@ package liquibase.util;
 
 import liquibase.database.Database;
 import liquibase.exception.DatabaseException;
+import liquibase.statement.SqlStatement;
 import liquibase.structure.core.Column;
 
 import java.sql.*;
@@ -135,13 +136,13 @@ public abstract class JdbcUtils {
      * @param results the result Collection (can be <code>null</code>)
      * @return the single result object
      */
-    public static Object requiredSingleResult(Collection results) throws DatabaseException {
+    public static Object requiredSingleResult(Collection results, SqlStatement sql) throws DatabaseException {
         int size = (results != null ? results.size() : 0);
         if (size == 0) {
-            throw new DatabaseException("Empty result set, expected one row");
+            throw new DatabaseException("Empty result set, expected one row in\n" + sql.toString());
         }
         if (results.size() > 1) {
-            throw new DatabaseException("Result set larger than one row");
+            throw new DatabaseException("Result set larger than one row in\n" + sql.toString());
         }
         return results.iterator().next();
     }

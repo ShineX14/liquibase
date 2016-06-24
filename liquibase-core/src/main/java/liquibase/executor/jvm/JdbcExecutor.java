@@ -246,7 +246,7 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
 
     public Object queryForObject(SqlStatement sql, RowMapper rowMapper, List<SqlVisitor> sqlVisitors) throws DatabaseException {
         List results = query(sql, rowMapper, sqlVisitors);
-        return JdbcUtils.requiredSingleResult(results);
+        return JdbcUtils.requiredSingleResult(results, sql);
     }
 
     @Override
