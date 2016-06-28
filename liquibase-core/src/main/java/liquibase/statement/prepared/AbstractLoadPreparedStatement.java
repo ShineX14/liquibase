@@ -5,6 +5,7 @@ import liquibase.change.core.InsertDataChange;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.statement.DatabaseFunction;
 import liquibase.statement.ExecutablePreparedStatement;
+import liquibase.structure.core.Sequence;
 
 public abstract class AbstractLoadPreparedStatement extends AbstractPreparedStatement
     implements ExecutablePreparedStatement {
@@ -39,7 +40,13 @@ public abstract class AbstractLoadPreparedStatement extends AbstractPreparedStat
       } else if (headerColumn.getType().equalsIgnoreCase("STRING")) {
         valueColumn.setValue(value.toString());
       } else if (headerColumn.getType().equalsIgnoreCase("COMPUTED")) {
-        valueColumn.setValueComputed(new DatabaseFunction(value.toString()));
+        if (headerColumn.getDefaultValueComputed() != null) {
+          valueColumn.setValueComputed(headerColumn.getDefaultValueComputed());
+        } else if (headerColumn.getDefaultValueSequenceNext() != null) {
+          valueColumn.setValueComputed(headerColumn.getDefaultValueSequenceNext());
+        } else {
+          valueColumn.setValueComputed(new DatabaseFunction(value.toString()));
+        }
       } else if (headerColumn.getType().equalsIgnoreCase("BLOB")) {
         valueColumn.setValueBlobFile(value.toString());
       } else if (headerColumn.getType().equalsIgnoreCase("CLOB")) {

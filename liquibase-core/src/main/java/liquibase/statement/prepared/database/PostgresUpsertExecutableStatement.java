@@ -8,6 +8,7 @@ import java.util.List;
 import liquibase.change.ColumnConfig;
 import liquibase.database.Database;
 import liquibase.exception.DatabaseException;
+import liquibase.statement.DatabaseFunction;
 import liquibase.statement.prepared.AbstractPreparedStatement;
 import liquibase.statement.prepared.InsertExecutablePreparedStatementChange;
 
@@ -34,13 +35,13 @@ public class PostgresUpsertExecutableStatement extends
 
 		StringBuilder params = new StringBuilder();
 		StringBuilder fields = new StringBuilder();
-		StringBuilder fieldsSet = new StringBuilder();
-		StringBuilder where1 = new StringBuilder();
-		StringBuilder where2 = new StringBuilder();
+		StringBuilder updateFields = new StringBuilder();
+		StringBuilder whereClause = new StringBuilder();
 
 		String tableName = database.escapeTableName(change.getCatalogName(),
 				change.getSchemaName(), change.getTableName());
 
+        List<String> primaryKeys = getPrimaryKey(change.getPrimaryKey());
 		for (ColumnConfig column : change.getColumns()) {
 			if (database.supportsAutoIncrement()
 					&& Boolean.TRUE.equals(column.isAutoIncrement())) {
@@ -50,13 +51,24 @@ public class PostgresUpsertExecutableStatement extends
 					change.getCatalogName(), change.getSchemaName(),
 					change.getTableName(), column.getName());
 
+            boolean pkcloum = primaryKeys.contains(columnName);
 			fields.append(columnName).append(",");
-			fieldsSet.append(columnName + "=nv." + columnName + ",");
+			if (!pkcloum) {
+			  updateFields.append(columnName + "=nv." + columnName + ",");
+            }
 
-			if (column.getValueObject() == null
-					&& column.getValueBlobFile() == null
-					&& column.getValueClobFile() == null) {
+            Object valueObject = column.getValueObject();
+            if (pkcloum) {
+              if (whereClause.length() > 0) {
+                whereClause.append(" and ");
+              }
+              whereClause.append(columnName).append("=").append(valueObject);
+            }
+            if (valueObject == null) {
 				params.append("null,");
+            } else if (valueObject instanceof DatabaseFunction) {
+              String value = database.generateDatabaseFunctionValue((DatabaseFunction)valueObject);
+              params.append(value);
 			} else {
 				if (column.getValueDate() != null) {
 					params.append("date(?),");
@@ -69,17 +81,18 @@ public class PostgresUpsertExecutableStatement extends
 
 		deleteLastSeperator(params);
 		deleteLastSeperator(fields);
-		deleteLastSeperator(fieldsSet);
+		deleteLastSeperator(updateFields);
 
 		StringBuilder sql = new StringBuilder();
 		sql.append("with new_values( " + fields + " ) as (");
 		sql.append("values( " + params + ")), ");
 		sql.append("upsert as ( update " + tableName + " m ");
-		sql.append("set " + fieldsSet + " from new_values nv where " + where1);
+		sql.append("set " + updateFields + " from new_values nv where " + whereClause);
 		sql.append(" returning m.*) ");
 		sql.append("insert into " + tableName + "(" + fields + ") ");
 		sql.append("select " + fields + " from new_values ");
-		sql.append("where not exists(select 1 from upsert up where " + where2 + ")");
+		//sql.append("where not exists (select 1 from upsert up where " + whereClause + ")");
+		sql.append("where not exists (select 1 from " + tableName + " where " + whereClause + ")");
 
 		String s = sql.toString();
 		statement = new Info(s, cols, getParameters(cols, change.getChangeSet()

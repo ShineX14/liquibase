@@ -209,7 +209,7 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
             }
             dbStatement.executeBatch();
             dbStatement.close();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.severe(sql);
             for (int i = 0; i < statements.size() && i < 10; i++) {
                 ExecutablePreparedStatement statement = statements.get(i);

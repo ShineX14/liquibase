@@ -8,6 +8,7 @@ import java.util.List;
 import liquibase.change.ColumnConfig;
 import liquibase.database.Database;
 import liquibase.exception.DatabaseException;
+import liquibase.statement.DatabaseFunction;
 import liquibase.statement.ExecutablePreparedStatement;
 
 /**
@@ -65,13 +66,14 @@ public class InsertExecutablePreparedStatement extends
       insertColumnSql.append(columnName).append(", ");
       updateSql.append(columnName).append("=");
 
-      if (column.getValueObject() == null && column.getValueBlobFile() == null
-          && column.getValueClobFile() == null) {
+      Object valueObject = column.getValueObject();
+      if (valueObject == null) {
         insertValueSql.append("null, ");
         updateSql.append("null, ");
-      } else if (column.getValueComputed() != null) {
-        insertValueSql.append(column.getValueComputed().getValue()).append(", ");
-        updateSql.append(column.getValueComputed().getValue()).append(", ");
+      } else if (valueObject instanceof DatabaseFunction) {
+        DatabaseFunction function = (DatabaseFunction)valueObject;
+        insertValueSql.append(database.generateDatabaseFunctionValue(function)).append(", ");
+        updateSql.append(database.generateDatabaseFunctionValue(function)).append(", ");
       } else {
         insertValueSql.append("?, ");
         updateSql.append("?, ");
