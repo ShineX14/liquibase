@@ -34,7 +34,7 @@ public class GlobalConfiguration extends AbstractConfigurationContainer {
 
         getContainer().addProperty(CHANGELOGLOCK_WAIT_TIME, Long.class)
                 .setDescription("Number of minutes to wait for the changelog lock to be available before giving up")
-                .setDefaultValue(5);
+                .setDefaultValue(1);
 
         getContainer().addProperty(CHANGELOGLOCK_POLL_RATE, Long.class)
                 .setDescription("Number of seconds wait between checks to the changelog lock when it is locked")
