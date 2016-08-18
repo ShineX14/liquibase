@@ -154,7 +154,7 @@ public class LiquibaseGenerateChangeLogMojo extends
         try {
             DiffOutputControl diffOutputControl = loadDiffProperty(liquibase);
             try {
-                ResourceAccessor fo = getFileOpener(getMavenArtifactClassLoader());
+                ResourceAccessor fo = getPropertyFileOpener(getMavenArtifactClassLoader());
                 InputStream in = StreamUtil.singleInputStream(userColumnPropertyFile, fo);
                 DataInterceptor.initUserColumnProperty(in);
             } catch (Exception e) {
@@ -236,7 +236,7 @@ public class LiquibaseGenerateChangeLogMojo extends
         Properties props = new LinkedProperties();
         InputStream in = null;
         try {
-            ResourceAccessor fo = getFileOpener(getMavenArtifactClassLoader());
+            ResourceAccessor fo = getPropertyFileOpener(getMavenArtifactClassLoader());
             in = StreamUtil.singleInputStream(propertyFile, fo);
             if (in == null) {
               throw new FileNotFoundException(propertyFile);
@@ -297,6 +297,9 @@ public class LiquibaseGenerateChangeLogMojo extends
         	getLog().info(indent + "dataDir: " + dataDir);
 		}
         getLog().info(indent + "userColumnPropertyFile: " + userColumnPropertyFile);
+        if (insertUpdate) {
+          getLog().info(indent + "insertUpdate: " + insertUpdate);
+        }
         if (xmlCsvRowLimit != 1000) {
         	getLog().info(indent + "xmlCsvRowLimit: " + xmlCsvRowLimit);
 		}

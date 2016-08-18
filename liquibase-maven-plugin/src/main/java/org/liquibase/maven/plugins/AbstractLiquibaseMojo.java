@@ -301,7 +301,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
         processSystemProperties();
 
         ClassLoader artifactClassLoader = getMavenArtifactClassLoader();
-        configureFieldsAndValues(getFileOpener(artifactClassLoader));
+        configureFieldsAndValues(getPropertyFileOpener(artifactClassLoader));
 
         try {
             LogFactory.setLoggingLevel(logging);
@@ -467,9 +467,22 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
     }
 
     protected ResourceAccessor getFileOpener(ClassLoader cl) {
-        ResourceAccessor mFO = new MavenResourceAccessor(cl);
-        ResourceAccessor fsFO = new FileSystemResourceAccessor(project.getBasedir().getAbsolutePath());
-        return new CompositeResourceAccessor(mFO, fsFO);
+      ResourceAccessor mFO = new MavenResourceAccessor(cl);
+      ResourceAccessor fsFO = new FileSystemResourceAccessor(project.getBasedir().getAbsolutePath());
+      return new CompositeResourceAccessor(mFO, fsFO);
+    }
+    
+    protected ResourceAccessor getPropertyFileOpener(ClassLoader cl) {
+      ResourceAccessor mFO = new MavenResourceAccessor(cl);
+      ResourceAccessor fsFO = new FileSystemResourceAccessor(project.getBasedir().getAbsolutePath());
+      
+      File cd = new File(".");
+      if (!cd.getAbsolutePath().equals(project.getBasedir().getAbsolutePath())) {
+        ResourceAccessor cdFO = new FileSystemResourceAccessor(cd.getAbsolutePath());
+        return new CompositeResourceAccessor(mFO, fsFO, cdFO);
+      }
+      
+      return new CompositeResourceAccessor(mFO, fsFO);
     }
 
     /**
