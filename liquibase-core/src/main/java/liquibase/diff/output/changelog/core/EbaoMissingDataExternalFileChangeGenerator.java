@@ -201,7 +201,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                 Map<String, Object> row = new HashMap<String, Object>();
                 for (int i = 1; i <= columns; ++i) {
                     Object value = rs.getObject(i);
-                    if (value instanceof Blob) {
+                    if (value instanceof Blob || value instanceof byte[]) {
                         value = rs.getBytes(i);
                     } else if (value instanceof Clob) {
                         value = rs.getString(i);
@@ -314,10 +314,10 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                     column.setValueBoolean((Boolean) value);
                 } else if (value instanceof Date) {
                     column.setValueDate((Date) value);
-                } else if (table.getColumn(column.getName()).getType().getTypeName().equals("BLOB")) {
+                } else if (table.getColumn(column.getName()).getType().getTypeName().contains("BLOB")) {
                     String lobFileName = writeLobFile(table, table.getColumn(column.getName()), value, row, dataDir);
                     column.setValueBlobFile(lobFileName);
-                } else if (table.getColumn(column.getName()).getType().getTypeName().equals("CLOB")) {
+                } else if (table.getColumn(column.getName()).getType().getTypeName().contains("CLOB")) {
                     String lobFileName = writeLobFile(table, table.getColumn(column.getName()), value, row, dataDir);
                     column.setValueClobFile(lobFileName);
                 } else if (value instanceof byte[]) {
@@ -360,7 +360,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
             dir.mkdir();
         }
 
-        if (column.getType().getTypeName().equals("BLOB")) {
+        if (column.getType().getTypeName().contains("BLOB")) {
             FileOutputStream out = new FileOutputStream(f);
             out.write((byte[]) value);
             out.close();
@@ -400,9 +400,9 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                         dataTypes[i] = "BOOLEAN";
                     } else if (value instanceof Date) {
                         dataTypes[i] = "DATE";
-                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().equals("BLOB")) {
+                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("BLOB")) {
                         dataTypes[i] = "BLOB";
-                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().equals("CLOB")) {
+                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("CLOB")) {
                         dataTypes[i] = "CLOB";
                     } else {
                         dataTypes[i] = "STRING";
@@ -414,10 +414,10 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                 } else {
                     if (value instanceof Date) {
                         line[i] = new ISODateFormat().format(((Date) value));
-                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().equals("BLOB")) {
+                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("BLOB")) {
                         String lobFileName = writeLobFile(table, table.getColumn(columnNames.get(i)), value, row, dataDir);
                         line[i] = lobFileName;
-                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().equals("CLOB")) {
+                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("CLOB")) {
                         String lobFileName = writeLobFile(table, table.getColumn(columnNames.get(i)), value, row, dataDir);
                         line[i] = lobFileName;
                     } else if (value instanceof byte[]) {
