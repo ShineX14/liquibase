@@ -77,7 +77,7 @@ public class Liquibase {
     //update
     private static boolean batchUpdate = false;
     private static boolean preparedStatementPreferred = false;
-    private static boolean markNextDdlChangeSetRan = false;
+    private boolean markNextDdlChangeSetRan = false;
 
     private static boolean relativeToChangelogFile = false;
 
@@ -1276,11 +1276,11 @@ public class Liquibase {
         }
     }
 
-    public static boolean isMarkNextChangeSetRan() {
+    public boolean isMarkNextChangeSetRan() {
         return markNextDdlChangeSetRan;
     }
 
-    public static void setMarkNextChangeSetRan() {
+    public void setMarkNextChangeSetRan() {
         markNextDdlChangeSetRan = true;
     }
 

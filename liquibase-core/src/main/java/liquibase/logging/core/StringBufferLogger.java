@@ -19,19 +19,12 @@ public class StringBufferLogger extends DefaultLogger {
 		loggerBuffer.setLength(0);
 	}
 	
-	public static int getLogLength() {
-		return loggerBuffer.length();
-	}
-	
-	public static String getLog(int start, int end) {
-		int logLimit = loggerBuffer.length();
-		if (start > logLimit) {
-			throw new IllegalArgumentException("Invalid start index " + start + " greater than log length " + logLimit);
+	public static String getLog(int start) {
+		int length = loggerBuffer.length();
+		if (start > length) {
+		    return "";
 		}
-		if (end > logLimit) {
-			throw new IllegalArgumentException("Invalid end index " + end + " greater than log length " + logLimit);
-		}
-		return loggerBuffer.substring(start, end);
+		return loggerBuffer.substring(start, length);
 	}
 	
 	@Override

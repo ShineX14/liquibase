@@ -68,7 +68,7 @@ public class LiquibaseUpdate extends AbstractLiquibaseUpdateMojo {
             liquibase.update(changesToApply, new Contexts(contexts), new LabelExpression(labels));
         } else {
             if (markNextChangeSetRan) {
-                Liquibase.setMarkNextChangeSetRan();
+              liquibase.setMarkNextChangeSetRan();
             }
             liquibase.update(new Contexts(contexts), new LabelExpression(labels));
         }
