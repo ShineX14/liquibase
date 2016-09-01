@@ -7,16 +7,9 @@ public class StringBufferLogger extends DefaultLogger {
 	private static StringBuffer loggerBuffer = new StringBuffer(1000000);
 	private static boolean enabled = false;
 	
-	public static void enable() {
-		enabled = true;
-	}
-
-	public static void disable() {
-		enabled = false;
-	}
-	
 	public static void reset() {
 		loggerBuffer.setLength(0);
+		enabled = true;
 	}
 	
 	public static String getLog(int start) {
