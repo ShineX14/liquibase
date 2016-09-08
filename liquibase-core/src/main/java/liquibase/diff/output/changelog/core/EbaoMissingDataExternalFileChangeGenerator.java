@@ -317,7 +317,8 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                 } else if (table.getColumn(column.getName()).getType().getTypeName().contains("BLOB")) {
                     String lobFileName = writeLobFile(table, table.getColumn(column.getName()), value, row, dataDir);
                     column.setValueBlobFile(lobFileName);
-                } else if (table.getColumn(column.getName()).getType().getTypeName().contains("CLOB")) {
+                } else if (table.getColumn(column.getName()).getType().getTypeName().contains("CLOB")
+                        || table.getColumn(column.getName()).getType().getTypeName().contains("TEXT")) {
                     String lobFileName = writeLobFile(table, table.getColumn(column.getName()), value, row, dataDir);
                     column.setValueClobFile(lobFileName);
                 } else if (value instanceof byte[]) {
@@ -402,7 +403,8 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                         dataTypes[i] = "DATE";
                     } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("BLOB")) {
                         dataTypes[i] = "BLOB";
-                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("CLOB")) {
+                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("CLOB")
+                            || table.getColumn(columnNames.get(i)).getType().getTypeName().contains("TEXT")) {
                         dataTypes[i] = "CLOB";
                     } else {
                         dataTypes[i] = "STRING";
@@ -417,7 +419,8 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                     } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("BLOB")) {
                         String lobFileName = writeLobFile(table, table.getColumn(columnNames.get(i)), value, row, dataDir);
                         line[i] = lobFileName;
-                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("CLOB")) {
+                    } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("CLOB")
+                            || table.getColumn(columnNames.get(i)).getType().getTypeName().contains("TEXT")) {
                         String lobFileName = writeLobFile(table, table.getColumn(columnNames.get(i)), value, row, dataDir);
                         line[i] = lobFileName;
                     } else if (value instanceof byte[]) {

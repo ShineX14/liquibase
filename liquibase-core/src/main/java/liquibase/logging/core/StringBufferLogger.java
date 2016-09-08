@@ -7,6 +7,10 @@ public class StringBufferLogger extends DefaultLogger {
 	private static StringBuffer loggerBuffer = new StringBuffer(1000000);
 	private static boolean enabled = false;
 	
+	@Deprecated //kept for compatibility
+	public static void enable() {
+	}
+	
 	public static void reset() {
 		loggerBuffer.setLength(0);
 		enabled = true;
