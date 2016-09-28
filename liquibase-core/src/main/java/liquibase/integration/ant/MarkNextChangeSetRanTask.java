@@ -19,12 +19,13 @@ public class MarkNextChangeSetRanTask extends BaseLiquibaseTask {
         Liquibase liquibase = null;
         try {
             liquibase = createLiquibase();
+            liquibase.setMarkNextChangeSetRan();
 
             Writer writer = createOutputWriter();
             if (writer == null) {
-                liquibase.markNextChangeSetRan(new Contexts(getContexts()), new LabelExpression(getLabels()));
+                liquibase.update(new Contexts(getContexts()), new LabelExpression(getLabels()));
             } else {
-                liquibase.markNextChangeSetRan(new Contexts(getContexts()), new LabelExpression(getLabels()), writer);
+                liquibase.update(new Contexts(getContexts()), new LabelExpression(getLabels()), writer);
                 writer.flush();
                 writer.close();
             }
