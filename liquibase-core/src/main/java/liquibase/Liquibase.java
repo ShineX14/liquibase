@@ -210,6 +210,7 @@ public class Liquibase {
 
         changeLogParameters.setContexts(contexts);
         changeLogParameters.setLabels(labelExpression);
+        log.info("Contexts:" + contexts.toString());
 
         try {
             DatabaseChangeLog changeLog = getDatabaseChangeLog();
