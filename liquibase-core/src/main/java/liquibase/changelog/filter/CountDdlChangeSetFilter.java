@@ -1,6 +1,9 @@
 package liquibase.changelog.filter;
 
 import liquibase.changelog.ChangeSet;
+import liquibase.precondition.Precondition;
+import liquibase.precondition.core.PreconditionContainer.ErrorOption;
+import liquibase.precondition.core.PreconditionContainer.FailOption;
 
 public class CountDdlChangeSetFilter implements ChangeSetFilter {
 
@@ -20,9 +23,13 @@ public class CountDdlChangeSetFilter implements ChangeSetFilter {
     if (changeSet.isAlwaysRun()) {
       return false;
     }
-    if (changeSet.getFailOnError() != null && changeSet.getFailOnError()) {
-      return false;
+    if (changeSet.getFailOnError() != null) {
+      if (!changeSet.getFailOnError()) {
+        return false;
+      }
     }
+//    ErrorOption errorOption = changeSet.getPreconditions().getOnError();
+//    FailOption failOption = changeSet.getPreconditions().getOnFail();
     return true;
   }
 }
