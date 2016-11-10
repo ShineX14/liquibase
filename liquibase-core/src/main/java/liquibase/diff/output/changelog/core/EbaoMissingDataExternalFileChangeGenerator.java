@@ -396,7 +396,10 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
             line = new String[columnNames.size()];
 
             for (int i = 0; i < columnNames.size(); i++) {
-                Object value = row.get(columnNames.get(i).toUpperCase());
+                Object value = row.get(columnNames.get(i));
+                if (value == null) {
+                  value = row.get(columnNames.get(i).toUpperCase());
+                }
                 if (dataTypes[i] == null && value != null) {
                     if (value instanceof Number) {
                         dataTypes[i] = "NUMERIC";
