@@ -305,7 +305,10 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                 ColumnConfig column = new ColumnConfig();
                 column.setName(columnNames.get(i));
 
-                Object value = row.get(columnNames.get(i).toUpperCase());
+                Object value = row.get(columnNames.get(i));
+                if (value == null) {
+                  value = row.get(columnNames.get(i).toUpperCase());
+                }
                 if (value == null) {
                     column.setValue(null);
                 } else if (value instanceof Number) {

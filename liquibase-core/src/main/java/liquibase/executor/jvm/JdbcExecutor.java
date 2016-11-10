@@ -185,7 +185,7 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
                     stmt.executeBatch();
                 } catch (SQLException e) {
                     log.severe(sqls.toString());
-                    throw new BatchUpdateDatabaseException(e);
+                    throw new BatchUpdateDatabaseException(sqls.size(), e);
                 }
                 return null;
             }
@@ -216,7 +216,7 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
                 log.severe("with parameters: " + statement.getStatement().parameters);
             }
             log.severe("... " + statements.size() + " record(s) in the batch update.");
-            throw new BatchUpdateDatabaseException(e);
+            throw new BatchUpdateDatabaseException(statements.size(), e);
         }
     }
 
