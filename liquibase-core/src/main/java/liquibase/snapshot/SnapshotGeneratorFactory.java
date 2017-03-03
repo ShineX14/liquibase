@@ -6,6 +6,8 @@ import liquibase.database.OfflineConnection;
 import liquibase.diff.compare.DatabaseObjectComparatorFactory;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
+import liquibase.logging.LogFactory;
+import liquibase.logging.Logger;
 import liquibase.servicelocator.ServiceLocator;
 import liquibase.structure.DatabaseObject;
 import liquibase.structure.core.Schema;
@@ -16,6 +18,7 @@ import java.util.*;
 
 public class SnapshotGeneratorFactory {
 
+    private static final Logger logger = LogFactory.getInstance().getLog();
     private static SnapshotGeneratorFactory instance;
 
     private List<SnapshotGenerator> generators = new ArrayList<SnapshotGenerator>();
@@ -86,21 +89,23 @@ public class SnapshotGeneratorFactory {
         List<Class<? extends DatabaseObject>> types = new ArrayList<Class<? extends DatabaseObject>>(getContainerTypes(example.getClass(), database));
         types.add(example.getClass());
 
-        if (createSnapshot(example, database, new SnapshotControl(database,  types.toArray(new Class[types.size()]))) != null) {
+        //if (createSnapshot(example, database, new SnapshotControl(database,  types.toArray(new Class[types.size()]))) != null) {
+        if (createSnapshot(example, database, new SnapshotControl(database,  example.getClass())) != null) {
             return true;
         }
-        CatalogAndSchema catalogAndSchema;
-        if (example.getSchema() == null) {
-            catalogAndSchema = database.getDefaultSchema();
-        } else {
-            catalogAndSchema = example.getSchema().toCatalogAndSchema();
-        }
-        DatabaseSnapshot snapshot = createSnapshot(catalogAndSchema, database, new SnapshotControl(database, example.getClass()));
-        for (DatabaseObject obj : snapshot.get(example.getClass())) {
-            if (DatabaseObjectComparatorFactory.getInstance().isSameObject(example, obj, database)) {
-                return true;
-            }
-        }
+//        CatalogAndSchema catalogAndSchema;
+//        if (example.getSchema() == null) {
+//            catalogAndSchema = database.getDefaultSchema();
+//        } else {
+//            catalogAndSchema = example.getSchema().toCatalogAndSchema();
+//        }
+//        logger.info(example.getName() + " is not found and going to check it in " + catalogAndSchema.toString());
+//        DatabaseSnapshot snapshot = createSnapshot(catalogAndSchema, database, new SnapshotControl(database, example.getClass()));
+//        for (DatabaseObject obj : snapshot.get(example.getClass())) {
+//            if (DatabaseObjectComparatorFactory.getInstance().isSameObject(example, obj, database)) {
+//                return true;
+//            }
+//        }
         return false;
     }
 

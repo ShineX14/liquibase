@@ -26,7 +26,8 @@ public class ChangeLogParametersTest {
         changeLogParameters.set("doubleSet", "originalValue");
         changeLogParameters.set("doubleSet", "newValue");
 
-        assertEquals("re-setting a param should not overwrite the value (like how ant works)", "originalValue", changeLogParameters.getValue("doubleSet"));
+        //assertEquals("re-setting a param should not overwrite the value (like how ant works)", "originalValue", changeLogParameters.getValue("doubleSet"));
+        assertEquals("re-setting a param should overwrite the value (not like how ant works)", "newValue", changeLogParameters.getValue("doubleSet"));
     }
 
     @Test
