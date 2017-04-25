@@ -21,6 +21,7 @@ import liquibase.lockservice.LockServiceFactory;
 import liquibase.logging.LogFactory;
 import liquibase.logging.LogLevel;
 import liquibase.logging.Logger;
+import liquibase.parser.core.xml.XMLIncludedChangeLogSAXParser;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.CompositeResourceAccessor;
 import liquibase.resource.FileSystemResourceAccessor;
@@ -932,6 +933,11 @@ public class Main {
 
 
             Liquibase liquibase = new Liquibase(changeLogFile, fileOpener, database);
+            Liquibase.setRelativeToChangelogFile();
+            Liquibase.setBatchUpdate();
+            Liquibase.setPreparedStatementPreferred();
+            XMLIncludedChangeLogSAXParser.setHighPriority();
+            StreamUtil.setDefaultEncoding("UTF-8");
             liquibase.setCurrentDateTimeFunction(currentDateTimeFunction);
             for (Map.Entry<String, Object> entry : changeLogParameters.entrySet()) {
                 liquibase.setChangeLogParameter(entry.getKey(), entry.getValue());

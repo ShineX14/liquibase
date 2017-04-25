@@ -702,7 +702,6 @@ public class ChangeSet implements Conditional, LiquibaseSerializable {
     private Class<?>[] batchUpdateChangeClass = new Class<?>[] {//
             InsertDataChange.class, //
             LoadDataChange.class, //
-            LoadUpdateDataChange.class, //
             UpdateDataChange.class, //
             DeleteDataChange.class };
     
