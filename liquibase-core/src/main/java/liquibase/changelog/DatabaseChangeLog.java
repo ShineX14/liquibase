@@ -296,7 +296,8 @@ public class DatabaseChangeLog implements Comparable<DatabaseChangeLog>, Conditi
         if (isRelativePath) {
             // workaround for FilenameUtils.normalize() returning null for relative paths like ../conf/liquibase.xml
             String tempFile = FilenameUtils.concat(FilenameUtils.getFullPath(relativeBaseFileName), fileName);
-            if (tempFile != null && new File(tempFile).exists() == true) {
+            //if (tempFile != null && new File(tempFile).exists() == true) {
+            if (tempFile != null) {
                 fileName = tempFile;
             } else {
                 fileName = FilenameUtils.getFullPath(relativeBaseFileName) + fileName;
