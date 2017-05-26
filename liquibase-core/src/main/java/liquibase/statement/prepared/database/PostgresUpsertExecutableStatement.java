@@ -62,7 +62,7 @@ public class PostgresUpsertExecutableStatement extends
               if (whereClause.length() > 0) {
                 whereClause.append(" and ");
               }
-              whereClause.append(columnName).append("=").append(valueObject);
+              whereClause.append("nv.").append(columnName).append("=").append(valueObject);
             }
             if (valueObject == null) {
 				params.append("null,");
