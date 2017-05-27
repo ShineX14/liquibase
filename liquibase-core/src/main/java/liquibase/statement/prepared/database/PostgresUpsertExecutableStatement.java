@@ -20,6 +20,7 @@ public class PostgresUpsertExecutableStatement extends
 
 	private Info statement;
 	private final List<ColumnConfig> cols = new ArrayList<ColumnConfig>();
+	private final List<ColumnConfig> pkcols = new ArrayList<ColumnConfig>();
 
 	public PostgresUpsertExecutableStatement(Database database,
 			InsertExecutablePreparedStatementChange change) {
@@ -51,18 +52,19 @@ public class PostgresUpsertExecutableStatement extends
 					change.getCatalogName(), change.getSchemaName(),
 					change.getTableName(), column.getName());
 
-            boolean pkcloum = primaryKeys.contains(columnName);
+            boolean isPkColumn = primaryKeys.contains(columnName);
 			fields.append(columnName).append(",");
-			if (!pkcloum) {
+			if (!isPkColumn) {
 			  updateFields.append(columnName + "=nv." + columnName + ",");
             }
 
             Object valueObject = column.getValueObject();
-            if (pkcloum) {
+            if (isPkColumn) {
               if (whereClause.length() > 0) {
                 whereClause.append(" and ");
               }
-              whereClause.append("nv.").append(columnName).append("=").append(valueObject);
+              whereClause.append("t.").append(columnName).append("=?");
+              pkcols.add(column);
             }
             if (valueObject == null) {
 				params.append("null,");
@@ -86,13 +88,12 @@ public class PostgresUpsertExecutableStatement extends
 		StringBuilder sql = new StringBuilder();
 		sql.append("with new_values( " + fields + " ) as (");
 		sql.append("values( " + params + ")), ");
-		sql.append("upsert as ( update " + tableName + " m ");
+		sql.append("upsert as ( update " + tableName + " t ");
 		sql.append("set " + updateFields + " from new_values nv where " + whereClause);
-		sql.append(" returning m.*) ");
+		sql.append(" returning t.*) ");
 		sql.append("insert into " + tableName + "(" + fields + ") ");
 		sql.append("select " + fields + " from new_values ");
-		//sql.append("where not exists (select 1 from upsert up where " + whereClause + ")");
-		sql.append("where not exists (select 1 from " + tableName + " where " + whereClause + ")");
+		sql.append("where not exists (select 1 from " + tableName + " t where " + whereClause + ")");
 
 		String s = sql.toString();
 		statement = new Info(s, cols, getParameters(cols, change.getChangeSet()
@@ -105,6 +106,10 @@ public class PostgresUpsertExecutableStatement extends
 		try {
 			setParameter(stmt, 1, cols, change.getChangeSet().getChangeLog()
 					.getPhysicalFilePath(), change.getResourceAccessor());
+			setParameter(stmt, cols.size() + 1, pkcols, change.getChangeSet().getChangeLog()
+			    .getPhysicalFilePath(), change.getResourceAccessor());
+			setParameter(stmt, cols.size() + pkcols.size() + 1, pkcols, change.getChangeSet().getChangeLog()
+			    .getPhysicalFilePath(), change.getResourceAccessor());
 		} catch (SQLException e) {
 			throw new DatabaseException(e);
 		}
