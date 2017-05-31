@@ -62,7 +62,7 @@ public class MysqlUpsertExecutablePreparedStatement extends AbstractPreparedStat
 				String function = database.generateDatabaseFunctionValue((DatabaseFunction)valueObject);
 				insertValueSql.append(function + ",");
 				if (!pkcloum) {
-					updateSql.append(columnName + "=values(" + function + "),");
+					updateSql.append(columnName + "=values(" + columnName + "),");
 				}
 			} else {
 				cols.add(column);

@@ -12,15 +12,13 @@ import liquibase.statement.DatabaseFunction;
 import liquibase.statement.prepared.AbstractPreparedStatement;
 import liquibase.statement.prepared.InsertExecutablePreparedStatementChange;
 
-public class PostgresUpsertExecutableStatement extends
-		AbstractPreparedStatement {
+public class PostgresUpsertExecutableStatement extends AbstractPreparedStatement {
 
 	private final Database database;
 	private final InsertExecutablePreparedStatementChange change;
 
 	private Info statement;
 	private final List<ColumnConfig> cols = new ArrayList<ColumnConfig>();
-	private final List<ColumnConfig> pkcols = new ArrayList<ColumnConfig>();
 
 	public PostgresUpsertExecutableStatement(Database database,
 			InsertExecutablePreparedStatementChange change) {
@@ -28,74 +26,77 @@ public class PostgresUpsertExecutableStatement extends
 		this.change = change;
 	}
 
-	@Override
 	public Info getStatement() {
 		if (statement != null) {
 			return statement;
 		}
 
-		StringBuilder params = new StringBuilder();
-		StringBuilder fields = new StringBuilder();
-		StringBuilder updateFields = new StringBuilder();
-		StringBuilder whereClause = new StringBuilder();
-
 		String tableName = database.escapeTableName(change.getCatalogName(),
 				change.getSchemaName(), change.getTableName());
 
-        List<String> primaryKeys = getPrimaryKey(change.getPrimaryKey());
+		StringBuilder insertColumnSql = new StringBuilder();
+		StringBuilder insertValueSql = new StringBuilder();
+		StringBuilder updateSql = new StringBuilder();
+
+		List<String> primaryKeys = getPrimaryKey(change.getPrimaryKey());
+		StringBuilder primaryKeyNames = new StringBuilder();
+		for (String pk : primaryKeys) {
+		  if (primaryKeyNames.length() > 0) {
+            primaryKeyNames.append(",");
+          }
+		  primaryKeyNames.append(pk);
+        }
 		for (ColumnConfig column : change.getColumns()) {
 			if (database.supportsAutoIncrement()
 					&& Boolean.TRUE.equals(column.isAutoIncrement())) {
 				continue;
 			}
+
 			String columnName = database.escapeColumnName(
 					change.getCatalogName(), change.getSchemaName(),
 					change.getTableName(), column.getName());
 
-            boolean isPkColumn = primaryKeys.contains(columnName);
-			fields.append(columnName).append(",");
-			if (!isPkColumn) {
-			  updateFields.append(columnName + "=nv." + columnName + ",");
-            }
+			insertColumnSql.append(columnName).append(",");
 
-            Object valueObject = column.getValueObject();
-            if (isPkColumn) {
-              if (whereClause.length() > 0) {
-                whereClause.append(" and ");
-              }
-              whereClause.append("t.").append(columnName).append("=?");
-              pkcols.add(column);
-            }
+			boolean pkcloum = primaryKeys.contains(columnName);
+			Object valueObject = column.getValueObject();
             if (valueObject == null) {
-				params.append("null,");
-            } else if (valueObject instanceof DatabaseFunction) {
-              String value = database.generateDatabaseFunctionValue((DatabaseFunction)valueObject);
-              params.append(value);
-			} else {
-				if (column.getValueDate() != null) {
-					params.append("date(?),");
-				} else {
-					params.append("?,");
+				insertValueSql.append("null,");
+				if (!pkcloum) {
+					updateSql.append(columnName + "=null,");
 				}
+			} else if (valueObject instanceof DatabaseFunction) {
+				String function = database.generateDatabaseFunctionValue((DatabaseFunction)valueObject);
+				insertValueSql.append(function + ",");
+				if (!pkcloum) {
+					updateSql.append(columnName + "=excluded." + columnName + ",");
+				}
+			} else {
 				cols.add(column);
+
+				insertValueSql.append("?,");
+				if (!pkcloum) {
+					updateSql.append(columnName + "=excluded." + columnName + ",");
+				}
 			}
 		}
 
-		deleteLastSeperator(params);
-		deleteLastSeperator(fields);
-		deleteLastSeperator(updateFields);
+		deleteLastSeperator(insertColumnSql);
+		deleteLastSeperator(insertValueSql);
+		deleteLastSeperator(updateSql);
 
-		StringBuilder sql = new StringBuilder();
-		sql.append("with new_values( " + fields + " ) as (");
-		sql.append("values( " + params + ")), ");
-		sql.append("upsert as ( update " + tableName + " t ");
-		sql.append("set " + updateFields + " from new_values nv where " + whereClause);
-		sql.append(" returning t.*) ");
-		sql.append("insert into " + tableName + "(" + fields + ") ");
-		sql.append("select " + fields + " from new_values ");
-		sql.append("where not exists (select 1 from " + tableName + " t where " + whereClause + ")");
+		StringBuilder mergeSql = new StringBuilder();
+		mergeSql.append("insert into ");
+		mergeSql.append(tableName + "(" + insertColumnSql + ")");
+		mergeSql.append(" values(" + insertValueSql + ") ");
+		if (updateSql.length() > 0) {
+		    mergeSql.append(" on conflict(").append(primaryKeyNames).append(") do update set " + updateSql);
+		} else {
+		  mergeSql.append(" od nothing");
+		}
+		
 
-		String s = sql.toString();
+		String s = mergeSql.toString();
 		statement = new Info(s, cols, getParameters(cols, change.getChangeSet()
 				.getFilePath()));
 		return statement;
@@ -106,10 +107,6 @@ public class PostgresUpsertExecutableStatement extends
 		try {
 			setParameter(stmt, 1, cols, change.getChangeSet().getChangeLog()
 					.getPhysicalFilePath(), change.getResourceAccessor());
-			setParameter(stmt, cols.size() + 1, pkcols, change.getChangeSet().getChangeLog()
-			    .getPhysicalFilePath(), change.getResourceAccessor());
-			setParameter(stmt, cols.size() + pkcols.size() + 1, pkcols, change.getChangeSet().getChangeLog()
-			    .getPhysicalFilePath(), change.getResourceAccessor());
 		} catch (SQLException e) {
 			throw new DatabaseException(e);
 		}
