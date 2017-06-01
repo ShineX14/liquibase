@@ -92,7 +92,7 @@ public class PostgresUpsertExecutableStatement extends AbstractPreparedStatement
 		if (updateSql.length() > 0) {
 		    mergeSql.append(" on conflict(").append(primaryKeyNames).append(") do update set " + updateSql);
 		} else {
-		  mergeSql.append(" od nothing");
+		    mergeSql.append(" on conflict(").append(primaryKeyNames).append(") do nothing");
 		}
 		
 
