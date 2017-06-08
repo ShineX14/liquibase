@@ -255,6 +255,11 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
         for (Column column : table.getColumns()) {
             columnNames.add(column.getName());
         }
+        for (String c : rs.get(0).keySet()) {
+            if (!columnNames.contains(c)) {
+                throw new IllegalStateException("Run 'mvn clean' to refresh database column cache");
+            }
+        }
         updateUserId(table.getName(), columnNames, rs);
 
         EbaoDiffOutputControl ebaoDiffOutputControl = (EbaoDiffOutputControl)outputControl;
