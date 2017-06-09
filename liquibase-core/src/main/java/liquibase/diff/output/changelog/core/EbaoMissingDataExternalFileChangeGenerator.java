@@ -256,8 +256,9 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
             columnNames.add(column.getName());
         }
         for (String c : rs.get(0).keySet()) {
-            if (!columnNames.contains(c)) {
-                throw new IllegalStateException("Run 'mvn clean' to refresh database column cache");
+            if (!columnNames.contains(c) && !"ROWNUM".equals(c)) {
+                throw new IllegalStateException("Run 'mvn clean' to refresh database column cache for " + table.getName() + "." + c 
+                    + " is not found in cached columns " + columnNames);
             }
         }
         updateUserId(table.getName(), columnNames, rs);

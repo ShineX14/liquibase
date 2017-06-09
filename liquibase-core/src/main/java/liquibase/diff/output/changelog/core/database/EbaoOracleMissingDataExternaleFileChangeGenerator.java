@@ -7,8 +7,8 @@ import liquibase.structure.DatabaseObject;
 
 public class EbaoOracleMissingDataExternaleFileChangeGenerator extends EbaoMissingDataExternalFileChangeGenerator {
 
-    private static final String sqlPrefix = "select * from ( select /*+ FIRST_ROWS(n) */ a.*, ROWNUM rnum from (";
-    private static final String sqlSuffix = ") a where ROWNUM <= :MAX ) where rnum  >= :MIN";
+    private static final String sqlPrefix = "select * from ( select /*+ FIRST_ROWS(n) */ a.*, ROWNUM from (";
+    private static final String sqlSuffix = ") a where ROWNUM <= :MAX ) where ROWNUM >= :MIN";
 	
     @Override
     public int getPriority(Class<? extends DatabaseObject> objectType, Database database) {
