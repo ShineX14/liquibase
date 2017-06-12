@@ -69,7 +69,7 @@ public class DefaultLogger extends AbstractLogger {
             return;
         }
 
-        err.println(logLevel + " " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(new Date()) + ": " + name + ": " + buildMessage(message));
+        err.println(logLevel + " " + DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.LONG).format(new Date()) + ": " + name + ": " + buildMessage(message));
     }
 
     @Override

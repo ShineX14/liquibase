@@ -77,6 +77,7 @@ public class Liquibase {
     //update
     private static boolean batchUpdate = false;
     private static boolean preparedStatementPreferred = false;
+    private static boolean metadataCachePreferred = false;
     private boolean markNextDdlChangeSetRan = false;
 
     private static boolean relativeToChangelogFile = false;
@@ -1299,6 +1300,14 @@ public class Liquibase {
 
     public static void setPreparedStatementPreferred() {
         preparedStatementPreferred = true;
+    }
+
+    public static boolean isMetadataCachePreferred() {
+      return metadataCachePreferred;
+    }
+
+    public static void setMetadataCachePreferred(boolean metadataCachePreferred) {
+      Liquibase.metadataCachePreferred = metadataCachePreferred;
     }
 
     public static boolean isRelativeToChangelogFile() {

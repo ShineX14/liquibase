@@ -1,5 +1,6 @@
 package liquibase.snapshot;
 
+import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.DatabaseException;
@@ -171,6 +172,9 @@ class ResultSetCache {
         }
 
         boolean shouldBulkSelect(String schemaKey, ResultSetCache resultSetCache) {
+            if (Liquibase.isMetadataCachePreferred()) {
+              return true;
+            }
             return resultSetCache.getTimesSingleQueried(schemaKey) >= 3;
         }
 

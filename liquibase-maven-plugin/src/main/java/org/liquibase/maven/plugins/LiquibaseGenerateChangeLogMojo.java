@@ -126,6 +126,11 @@ public class LiquibaseGenerateChangeLogMojo extends
   protected boolean insertUpdate = false;
 
   /**
+   * @parameter expression="${liquibase.metadataCachePreferred}" default-value="false"
+   */
+  protected boolean metadataCachePreferred = false;
+
+  /**
    * @parameter expression="${liquibase.xmlCsvRowLimit}" default-value="1000"
    */
   protected int xmlCsvRowLimit = 1000;
@@ -174,6 +179,7 @@ public class LiquibaseGenerateChangeLogMojo extends
 
     private DiffOutputControl loadDiffProperty(Liquibase liquibase) {
         log.info("loading " + diffTypes + " from schema '" + defaultSchemaName + "'");
+        Liquibase.setMetadataCachePreferred(metadataCachePreferred);
         EbaoDiffOutputControl diffControl = new EbaoDiffOutputControl(outputDefaultCatalog, outputDefaultSchema, true, liquibase.getDatabase());
         diffControl.setInsertUpdatePreferred(insertUpdate);
         diffControl.setXmlCsvRowLimit(xmlCsvRowLimit);

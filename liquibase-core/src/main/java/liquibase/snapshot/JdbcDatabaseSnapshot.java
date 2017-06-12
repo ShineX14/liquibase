@@ -280,20 +280,6 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                     return new ResultSetCache.RowData(catalogName, schemaName, database, tableName, columnName);
                 }
 
-
-                @Override
-                boolean shouldBulkSelect(String schemaKey, ResultSetCache resultSetCache) {
-                    Set<String> seenTables = resultSetCache.getInfo("seenTables", Set.class);
-                    if (seenTables == null) {
-                        seenTables = new HashSet<String>();
-                        resultSetCache.putInfo("seenTables", seenTables);
-                    }
-
-                    seenTables.add(catalogName+":"+schemaName+":"+tableName);
-                    return seenTables.size() > 2;
-                }
-
-
                 @Override
 				public List<CachedRow> fastFetchQuery() throws SQLException, DatabaseException {
                     if (database instanceof OracleDatabase) {
