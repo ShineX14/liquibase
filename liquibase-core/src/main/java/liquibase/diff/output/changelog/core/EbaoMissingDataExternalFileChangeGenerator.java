@@ -211,6 +211,9 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                 list.add(row);
             }
     
+            if (list.isEmpty()) {
+              throw new IllegalStateException("Empty result set: " + sql);
+            }
             return list;
         } catch (Exception e) {
             throw new UnexpectedLiquibaseException(sql, e);
@@ -256,10 +259,10 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
             columnNames.add(column.getName());
         }
         for (String c : rs.get(0).keySet()) {
-            if (!columnNames.contains(c) && !"ROWNUM".equals(c)) {
-                throw new IllegalStateException("Run 'mvn clean' to refresh database column cache for " + table.getName() + "." + c 
-                    + " is not found in cached columns " + columnNames);
-            }
+          if (!columnNames.contains(c) && !"innerROWNUM".equalsIgnoreCase(c)) {//EbaoOracleMissingDataExternaleFileChangeGenerator
+            throw new IllegalStateException("Run 'mvn clean' to refresh database column cache for " + table.getName() + "." + c 
+                + " is not found in cached columns " + columnNames);
+          }
         }
         updateUserId(table.getName(), columnNames, rs);
 
