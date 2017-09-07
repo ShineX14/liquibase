@@ -51,26 +51,26 @@ public class MysqlUpsertExecutablePreparedStatement extends AbstractPreparedStat
 
 			insertColumnSql.append(columnName).append(",");
 
-			boolean pkcloum = primaryKeys.contains(columnName);
+			//boolean pkcloum = primaryKeys.contains(columnName);
 			Object valueObject = column.getValueObject();
             if (valueObject == null) {
 				insertValueSql.append("null,");
-				if (!pkcloum) {
+				//if (!pkcloum) {
 					updateSql.append(columnName + "=null,");
-				}
+				//}
 			} else if (valueObject instanceof DatabaseFunction) {
 				String function = database.generateDatabaseFunctionValue((DatabaseFunction)valueObject);
 				insertValueSql.append(function + ",");
-				if (!pkcloum) {
+				//if (!pkcloum) {
 					updateSql.append(columnName + "=values(" + columnName + "),");
-				}
+				//}
 			} else {
 				cols.add(column);
 
 				insertValueSql.append("?,");
-				if (!pkcloum) {
+				//if (!pkcloum) {
 					updateSql.append(columnName + "=values(" + columnName + "),");
-				}
+				//}
 			}
 		}
 

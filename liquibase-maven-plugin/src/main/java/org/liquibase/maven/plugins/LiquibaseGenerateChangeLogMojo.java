@@ -298,16 +298,17 @@ public class LiquibaseGenerateChangeLogMojo extends
 	protected void printSettings(String indent) {
 		super.printSettings(indent);
         getLog().info(indent + "diffTypes: " + diffTypes);
+        getLog().info(indent + "diffPropertyFile: " + diffPropertyFile);
         getLog().info(indent + "outputChangeLogFile: " + outputChangeLogFile);
         if (dataDir != null) {
-        	getLog().info(indent + "dataDir: " + dataDir);
+          getLog().info(indent + "dataDir: " + dataDir);
 		}
         getLog().info(indent + "userColumnPropertyFile: " + userColumnPropertyFile);
         if (insertUpdate) {
           getLog().info(indent + "insertUpdate: " + insertUpdate);
         }
         if (xmlCsvRowLimit != 1000) {
-        	getLog().info(indent + "xmlCsvRowLimit: " + xmlCsvRowLimit);
+          getLog().info(indent + "xmlCsvRowLimit: " + xmlCsvRowLimit);
 		}
 	}
 
