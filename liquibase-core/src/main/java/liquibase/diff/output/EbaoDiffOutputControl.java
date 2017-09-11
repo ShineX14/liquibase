@@ -10,6 +10,7 @@ import liquibase.database.Database;
 import liquibase.database.core.MSSQLDatabase;
 import liquibase.database.core.MySQLDatabase;
 import liquibase.database.core.OracleDatabase;
+import liquibase.structure.core.Table;
 
 public class EbaoDiffOutputControl extends DiffOutputControl {
 
@@ -61,11 +62,7 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
   }
 
   public void addDiffTable(String diffTable, String condition, String subdir, String filename) {
-    if (database instanceof MySQLDatabase) {
-      diffTable = diffTable.toLowerCase();
-    } else {
-      diffTable = diffTable.toUpperCase();
-    }
+    diffTable = database.correctObjectName(diffTable, Table.class);
     if (condition != null) {
       condition = condition.trim();
       if (!"".equals(condition)
