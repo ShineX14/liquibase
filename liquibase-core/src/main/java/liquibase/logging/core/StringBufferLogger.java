@@ -1,7 +1,5 @@
 package liquibase.logging.core;
 
-import org.apache.commons.lang.StringUtils;
-
 import liquibase.logging.LogLevel;
 
 public class StringBufferLogger extends DefaultLogger {
@@ -21,7 +19,7 @@ public class StringBufferLogger extends DefaultLogger {
     LOGGER_BUFFER_LIMIT = 90;
     loggerBuffer = new StringBuffer(LOGGER_BUFFER_MAX);
   }
-  
+
   public static synchronized void reset() {
     loggerBuffer.setLength(0);
     deletedBufferSize = 0;
@@ -33,17 +31,22 @@ public class StringBufferLogger extends DefaultLogger {
     return hasSevereLog;
   }
 
-  private static final String DOT_LINE = StringUtils.leftPad("\n", 199, ".");
-  
+  private static final String DOT_LINE = new String(new char[199]).replace('\0', '.') + "\n";
+
   public static synchronized String getLog(int start) {
     start = start - deletedBufferSize;
     int length = loggerBuffer.length();
     if (start > length) {
       return "";
-    } else if (start < 0) {
-      return StringUtils.leftPad("", -start, DOT_LINE);
-    } else {
+    } else if (start >= 0) {
       return loggerBuffer.substring(start, length);
+    } else {
+      StringBuilder s = new StringBuilder(-start);
+      for (int i = 0; i < -start / DOT_LINE.length(); i++) {
+        s.append(DOT_LINE);
+      }
+      s.append(DOT_LINE.subSequence(0, -start - s.length()));
+      return s.toString();
     }
   }
 
@@ -59,7 +62,7 @@ public class StringBufferLogger extends DefaultLogger {
       deletedBufferSize += LOGGER_BUFFER_MAX / 2;
     }
   }
-  
+
   @Override
   protected void print(LogLevel logLevel, String message) {
     super.print(logLevel, message);
