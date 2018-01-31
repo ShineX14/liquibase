@@ -181,10 +181,9 @@ public class StreamUtil {
             } else {
                 base = changeSet.getChangeLog().getPhysicalFilePath().replaceAll("\\\\","/");
             }
-            if (!base.contains("/")) {
-                base = ".";
+            if (base.contains("/")) {
+                file = base.replaceFirst("/[^/]*$", "") + "/" + file;
             }
-            file = base.replaceFirst("/[^/]*$", "") + "/" + file;
         }
 
         return singleInputStream(file, resourceAccessor);
@@ -215,11 +214,9 @@ public class StreamUtil {
             } else {
                 base = changeSet.getChangeLog().getPhysicalFilePath().replaceAll("\\\\","/");
             }
-            if (base == null || !base.contains("/")) {
-                base = ".";
+            if (base != null && base.contains("/")) {
+              file = base.replaceFirst("/[^/]*$", "") + "/" + file;
             }
-
-            file = base.replaceFirst("/[^/]*$", "") + "/" + file;
         }
 
         return singleInputStream(file, resourceAccessor);
