@@ -173,7 +173,7 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
                             sql = sql.replaceFirst("/\\s*/\\s*$", ""); // remove duplicated /'s
                         }
 
-                        log.debug("Executing EXECUTE database command: " + sql);
+                        log.debug("Executing EXECUTE database command:\n    " + sql);
                         sqls.add(sql);
                         // if (statement.contains("?") || statement.contains("{")) {
                         stmt.setEscapeProcessing(false);
@@ -203,7 +203,7 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
         String sql = statements.get(0).getStatement().sql;
         try {
             PreparedStatement dbStatement = f.create(sql);
-            log.debug("Executing EXECUTE database command: " + sql);
+            log.debug("Executing EXECUTE database command:\n    " + sql);
             for (ExecutablePreparedStatement statement : statements) {
                 statement.execute(dbStatement);
             }
@@ -320,7 +320,7 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
                 if (sqlToExecute.length != 1) {
                     throw new DatabaseException("Cannot call update on Statement that returns back multiple Sql objects");
                 }
-                log.debug("Executing UPDATE database command: "+sqlToExecute[0]);
+                log.debug("Executing UPDATE database command:\n    "+sqlToExecute[0]);
                 return stmt.executeUpdate(sqlToExecute[0]);
             }
 
@@ -399,7 +399,7 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
                     statement = statement.replaceFirst("/\\s*/\\s*$", ""); //remove duplicated /'s
                 }
 
-                log.debug("Executing EXECUTE database command: "+statement);
+                log.debug("Executing EXECUTE database command:\n    "+statement);
                 // if (statement.contains("?") || statement.contains("{")) {
                     stmt.setEscapeProcessing(false);
                 //}
@@ -440,7 +440,7 @@ public class JdbcExecutor extends AbstractExecutor implements Executor {
                 if (sqlToExecute.length != 1) {
                     throw new DatabaseException("Can only query with statements that return one sql statement");
                 }
-                log.debug("Executing QUERY database command: "+sqlToExecute[0]);
+                log.debug("Executing QUERY database command:\n    "+sqlToExecute[0]);
 
                 rs = stmt.executeQuery(sqlToExecute[0]);
                 ResultSet rsToUse = rs;

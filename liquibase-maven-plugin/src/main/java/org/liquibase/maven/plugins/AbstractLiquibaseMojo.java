@@ -300,16 +300,14 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
 
         processSystemProperties();
 
+        try {
+            LogFactory.getInstance().setDefaultLoggingLevel(logging);
+        } catch (IllegalArgumentException e) {
+            throw new MojoExecutionException("Failed to set logging level: " + e.getMessage(), e);
+        }
+
         ClassLoader artifactClassLoader = getMavenArtifactClassLoader();
         configureFieldsAndValues(getPropertyFileOpener(artifactClassLoader));
-
-        try {
-            LogFactory.setLoggingLevel(logging);
-        }
-        catch (IllegalArgumentException e) {
-            throw new MojoExecutionException("Failed to set logging level: " + e.getMessage(),
-                    e);
-        }
 
         // Displays the settings for the Mojo depending of verbosity mode.
         displayMojoSettings();
