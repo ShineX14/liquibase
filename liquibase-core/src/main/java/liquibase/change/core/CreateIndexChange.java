@@ -1,14 +1,24 @@
 package liquibase.change.core;
 
-import liquibase.change.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import liquibase.change.AbstractChange;
+import liquibase.change.AddColumnConfig;
+import liquibase.change.Change;
+import liquibase.change.ChangeMetaData;
+import liquibase.change.ChangeStatus;
+import liquibase.change.ChangeWithColumns;
+import liquibase.change.ColumnConfig;
+import liquibase.change.DatabaseChange;
+import liquibase.change.DatabaseChangeProperty;
 import liquibase.database.Database;
+import liquibase.database.core.TencentDCDBDatabase;
 import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.CreateIndexStatement;
 import liquibase.structure.core.Index;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Creates an index on an existing column.
@@ -92,6 +102,18 @@ public class CreateIndexChange extends AbstractChange implements ChangeWithColum
 
     @Override
     public SqlStatement[] generateStatements(Database database) {
+      if (database instanceof TencentDCDBDatabase) {
+        if (getChangeSet() != null) {
+          Set<String> dbms = getChangeSet().getDbmsSet();
+          if (dbms != null && !dbms.contains(database.getShortName())) {
+            if (isUnique()) {
+              return null;
+            }
+          }
+        }
+      }
+
+      
         List<String> columns = new ArrayList<String>();
         for (ColumnConfig column : getColumns()) {
             columns.add(column.getName());

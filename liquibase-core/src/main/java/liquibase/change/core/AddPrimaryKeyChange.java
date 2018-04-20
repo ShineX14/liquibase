@@ -1,8 +1,11 @@
 package liquibase.change.core;
 
+import java.util.Set;
+
 import liquibase.change.*;
 import liquibase.database.Database;
 import liquibase.database.core.DB2Database;
+import liquibase.database.core.TencentDCDBDatabase;
 import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.AddPrimaryKeyStatement;
@@ -92,6 +95,13 @@ public class AddPrimaryKeyChange extends AbstractChange {
 //todo        } else if (database instanceof SQLiteDatabase) {
 //            // return special statements for SQLite databases
 //            return generateStatementsForSQLiteDatabase(database);
+        } else if (database instanceof TencentDCDBDatabase) {
+          if (getChangeSet() != null) {
+            Set<String> dbms = getChangeSet().getDbmsSet();
+            if (dbms != null && !dbms.contains(database.getShortName())) {
+              return null;
+            }
+          }
         }
 
         return new SqlStatement[]{

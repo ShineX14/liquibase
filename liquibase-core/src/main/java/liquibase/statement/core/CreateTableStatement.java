@@ -11,6 +11,7 @@ public class CreateTableStatement extends AbstractSqlStatement {
     private String tableName;
     private String tablespace;
     private String remarks;
+    private String shardKey;
     private List<String> columns = new ArrayList<String>();
     private Set<AutoIncrementConstraint> autoIncrementConstraints = new HashSet<AutoIncrementConstraint>();
     private Map<String, LiquibaseDataType> columnTypes = new HashMap<String, LiquibaseDataType>();
@@ -29,11 +30,17 @@ public class CreateTableStatement extends AbstractSqlStatement {
         this.tableName = tableName;
     }
 
-    public CreateTableStatement(String catalogName, String schemaName, String tableName,String remarks) {
+    public CreateTableStatement(String catalogName, String schemaName, String tableName, String remarks) {
         this(catalogName,schemaName,tableName);
         this.remarks = remarks;
     }
 
+    public CreateTableStatement(String catalogName, String schemaName, String tableName, String remarks, String shardKey) {
+      this(catalogName,schemaName,tableName);
+      this.remarks = remarks;
+      this.shardKey = shardKey;
+    }
+    
     public String getCatalogName() {
         return catalogName;
     }
@@ -65,6 +72,14 @@ public class CreateTableStatement extends AbstractSqlStatement {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+
+    public String getShardKey() {
+      return shardKey;
+    }
+
+    public void setShardKey(String shardKey) {
+      this.shardKey = shardKey;
     }
 
     public PrimaryKeyConstraint getPrimaryKeyConstraint() {

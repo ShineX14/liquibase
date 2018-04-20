@@ -35,6 +35,7 @@ public class CreateTableChange extends AbstractChange implements ChangeWithColum
     private String tableName;
     private String tablespace;
     private String remarks;
+    private String shardKey;
 
     public CreateTableChange() {
         super();
@@ -137,7 +138,7 @@ public class CreateTableChange extends AbstractChange implements ChangeWithColum
     }
 
     protected CreateTableStatement generateCreateTableStatement() {
-        return new CreateTableStatement(getCatalogName(), getSchemaName(), getTableName(),getRemarks());
+        return new CreateTableStatement(getCatalogName(), getSchemaName(), getTableName(),getRemarks(), getShardKey());
     }
 
     @Override
@@ -249,6 +250,15 @@ public class CreateTableChange extends AbstractChange implements ChangeWithColum
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+
+    @DatabaseChangeProperty(supportsDatabase = "dcdb")
+    public String getShardKey() {
+      return shardKey;
+    }
+
+    public void setShardKey(String shardKey) {
+      this.shardKey = shardKey;
     }
 
     @Override

@@ -1,7 +1,10 @@
 package liquibase.change.core;
 
+import java.util.Set;
+
 import liquibase.change.*;
 import liquibase.database.Database;
+import liquibase.database.core.TencentDCDBDatabase;
 import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.AddUniqueConstraintStatement;
@@ -111,6 +114,14 @@ public class AddUniqueConstraintChange extends AbstractChange {
 //    		// return special statements for SQLite databases
 //    		return generateStatementsForSQLiteDatabase(database);
 //        }
+    if (database instanceof TencentDCDBDatabase) {
+      if (getChangeSet() != null) {
+        Set<String> dbms = getChangeSet().getDbmsSet();
+        if (dbms != null && !dbms.contains(database.getShortName())) {
+          return null;
+        }
+      }
+    }
 
         boolean deferrable = false;
         if (getDeferrable() != null) {
