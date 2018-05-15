@@ -114,14 +114,14 @@ public class AddUniqueConstraintChange extends AbstractChange {
 //    		// return special statements for SQLite databases
 //    		return generateStatementsForSQLiteDatabase(database);
 //        }
-    if (database instanceof TencentDCDBDatabase) {
-      if (getChangeSet() != null) {
-        Set<String> dbms = getChangeSet().getDbmsSet();
-        if (dbms != null && !dbms.contains(database.getShortName())) {
-          return null;
+        if (database instanceof TencentDCDBDatabase) {
+            if (getChangeSet() != null) {
+                Set<String> dbms = getChangeSet().getDbmsSet();
+                if (dbms != null && !dbms.contains(database.getShortName())) {
+                    return new SqlStatement[] {};
+                }
+            }
         }
-      }
-    }
 
         boolean deferrable = false;
         if (getDeferrable() != null) {

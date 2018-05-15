@@ -1,8 +1,11 @@
 package liquibase.change.core;
 
+import java.util.Set;
+
 import liquibase.change.*;
 import liquibase.database.Database;
 import liquibase.database.core.SybaseASADatabase;
+import liquibase.database.core.TencentDCDBDatabase;
 import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.DropUniqueConstraintStatement;
@@ -69,6 +72,14 @@ public class DropUniqueConstraintChange extends AbstractChange {
 
     @Override
     public SqlStatement[] generateStatements(Database database) {
+        if (database instanceof TencentDCDBDatabase) {
+            if (getChangeSet() != null) {
+                Set<String> dbms = getChangeSet().getDbmsSet();
+                if (dbms != null && !dbms.contains(database.getShortName())) {
+                    return new SqlStatement[] {};
+                }
+            }
+        }
         
 //todo    	if (database instanceof SQLiteDatabase) {
 //    		// return special statements for SQLite databases

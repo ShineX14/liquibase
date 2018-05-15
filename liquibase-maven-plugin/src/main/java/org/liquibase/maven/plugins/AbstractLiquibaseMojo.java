@@ -524,6 +524,9 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             getLog().info(indent + "properties file: " + propertyFile);
             getLog().info(indent + "properties file will override? " + propertyFileWillOverride);
         }
+        if (databaseClass != null) {
+          getLog().info(indent + "databaseClass: " + databaseClass);
+        }
         if (!promptOnNonLocalDatabase) {
             getLog().info(indent + "prompt on non-local database? " + promptOnNonLocalDatabase);
         }
@@ -579,6 +582,10 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             String key = (String) it.next();
             String value = (String) props.get(key);
             try {
+                if (key.startsWith("liquibase.")) {
+                  System.setProperty(key, value);
+                  key = key.substring("liquibase.".length());
+                }
                 if ("DRIVER_CLASS".equals(key) || "jdbc.driver".equals(key)) {
                     key = "driver";
                 }

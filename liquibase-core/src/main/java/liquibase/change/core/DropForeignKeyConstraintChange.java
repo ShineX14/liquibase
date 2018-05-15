@@ -3,6 +3,7 @@ package liquibase.change.core;
 import liquibase.change.*;
 import liquibase.database.Database;
 import liquibase.database.core.SQLiteDatabase;
+import liquibase.database.core.TencentDCDBDatabase;
 import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.DropForeignKeyConstraintStatement;
@@ -56,7 +57,10 @@ public class DropForeignKeyConstraintChange extends AbstractChange {
 
     @Override
     public SqlStatement[] generateStatements(Database database) {
-
+        if (database instanceof TencentDCDBDatabase) {
+            return new SqlStatement[] {};
+        }
+        
         if (database instanceof SQLiteDatabase) {
     		// return special statements for SQLite databases
     		return generateStatementsForSQLiteDatabase();

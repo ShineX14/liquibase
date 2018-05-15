@@ -21,7 +21,12 @@ public class TencentDCDBDatabase extends EbaoMysqlDatabase {
   @Override
   public boolean isCorrectDatabaseImplementation(DatabaseConnection conn) throws DatabaseException {
     return super.isCorrectDatabaseImplementation(conn)
-        && PRODUCT_NAME.equalsIgnoreCase(System.getProperty("liquibase.database"));
+        && TencentDCDBDatabase.class.getName().equals(System.getProperty("liquibase.databaseClass"));
+  }
+
+  @Override
+  public boolean supportsDDLInTransaction() {
+    return false;
   }
 
 }

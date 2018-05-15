@@ -2,7 +2,9 @@ package liquibase.change.core;
 
 import liquibase.change.*;
 import liquibase.database.Database;
+import liquibase.database.core.HsqlDatabase;
 import liquibase.database.core.SQLiteDatabase;
+import liquibase.database.core.TencentDCDBDatabase;
 import liquibase.parser.core.ParsedNode;
 import liquibase.parser.core.ParsedNodeException;
 import liquibase.resource.ResourceAccessor;
@@ -84,6 +86,10 @@ public class CreateViewChange extends AbstractChange {
 
     @Override
     public SqlStatement[] generateStatements(Database database) {
+        if (database instanceof TencentDCDBDatabase) {
+            return new SqlStatement[] {};
+        }
+
         List<SqlStatement> statements = new ArrayList<SqlStatement>();
 
 		boolean replaceIfExists = false;

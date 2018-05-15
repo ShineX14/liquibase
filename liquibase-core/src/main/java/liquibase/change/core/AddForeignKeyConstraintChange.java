@@ -3,6 +3,8 @@ package liquibase.change.core;
 import liquibase.change.*;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
+import liquibase.database.core.HsqlDatabase;
+import liquibase.database.core.TencentDCDBDatabase;
 import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.structure.core.ForeignKey;
 import liquibase.structure.core.ForeignKeyConstraintType;
@@ -218,6 +220,9 @@ public class AddForeignKeyConstraintChange extends AbstractChange {
 
     @Override
     public SqlStatement[] generateStatements(Database database) {
+        if (database instanceof TencentDCDBDatabase) {
+            return new SqlStatement[] {};
+        }
 
         boolean deferrable = false;
         if (getDeferrable() != null) {

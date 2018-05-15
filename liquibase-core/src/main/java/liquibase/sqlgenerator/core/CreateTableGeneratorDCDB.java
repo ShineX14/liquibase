@@ -1,25 +1,11 @@
 package liquibase.sqlgenerator.core;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-
 import liquibase.database.Database;
-import liquibase.database.core.InformixDatabase;
 import liquibase.database.core.TencentDCDBDatabase;
-import liquibase.exception.ValidationErrors;
-import liquibase.logging.LogFactory;
 import liquibase.sql.Sql;
 import liquibase.sql.UnparsedSql;
 import liquibase.sqlgenerator.SqlGeneratorChain;
-import liquibase.sqlgenerator.core.AbstractSqlGenerator;
-import liquibase.statement.AutoIncrementConstraint;
-import liquibase.statement.ForeignKeyConstraint;
-import liquibase.statement.UniqueConstraint;
 import liquibase.statement.core.CreateTableStatement;
-import liquibase.structure.core.Schema;
-import liquibase.structure.core.Table;
-import liquibase.util.StringUtils;
 
 
 /**
@@ -42,13 +28,19 @@ public class CreateTableGeneratorDCDB extends CreateTableGenerator {
 	@Override
     public Sql[] generateSql(CreateTableStatement statement, Database database, SqlGeneratorChain sqlGeneratorChain) {
         Sql[] sql = super.generateSql(statement, database, sqlGeneratorChain);
+        int length = sql.length;
+        Sql[] newsql = new Sql[length + 1];
+        for (int i=0; i<length; i++) {
+          newsql[i] = sql[i];
+        }
         if (statement.getShardKey() != null) {
           StringBuilder s = new StringBuilder();
           s.append(sql[0].toSql());
           s.append(" shardkey=").append(statement.getShardKey());
-          sql[0] = new UnparsedSql(s.toString(), getAffectedTable(statement));
+          newsql[0] = new UnparsedSql(s.toString(), getAffectedTable(statement));
         }
-        return sql;
+        newsql[length] = new UnparsedSql("select sleep(5)", getAffectedTable(statement));
+        return newsql;
 	}
 
 }

@@ -2,6 +2,7 @@ package liquibase.change.core;
 
 import liquibase.change.*;
 import liquibase.database.Database;
+import liquibase.database.core.TencentDCDBDatabase;
 import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.DropViewStatement;
@@ -46,6 +47,10 @@ public class DropViewChange extends AbstractChange {
 
     @Override
     public SqlStatement[] generateStatements(Database database) {
+        if (database instanceof TencentDCDBDatabase) {
+            return new SqlStatement[] {};
+        }
+
         return new SqlStatement[]{
                 new DropViewStatement(getCatalogName(), getSchemaName(), getViewName()),
         };

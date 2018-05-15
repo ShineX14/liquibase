@@ -3,6 +3,7 @@ package liquibase.change.core;
 import liquibase.change.*;
 import liquibase.database.Database;
 import liquibase.database.core.SQLiteDatabase;
+import liquibase.database.core.TencentDCDBDatabase;
 import liquibase.database.core.SQLiteDatabase.AlterTableVisitor;
 import liquibase.snapshot.SnapshotGeneratorFactory;
 import liquibase.structure.core.Column;
@@ -14,6 +15,7 @@ import liquibase.structure.core.Table;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Removes an existing primary key.
@@ -71,6 +73,14 @@ public class DropPrimaryKeyChange extends AbstractChange {
 
     @Override
     public SqlStatement[] generateStatements(Database database) {
+        if (database instanceof TencentDCDBDatabase) {
+            if (getChangeSet() != null) {
+                Set<String> dbms = getChangeSet().getDbmsSet();
+                if (dbms != null && !dbms.contains(database.getShortName())) {
+                    return new SqlStatement[] {};
+                }
+            }
+        }
 
         if (database instanceof SQLiteDatabase) {
     		// return special statements for SQLite databases

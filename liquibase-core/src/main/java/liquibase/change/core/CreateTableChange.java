@@ -118,10 +118,12 @@ public class CreateTableChange extends AbstractChange implements ChangeWithColum
         statements.add(statement);
 
         if (StringUtils.trimToNull(remarks) != null) {
+          if (!(database instanceof MySQLDatabase)) {//comment generated in CreateTableGenerator already
             SetTableRemarksStatement remarksStatement = new SetTableRemarksStatement(catalogName, schemaName, tableName, remarks);
             if (SqlGeneratorFactory.getInstance().supports(remarksStatement, database)) {
                 statements.add(remarksStatement);
             }
+          }
         }
 
         for (ColumnConfig column : getColumns()) {
@@ -252,7 +254,7 @@ public class CreateTableChange extends AbstractChange implements ChangeWithColum
         this.remarks = remarks;
     }
 
-    @DatabaseChangeProperty(supportsDatabase = "dcdb")
+    @DatabaseChangeProperty(isChangeProperty = false)
     public String getShardKey() {
       return shardKey;
     }
