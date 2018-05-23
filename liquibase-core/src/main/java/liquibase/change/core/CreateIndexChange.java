@@ -103,15 +103,10 @@ public class CreateIndexChange extends AbstractChange implements ChangeWithColum
     @Override
     public SqlStatement[] generateStatements(Database database) {
       if (database instanceof TencentDCDBDatabase) {
-        if (getChangeSet() != null) {
-          Set<String> dbms = getChangeSet().getDbmsSet();
-          if (dbms != null && !dbms.contains(database.getShortName())) {
-            if (isUnique()) {
-              return null;
+            if (isUnique() != null && isUnique()) {
+                return new SqlStatement[] {};
             }
-          }
         }
-      }
 
       
         List<String> columns = new ArrayList<String>();

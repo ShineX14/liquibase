@@ -115,12 +115,7 @@ public class AddUniqueConstraintChange extends AbstractChange {
 //    		return generateStatementsForSQLiteDatabase(database);
 //        }
         if (database instanceof TencentDCDBDatabase) {
-            if (getChangeSet() != null) {
-                Set<String> dbms = getChangeSet().getDbmsSet();
-                if (dbms != null && !dbms.contains(database.getShortName())) {
-                    return new SqlStatement[] {};
-                }
-            }
+            return new SqlStatement[] {};
         }
 
         boolean deferrable = false;

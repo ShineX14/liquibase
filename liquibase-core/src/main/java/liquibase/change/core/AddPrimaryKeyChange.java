@@ -96,12 +96,7 @@ public class AddPrimaryKeyChange extends AbstractChange {
 //            // return special statements for SQLite databases
 //            return generateStatementsForSQLiteDatabase(database);
         } else if (database instanceof TencentDCDBDatabase) {
-            if (getChangeSet() != null) {
-                Set<String> dbms = getChangeSet().getDbmsSet();
-                if (dbms != null && !dbms.contains(database.getShortName())) {
-                    return new SqlStatement[] {};
-                }
-            }
+            return new SqlStatement[] {};
         }
 
         return new SqlStatement[]{
