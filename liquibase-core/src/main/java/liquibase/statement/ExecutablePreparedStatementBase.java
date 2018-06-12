@@ -108,7 +108,7 @@ public abstract class ExecutablePreparedStatementBase implements ExecutablePrepa
 		        stmt.setInt(i, number.intValue());
 		    }
 		} else if(col.getValueDate() != null) {
-		    stmt.setDate(i, new java.sql.Date(col.getValueDate().getTime()));
+		    stmt.setTimestamp(i, new java.sql.Timestamp(col.getValueDate().getTime()));
 		} else if (col.getValueBlobFile() != null) {
 			try {
 				LOBContent<InputStream> lob = toBinaryStream(col.getValueBlobFile());
