@@ -1,5 +1,6 @@
 package liquibase.resource;
 
+import liquibase.logging.LogFactory;
 import liquibase.logging.Logger;
 import liquibase.logging.core.DefaultLogger;
 import liquibase.util.FileUtil;
@@ -16,8 +17,6 @@ import java.util.*;
  */
 public class ClassLoaderResourceAccessor extends AbstractResourceAccessor {
 
-    private static final Logger logger = new DefaultLogger();
-    
     private ClassLoader classLoader;
     public ClassLoaderResourceAccessor() {
         this.classLoader = getClass().getClassLoader();
@@ -50,6 +49,8 @@ public class ClassLoaderResourceAccessor extends AbstractResourceAccessor {
         }
 
         if (seenUrls.size() > 1 && !"META-INF/MANIFEST.MF".equals(path)) {
+            //circular dependency on ServiceLocator and Logger
+            Logger logger = LogFactory.getInstance().getLog();
             logger.warning(seenUrls.toString());
         }
         Set<InputStream> set = new HashSet<InputStream>();
