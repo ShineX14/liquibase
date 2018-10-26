@@ -13,6 +13,7 @@ import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
 import liquibase.logging.LogFactory;
 import liquibase.logging.Logger;
+import liquibase.logging.core.DefaultLogger;
 import liquibase.resource.AbstractResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 import liquibase.util.StringUtils;
@@ -60,6 +61,8 @@ import java.util.*;
  */
 public class SpringLiquibase implements InitializingBean, BeanNameAware, ResourceLoaderAware {
 
+    private static final Logger logger = new DefaultLogger();
+
     public class SpringResourceOpener extends AbstractResourceAccessor {
 
         private String parentFile;
@@ -104,6 +107,9 @@ public class SpringLiquibase implements InitializingBean, BeanNameAware, Resourc
             }
             for (Resource resource : resources) {
                 returnSet.add(resource.getURL().openStream());
+                if (resources.length > 1) {
+                    logger.warning(resource.toString());
+                }
             }
 
             return returnSet;
