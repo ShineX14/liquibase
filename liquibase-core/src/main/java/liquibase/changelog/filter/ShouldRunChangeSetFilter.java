@@ -22,7 +22,7 @@ public class ShouldRunChangeSetFilter implements ChangeSetFilter {
     public ShouldRunChangeSetFilter(Database database) throws DatabaseException {
         this(database, true);
     }
-    
+
     @Override
     @SuppressWarnings({"RedundantIfStatement"})
     public ChangeSetFilterResult accepts(ChangeSet changeSet) {
@@ -83,7 +83,7 @@ public class ShouldRunChangeSetFilter implements ChangeSetFilter {
 
     protected String normalizePath(String filePath) {
         if (ignoreClasspathPrefix) {
-            return filePath.replaceFirst("^classpath:", "");
+            return filePath.replaceFirst("^classpath:|^classpath\\*:", "");
         }
         return filePath;
     }
