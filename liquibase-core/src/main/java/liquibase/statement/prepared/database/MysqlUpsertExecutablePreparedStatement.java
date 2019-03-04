@@ -38,7 +38,7 @@ public class MysqlUpsertExecutablePreparedStatement extends AbstractPreparedStat
 		StringBuilder insertValueSql = new StringBuilder();
 		StringBuilder updateSql = new StringBuilder();
 
-		List<String> primaryKeys = getPrimaryKey(change.getPrimaryKey());
+		//List<String> primaryKeys = getPrimaryKey(change.getPrimaryKey());
 		for (ColumnConfig column : change.getColumns()) {
 			if (database.supportsAutoIncrement()
 					&& Boolean.TRUE.equals(column.isAutoIncrement())) {

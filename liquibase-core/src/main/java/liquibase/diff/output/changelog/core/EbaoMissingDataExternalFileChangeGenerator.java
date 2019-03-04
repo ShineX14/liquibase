@@ -21,6 +21,8 @@ import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.codec.binary.Hex;
+
 import liquibase.change.Change;
 import liquibase.change.ColumnConfig;
 import liquibase.change.core.AddForeignKeyConstraintChange;
@@ -38,7 +40,6 @@ import liquibase.change.core.LoadUpdateDataChange;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.IncludedFile;
 import liquibase.database.Database;
-import liquibase.database.core.OracleDatabase;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.diff.output.ChangeSetToChangeLog;
 import liquibase.diff.output.DataInterceptor;
@@ -299,7 +300,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
             List<Map<String, Object>> rs, String dataDir) throws FileNotFoundException, IOException, DatabaseException,
             ParserConfigurationException {
         List<InsertDataChange> changes = new ArrayList<InsertDataChange>();
-        for (Map row : rs) {
+        for (Map<String, Object> row : rs) {
             InsertDataChange change = newInsertDataChange(table, outputControl.isInsertUpdatePreferred());
             if (outputControl.getIncludeCatalog()) {
                 change.setCatalogName(table.getSchema().getCatalogName());
@@ -334,11 +335,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                     String lobFileName = writeLobFile(table, table.getColumn(column.getName()), value, row, dataDir);
                     column.setValueClobFile(lobFileName);
                 } else if (value instanceof byte[]) {
-                    StringBuilder sb = new StringBuilder();
-                    for (byte b : (byte[]) value) {
-                        sb.append(String.format("%02x", b & 0xff));
-                    }
-                    column.setValue(sb.toString());
+                    column.setValueBlob(Hex.encodeHexString((byte[]) value));
                 } else { // string
                     // column.setValue(value.toString().replace("\\", "\\\\"));
                     column.setValue(value.toString());
@@ -401,7 +398,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
         }
         outputFile.writeNext(line);
 
-        for (Map row : rs) {
+        for (Map<String, Object> row : rs) {
             line = new String[columnNames.size()];
 
             for (int i = 0; i < columnNames.size(); i++) {
@@ -439,11 +436,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                         String lobFileName = writeLobFile(table, table.getColumn(columnNames.get(i)), value, row, dataDir);
                         line[i] = lobFileName;
                     } else if (value instanceof byte[]) {
-                        StringBuilder sb = new StringBuilder();
-                        for (byte b : (byte[]) value) {
-                            sb.append(String.format("%02x", b & 0xff));
-                        }
-                        line[i] = sb.toString();
+                        line[i] = Hex.encodeHexString((byte[]) value);
                     } else {
                         line[i] = value.toString();
                     }

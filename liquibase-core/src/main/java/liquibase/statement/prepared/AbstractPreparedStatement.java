@@ -14,6 +14,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
+
 import liquibase.change.ColumnConfig;
 import liquibase.database.PreparedStatementFactory;
 import liquibase.exception.DatabaseException;
@@ -150,44 +153,54 @@ public abstract class AbstractPreparedStatement implements
 			} else if (col.getValueDate() != null) {
                 stmt.setTimestamp(paramIndex, new java.sql.Timestamp(col.getValueDate().getTime()));
 			} else if (col.getValueBlobFile() != null) {
-				try {
-					// File file = new File(col.getValueBlob());
-					// stmt.setBinaryStream(i, new BufferedInputStream(new
-					// FileInputStream(file)), (int) file.length());
-					String file = col.getValueBlobFile();
-					InputStream stream = getLobFileStream(opener, file,
-							parentFilePath);
-					try {
-						stmt.setBinaryStream(paramIndex,
-								new BufferedInputStream(stream));
-					} catch (Exception ee) {
-						stmt.setBinaryStream(paramIndex,
-								new BufferedInputStream(stream),
-								stream.available());
-					}
-				} catch (IOException e) {
-					throw new DatabaseException(e.getMessage(), e); // wrap
-				}
+			    try {
+    			    String file = col.getValueBlobFile();
+    			    if (file.contains(".")) {
+    			            // File file = new File(col.getValueBlob());
+    			            // stmt.setBinaryStream(i, new BufferedInputStream(new
+    			            // FileInputStream(file)), (int) file.length());
+    			            InputStream stream = getLobFileStream(opener, file,
+    			                    parentFilePath);
+    			            try {
+    			                stmt.setBinaryStream(paramIndex,
+    			                        new BufferedInputStream(stream));
+    			            } catch (Exception ee) {
+    			                stmt.setBinaryStream(paramIndex,
+    			                        new BufferedInputStream(stream),
+    			                        stream.available());
+    			            }
+                    } else {
+                        stmt.setBytes(paramIndex, Hex.decodeHex(file.toCharArray()));
+                    }
+			    } catch (IOException e) {
+			        throw new DatabaseException(e.getMessage(), e); // wrap
+                } catch (DecoderException e) {
+                    throw new DatabaseException(e.getMessage(), e); // wrap
+                }
 			} else if (col.getValueClobFile() != null) {
-				try {
-					// File file = new File(col.getValueClob());
-					// stmt.setCharacterStream(i, new BufferedReader(new
-					// FileReader(file)), (int) file.length());
-					String file = col.getValueClobFile();
-					InputStream stream = getLobFileStream(opener, file,
-							parentFilePath);
-					InputStreamReader streamReader = new InputStreamReader(
-							stream, StreamUtil.getDefaultEncoding());
-					try {
-						stmt.setCharacterStream(paramIndex, new BufferedReader(
-								streamReader));
-					} catch (Exception ee) {
-						stmt.setCharacterStream(paramIndex, new BufferedReader(
-								streamReader), stream.available());
-					}
-				} catch (IOException e) {
-					throw new DatabaseException(e.getMessage(), e); // wrap
-				}
+			    String file = col.getValueClobFile();
+			    if (file.contains(".")) {
+			        try {
+			            // File file = new File(col.getValueClob());
+			            // stmt.setCharacterStream(i, new BufferedReader(new
+			            // FileReader(file)), (int) file.length());
+			            InputStream stream = getLobFileStream(opener, file,
+			                    parentFilePath);
+			            InputStreamReader streamReader = new InputStreamReader(
+			                    stream, StreamUtil.getDefaultEncoding());
+			            try {
+			                stmt.setCharacterStream(paramIndex, new BufferedReader(
+			                        streamReader));
+			            } catch (Exception ee) {
+			                stmt.setCharacterStream(paramIndex, new BufferedReader(
+			                        streamReader), stream.available());
+			            }
+			        } catch (IOException e) {
+			            throw new DatabaseException(e.getMessage(), e); // wrap
+			        }
+                } else {
+                    stmt.setString(paramIndex, file);
+                }
 			}
 		}
 		log.debug("with parameters: " + getParameters(cols, parentFilePath));

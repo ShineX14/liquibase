@@ -26,6 +26,9 @@ public class UUIDType extends LiquibaseDataType {
         if (database instanceof OracleDatabase) {
             return new DatabaseDataType("RAW",16);
         }
+        if (database instanceof MySQLDatabase) {
+            return new DatabaseDataType("BINARY",16);
+        }
         if (database instanceof SQLiteDatabase) {
             return new DatabaseDataType("TEXT");
         }
