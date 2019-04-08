@@ -4,9 +4,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.Clob;
 import java.sql.ResultSet;
@@ -375,7 +376,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
             out.write((byte[]) value);
             out.close();
         } else {
-            FileWriter out = new FileWriter(f);
+            Writer out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(f), StandardCharsets.UTF_8));
             out.append((String) value);
             out.close();
         }
@@ -390,7 +391,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
             filePath = dataDir + "/" + fileName;
         }
 
-        CSVWriter outputFile = new CSVWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath), "UTF-8")));
+        CSVWriter outputFile = new CSVWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8)));
         String[] dataTypes = new String[columnNames.size()];
         String[] line = new String[columnNames.size()];
         for (int i = 0; i < columnNames.size(); i++) {
