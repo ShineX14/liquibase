@@ -115,11 +115,17 @@ public abstract class AbstractPreparedStatement implements
 			} else if (col.getValueDate() != null) {
 				params.add(col.getValueDate().toString());
 			} else if (col.getValueBlobFile() != null) {
-				String file = col.getValueBlobFile();
-				params.add(getFilePath(file, parentFilePath));
+				String value = col.getValueBlobFile();
+				if (value.contains(".")) {
+				    value = getFilePath(value, parentFilePath);
+                }
+				params.add(value);
 			} else if (col.getValueClobFile() != null) {
-				String file = col.getValueClobFile();
-				params.add(getFilePath(file, parentFilePath));
+				String value = col.getValueClobFile();
+                if (value.contains(".")) {
+                    value = getFilePath(value, parentFilePath);
+                }
+                params.add(value);
 			}
 		}
 		return params;

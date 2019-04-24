@@ -419,6 +419,8 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
                     } else if (table.getColumn(columnNames.get(i)).getType().getTypeName().contains("CLOB")
                             || table.getColumn(columnNames.get(i)).getType().getTypeName().contains("TEXT")) {
                         dataTypes[i] = "CLOB";
+                    } else if (value instanceof byte[]) {
+                        dataTypes[i] = "BLOB";
                     } else {
                         dataTypes[i] = "STRING";
                     }
