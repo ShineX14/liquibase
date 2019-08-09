@@ -19,6 +19,7 @@ import liquibase.resource.ResourceAccessor;
 import liquibase.util.StreamUtil;
 import liquibase.util.file.FilenameUtils;
 
+import org.apache.commons.io.IOUtils;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -107,9 +108,9 @@ public class XMLChangeLogSAXParser extends AbstractChangeLogParser {
         } catch (ChangeLogParseException e) {
             throw e;
         } catch (IOException e) {
-            throw new ChangeLogParseException("Error Reading Migration File: " + e.getMessage(), e);
+            throw new ChangeLogParseException("Error Reading Migration File " + physicalChangeLogLocation + ": " + e.getMessage(), e);
         } catch (SAXParseException e) {
-            throw new ChangeLogParseException("Error parsing line " + e.getLineNumber() + " column " + e.getColumnNumber() + " of " + physicalChangeLogLocation +": " + e.getMessage(), e);
+            throw new ChangeLogParseException("Error parsing line " + e.getLineNumber() + " column " + e.getColumnNumber() + " in " + physicalChangeLogLocation +": " + e.getMessage(), e);
         } catch (SAXException e) {
             Throwable parentCause = e.getException();
             while (parentCause != null) {
@@ -119,33 +120,20 @@ public class XMLChangeLogSAXParser extends AbstractChangeLogParser {
                 parentCause = parentCause.getCause();
             }
             String reason = e.getMessage();
-            String causeReason = null;
-            if (e.getCause() != null) {
-                causeReason = e.getCause().getMessage();
-            }
-
-//            if (reason == null && causeReason==null) {
-//                reason = "Unknown Reason";
-//            }
             if (reason == null) {
-                if (causeReason != null) {
-                    reason = causeReason;
-                } else {
-                    reason = "Unknown Reason";
+                if (e.getCause() != null) {
+                    reason = e.getCause().getMessage();
                 }
+            }
+            if (reason == null) {
+                reason = "Unknown Reason";
             }
 
-            throw new ChangeLogParseException("Invalid Migration File: " + reason, e);
+            throw new ChangeLogParseException("Invalid Migration File " + physicalChangeLogLocation + ": " + reason, e);
         } catch (Exception e) {
-            throw new ChangeLogParseException(e);
+            throw new ChangeLogParseException(physicalChangeLogLocation, e);
         } finally {
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    // probably ok
-                }
-            }
+            IOUtils.closeQuietly(inputStream);
         }
     }
 }
