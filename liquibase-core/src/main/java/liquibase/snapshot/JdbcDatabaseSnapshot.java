@@ -316,11 +316,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                     try {
                         return extract(databaseMetaData.getColumns(((AbstractJdbcDatabase) database).getJdbcCatalogName(catalogAndSchema), ((AbstractJdbcDatabase) database).getJdbcSchemaName(catalogAndSchema), null, null));
                     } catch (SQLException e) {
-                        if (shouldReturnEmptyColumns(e)) {
-                            return new ArrayList<CachedRow>();
-                        } else {
-                            throw e;
-                        }
+                        throw e;
                     }
                 }
 
