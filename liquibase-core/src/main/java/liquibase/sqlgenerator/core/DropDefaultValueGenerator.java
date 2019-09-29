@@ -38,23 +38,23 @@ public class DropDefaultValueGenerator extends AbstractSqlGenerator<DropDefaultV
         String sql;
         String escapedTableName = database.escapeTableName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName());
         if (database instanceof MSSQLDatabase) {
-             String productVersion = null;
-             try {
-                 productVersion = database.getDatabaseProductVersion();
-             } catch (DatabaseException e) {
-                 throw new UnexpectedLiquibaseException(e);
-             }
-             if(productVersion == null || productVersion.startsWith("9") || productVersion.startsWith("10") || productVersion.startsWith("11") || productVersion.startsWith("12")) { // SQL Server 2005/2008/2012/2014
+//             String productVersion = null;
+//             try {
+//                 productVersion = database.getDatabaseProductVersion();
+//             } catch (DatabaseException e) {
+//                 throw new UnexpectedLiquibaseException(e);
+//             }
+//             if(productVersion == null || productVersion.startsWith("9") || productVersion.startsWith("10") || productVersion.startsWith("11") || productVersion.startsWith("12")) { // SQL Server 2005/2008/2012/2014
                 // SQL Server 2005 does not often work with the simpler query shown below
                 String query = "DECLARE @default sysname\n";
                 query += "SELECT @default = object_name(default_object_id) FROM sys.columns WHERE object_id=object_id('" + escapedTableName + "') AND name='" + statement.getColumnName() + "'\n";
                 query += "EXEC ('ALTER TABLE " + escapedTableName + " DROP CONSTRAINT ' + @default)";
                 // System.out.println("DROP QUERY : " + query);
                 sql = query;
-             } else {
-        		// FIXME this syntax does not supported by MSSQL 2000
-        		sql = "ALTER TABLE " + escapedTableName + " DROP CONSTRAINT select d.name from syscolumns c,sysobjects d, sysobjects t where c.id=t.id AND d.parent_obj=t.id AND d.type='D' AND t.type='U' AND c.name='"+statement.getColumnName()+"' AND t.name='"+statement.getTableName()+"'";
-             }
+//             } else {
+//        		 FIXME this syntax does not supported by MSSQL 2000
+//        		sql = "ALTER TABLE " + escapedTableName + " DROP CONSTRAINT select d.name from syscolumns c,sysobjects d, sysobjects t where c.id=t.id AND d.parent_obj=t.id AND d.type='D' AND t.type='U' AND c.name='"+statement.getColumnName()+"' AND t.name='"+statement.getTableName()+"'";
+//             }
         } else if (database instanceof MySQLDatabase) {
             sql = "ALTER TABLE " + escapedTableName + " ALTER " + database.escapeColumnName(statement.getCatalogName(), statement.getSchemaName(), statement.getTableName(), statement.getColumnName()) + " DROP DEFAULT";
         } else if (database instanceof OracleDatabase) {
