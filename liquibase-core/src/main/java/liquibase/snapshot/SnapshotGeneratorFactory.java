@@ -165,6 +165,7 @@ public class SnapshotGeneratorFactory {
     public boolean hasDatabaseChangeLogTable(Database database) throws DatabaseException {
         try {
         	if (!hasDatabaseChangeLogTable) {
+                logger.info("check databasechangelog ...");
                 hasDatabaseChangeLogTable = has(new Table().setName(database.getDatabaseChangeLogTableName()).setSchema(new Schema(database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName())), database);
         	}
 			return hasDatabaseChangeLogTable;
@@ -176,6 +177,7 @@ public class SnapshotGeneratorFactory {
     public boolean hasDatabaseChangeLogLockTable(Database database) throws DatabaseException {
         try {
         	if (!hasDatabaseChangeLogLockTable) {
+        	    logger.info("check databasechangeloglock ...");
         		hasDatabaseChangeLogLockTable = has(new Table().setName(database.getDatabaseChangeLogLockTableName()).setSchema(new Schema(database.getLiquibaseCatalogName(), database.getLiquibaseSchemaName())), database);
         	}
         	return hasDatabaseChangeLogLockTable;
