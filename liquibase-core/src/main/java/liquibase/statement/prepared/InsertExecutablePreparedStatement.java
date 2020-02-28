@@ -17,7 +17,6 @@ import liquibase.statement.ExecutablePreparedStatement;
 public class InsertExecutablePreparedStatement extends
     AbstractPreparedStatement implements ExecutablePreparedStatement {
 
-  private final Database database;
   private final InsertExecutablePreparedStatementChange change;
   private final List<ColumnConfig> cols = new ArrayList<ColumnConfig>();
 

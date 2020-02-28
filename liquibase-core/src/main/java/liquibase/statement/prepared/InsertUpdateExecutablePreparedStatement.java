@@ -23,6 +23,7 @@ public class InsertUpdateExecutablePreparedStatement extends
 
 	public InsertUpdateExecutablePreparedStatement(Database database,
 			InsertExecutablePreparedStatementChange change) {
+	    this.database = database;
 		if (database instanceof OracleDatabase) {
 			upsert = new OracleUpsertExecutablePreparedStatement(database, change);
 		} else if (database instanceof MySQLDatabase) {

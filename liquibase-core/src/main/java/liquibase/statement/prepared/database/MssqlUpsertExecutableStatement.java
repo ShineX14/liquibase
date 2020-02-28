@@ -14,7 +14,6 @@ import liquibase.statement.prepared.InsertExecutablePreparedStatementChange;
 
 public class MssqlUpsertExecutableStatement extends AbstractPreparedStatement {
 
-	private final Database database;
 	private final InsertExecutablePreparedStatementChange change;
 
 	private Info statement;

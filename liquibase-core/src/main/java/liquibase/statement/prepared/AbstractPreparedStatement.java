@@ -10,15 +10,17 @@ import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 
 import liquibase.change.ColumnConfig;
+import liquibase.database.Database;
 import liquibase.database.PreparedStatementFactory;
+import liquibase.database.core.PostgresDatabase;
 import liquibase.exception.DatabaseException;
 import liquibase.logging.LogFactory;
 import liquibase.logging.Logger;
@@ -30,6 +32,7 @@ public abstract class AbstractPreparedStatement implements
 		ExecutablePreparedStatement {
 
 	private final Logger log = LogFactory.getInstance().getLog();
+    protected Database database;
 
 	protected List<String> getPrimaryKey(String primaryKeys) {
 		if (primaryKeys == null || primaryKeys.length() == 0) {
@@ -176,7 +179,11 @@ public abstract class AbstractPreparedStatement implements
     			                        stream.available());
     			            }
                     } else {
+                      if (database != null && database instanceof PostgresDatabase ) {
+                        stmt.setObject(paramIndex, UUID.nameUUIDFromBytes(Hex.decodeHex(file.toCharArray())));
+                      } else {
                         stmt.setBytes(paramIndex, Hex.decodeHex(file.toCharArray()));
+                      }
                     }
 			    } catch (IOException e) {
 			        throw new DatabaseException(e.getMessage(), e); // wrap
@@ -269,5 +276,4 @@ public abstract class AbstractPreparedStatement implements
 			s.deleteCharAt(index);
 		}
 	}
-
 }
