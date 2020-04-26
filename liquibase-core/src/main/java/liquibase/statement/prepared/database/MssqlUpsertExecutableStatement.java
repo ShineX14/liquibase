@@ -52,7 +52,7 @@ public class MssqlUpsertExecutableStatement extends AbstractPreparedStatement {
 
 			insertColumnSql.append(columnName).append(",");
 
-			boolean pkcloum = primaryKeys.contains(columnName);
+			boolean pkcloum = primaryKeys.contains(column.getName()); 
             Object valueObject = column.getValueObject();
             if (valueObject == null) {
 				insertValueSql.append("null,");
