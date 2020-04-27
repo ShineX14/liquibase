@@ -59,6 +59,10 @@ public class MssqlUpsertExecutableStatement extends AbstractPreparedStatement {
 				if (!pkcloum) {
 					updateSql.append(columnName + "=null,");
 				}
+				columnSql.append(columnName + ",");
+                columnValueSql.append("null,");
+//                cols.add(column);
+                
             } else if (valueObject instanceof DatabaseFunction) {
                 String function = database.generateDatabaseFunctionValue((DatabaseFunction)valueObject);
 				insertValueSql.append(function + ",");
