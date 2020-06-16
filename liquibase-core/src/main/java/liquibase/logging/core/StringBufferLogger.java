@@ -8,11 +8,15 @@ public class StringBufferLogger extends DefaultLogger {
   private static int LOGGER_BUFFER_LIMIT = LOGGER_BUFFER_MAX * 99 / 100;
   private static StringBuffer loggerBuffer = new StringBuffer(LOGGER_BUFFER_MAX);
   private static int deletedBufferSize = 0;
-  private static boolean enabled = false;
   private static boolean hasSevereLog = false;
-
+  private static LoggerSpi logger;
+ 
   @Deprecated // kept for compatibility
   public static void enable() {}
+
+  public static void setLogger(LoggerSpi logger) {
+    StringBufferLogger.logger = logger;
+  }
 
   static void initTest() {
     LOGGER_BUFFER_MAX = 100;
@@ -24,7 +28,6 @@ public class StringBufferLogger extends DefaultLogger {
     loggerBuffer.setLength(0);
     deletedBufferSize = 0;
     hasSevereLog = false;
-    enabled = true;
   }
 
   public static boolean hasSevereLog() {
@@ -69,7 +72,7 @@ public class StringBufferLogger extends DefaultLogger {
       return s.toString();
     }
   }
-  
+
   @Override
   public int getPriority() {
     return super.getPriority() + 1;
@@ -85,10 +88,22 @@ public class StringBufferLogger extends DefaultLogger {
 
   @Override
   protected void print(LogLevel logLevel, String message) {
-    super.print(logLevel, message);
-    if (enabled) {
-      printStringBufferLog(message);
+    if (logger == null) {
+      super.print(logLevel, message);
+    } else {
+      if (logLevel == LogLevel.DEBUG) {
+        logger.debug(message);
+      } else if (logLevel == LogLevel.INFO) {
+        logger.info(message);
+      } else if (logLevel == LogLevel.WARNING) {
+        logger.warn(message);
+      } else if (logLevel == LogLevel.SEVERE) {
+        logger.error(message);
+      } else {
+        logger.error(message);
+      }
     }
+    printStringBufferLog(message);
   }
 
   @Override
