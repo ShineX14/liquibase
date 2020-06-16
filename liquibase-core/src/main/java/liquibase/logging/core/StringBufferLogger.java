@@ -33,6 +33,24 @@ public class StringBufferLogger extends DefaultLogger {
 
   private static final String DOT_LINE = new String(new char[199]).replace('\0', '.') + "\n";
 
+  public static synchronized LogBlock getLogBlock(int start) {
+    start = start - deletedBufferSize;
+    int length = loggerBuffer.length();
+    if (start > length) {
+      return new LogBlock("", 0);
+    } else if (start >= 0) {
+      String log = loggerBuffer.substring(start, length);
+      return new LogBlock(log, log.length());
+    } else {
+      int totalLength = -start + length;
+      StringBuilder s = new StringBuilder(DOT_LINE.length() + length);
+      s.append(DOT_LINE);
+      s.append(loggerBuffer.substring(0, length));
+      return new LogBlock(s.toString(), totalLength);
+    }
+  }
+ 
+  //kept for backward compatibilities
   public static synchronized String getLog(int start) {
     start = start - deletedBufferSize;
     int length = loggerBuffer.length();
@@ -41,15 +59,17 @@ public class StringBufferLogger extends DefaultLogger {
     } else if (start >= 0) {
       return loggerBuffer.substring(start, length);
     } else {
-      StringBuilder s = new StringBuilder(-start);
+      int totalLength = -start + length;
+      StringBuilder s = new StringBuilder(totalLength);
       for (int i = 0; i < -start / DOT_LINE.length(); i++) {
         s.append(DOT_LINE);
       }
-      s.append(DOT_LINE.subSequence(0, -start - s.length()));
+      s.append(DOT_LINE.subSequence(0, -start % DOT_LINE.length()));
+      s.append(loggerBuffer.substring(0, length));
       return s.toString();
     }
   }
-
+  
   @Override
   public int getPriority() {
     return super.getPriority() + 1;
