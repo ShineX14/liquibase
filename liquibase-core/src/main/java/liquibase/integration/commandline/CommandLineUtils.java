@@ -150,7 +150,8 @@ public class CommandLineUtils {
         if (snapshotTypes == null || "".equals(snapshotTypes)) {
     	    types = "table,view,column,primaryKey,foreignKey,index,uniqueConstraint,sequence";
         } else if ("data".equals(snapshotTypes)) {
-        	types = "table,column,primaryKey,foreignKey,data";
+        	//types = "table,column,primaryKey,foreignKey,data";
+            types = "table,column,primaryKey,data";
         }
         SnapshotControl snapshotControl = new EbaoSnapshotControl(originalDatabase, types, (EbaoDiffOutputControl)diffOutputControl);;
         command.setReferenceSnapshotControl(snapshotControl);

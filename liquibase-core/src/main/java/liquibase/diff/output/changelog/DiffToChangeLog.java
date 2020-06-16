@@ -146,41 +146,49 @@ public class DiffToChangeLog {
         }
 
         List<ChangeSet> changeSets = new ArrayList<ChangeSet>();
-        List<Class<? extends DatabaseObject>> types = getOrderedOutputTypes(MissingObjectChangeGenerator.class);
-        for (Class<? extends DatabaseObject> type : types) {
-            ObjectQuotingStrategy quotingStrategy = ObjectQuotingStrategy.QUOTE_ALL_OBJECTS;
-            for (DatabaseObject object : diffResult.getMissingObjects(type, comparator0)) {
-                if (object == null) {
-                    continue;
-                }
-                if (!diffResult.getReferenceSnapshot().getDatabase().isLiquibaseObject(object) && !diffResult.getReferenceSnapshot().getDatabase().isSystemObject(object)) {
-                    ChangeSet[] changes = changeGeneratorFactory.fixMissing(object, diffOutputControl, diffResult.getReferenceSnapshot().getDatabase(), diffResult.getComparisonSnapshot().getDatabase());
-                    addToChangeSets(changes, changeSets, quotingStrategy);
+
+        if (!diffResult.getMissingObjects().isEmpty()) {
+            List<Class<? extends DatabaseObject>> types = getOrderedOutputTypes(MissingObjectChangeGenerator.class);
+            for (Class<? extends DatabaseObject> type : types) {
+                ObjectQuotingStrategy quotingStrategy = ObjectQuotingStrategy.QUOTE_ALL_OBJECTS;
+                for (DatabaseObject object : diffResult.getMissingObjects(type, comparator0)) {
+                    if (object == null) {
+                        continue;
+                    }
+                    if (!diffResult.getReferenceSnapshot().getDatabase().isLiquibaseObject(object) && !diffResult.getReferenceSnapshot().getDatabase().isSystemObject(object)) {
+                        ChangeSet[] changes = changeGeneratorFactory.fixMissing(object, diffOutputControl, diffResult.getReferenceSnapshot().getDatabase(), diffResult.getComparisonSnapshot().getDatabase());
+                        addToChangeSets(changes, changeSets, quotingStrategy);
+                    }
                 }
             }
         }
 
-        types = getOrderedOutputTypes(UnexpectedObjectChangeGenerator.class);
-        for (Class<? extends DatabaseObject> type : types) {
-            ObjectQuotingStrategy quotingStrategy = ObjectQuotingStrategy.QUOTE_ALL_OBJECTS;
-            for (DatabaseObject object : diffResult.getUnexpectedObjects(type, comparator)) {
-                if (!diffResult.getComparisonSnapshot().getDatabase().isLiquibaseObject(object) && !diffResult.getComparisonSnapshot().getDatabase().isSystemObject(object)) {
-                    Change[] changes = changeGeneratorFactory.fixUnexpected(object, diffOutputControl, diffResult.getReferenceSnapshot().getDatabase(), diffResult.getComparisonSnapshot().getDatabase());
-                    addToChangeSets(changes, changeSets, quotingStrategy);
+        if (!diffResult.getUnexpectedObjects().isEmpty()) {
+            List<Class<? extends DatabaseObject>> types = getOrderedOutputTypes(UnexpectedObjectChangeGenerator.class);
+            for (Class<? extends DatabaseObject> type : types) {
+                ObjectQuotingStrategy quotingStrategy = ObjectQuotingStrategy.QUOTE_ALL_OBJECTS;
+                for (DatabaseObject object : diffResult.getUnexpectedObjects(type, comparator)) {
+                    if (!diffResult.getComparisonSnapshot().getDatabase().isLiquibaseObject(object) && !diffResult.getComparisonSnapshot().getDatabase().isSystemObject(object)) {
+                        Change[] changes = changeGeneratorFactory.fixUnexpected(object, diffOutputControl, diffResult.getReferenceSnapshot().getDatabase(), diffResult.getComparisonSnapshot().getDatabase());
+                        addToChangeSets(changes, changeSets, quotingStrategy);
+                    }
                 }
             }
         }
 
-        types = getOrderedOutputTypes(ChangedObjectChangeGenerator.class);
-        for (Class<? extends DatabaseObject> type : types) {
-            ObjectQuotingStrategy quotingStrategy = ObjectQuotingStrategy.QUOTE_ALL_OBJECTS;
-            for (Map.Entry<? extends DatabaseObject, ObjectDifferences> entry : diffResult.getChangedObjects(type, comparator).entrySet()) {
-                if (!diffResult.getReferenceSnapshot().getDatabase().isLiquibaseObject(entry.getKey()) && !diffResult.getReferenceSnapshot().getDatabase().isSystemObject(entry.getKey())) {
-                    Change[] changes = changeGeneratorFactory.fixChanged(entry.getKey(), entry.getValue(), diffOutputControl, diffResult.getReferenceSnapshot().getDatabase(), diffResult.getComparisonSnapshot().getDatabase());
-                    addToChangeSets(changes, changeSets, quotingStrategy);
+        if (!diffResult.getChangedObjects().isEmpty()) {
+            List<Class<? extends DatabaseObject>> types = getOrderedOutputTypes(ChangedObjectChangeGenerator.class);
+            for (Class<? extends DatabaseObject> type : types) {
+                ObjectQuotingStrategy quotingStrategy = ObjectQuotingStrategy.QUOTE_ALL_OBJECTS;
+                for (Map.Entry<? extends DatabaseObject, ObjectDifferences> entry : diffResult.getChangedObjects(type, comparator).entrySet()) {
+                    if (!diffResult.getReferenceSnapshot().getDatabase().isLiquibaseObject(entry.getKey()) && !diffResult.getReferenceSnapshot().getDatabase().isSystemObject(entry.getKey())) {
+                        Change[] changes = changeGeneratorFactory.fixChanged(entry.getKey(), entry.getValue(), diffOutputControl, diffResult.getReferenceSnapshot().getDatabase(), diffResult.getComparisonSnapshot().getDatabase());
+                        addToChangeSets(changes, changeSets, quotingStrategy);
+                    }
                 }
             }
         }
+        
         return changeSets;
     }
 
