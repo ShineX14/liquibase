@@ -8,6 +8,7 @@ import liquibase.database.core.MSSQLDatabase;
 import liquibase.database.core.MySQLDatabase;
 import liquibase.database.core.OracleDatabase;
 import liquibase.database.core.PostgresDatabase;
+import liquibase.database.core.SQLiteDatabase;
 import liquibase.exception.DatabaseException;
 import liquibase.statement.ExecutablePreparedStatement;
 import liquibase.statement.prepared.database.Db2UpsertExecutableStatement;
@@ -34,6 +35,8 @@ public class InsertUpdateExecutablePreparedStatement extends
 			upsert = new MssqlUpsertExecutableStatement(database, change);
 		} else if (database instanceof DB2Database) {
 			upsert = new Db2UpsertExecutableStatement(database, change);
+		} else if (database instanceof SQLiteDatabase) {
+		    upsert = new PostgresUpsertExecutableStatement(database, change);
 		} else {
 			upsert = new MssqlUpsertExecutableStatement(database, change);
 		}
