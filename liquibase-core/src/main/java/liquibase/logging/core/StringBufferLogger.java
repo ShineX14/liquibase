@@ -1,6 +1,7 @@
 package liquibase.logging.core;
 
 import liquibase.logging.LogLevel;
+import liquibase.logging.LoggerSpi;
 
 public class StringBufferLogger extends DefaultLogger {
 
