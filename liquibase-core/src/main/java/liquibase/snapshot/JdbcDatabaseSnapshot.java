@@ -1,20 +1,11 @@
 package liquibase.snapshot;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import liquibase.CatalogAndSchema;
-import liquibase.Liquibase;
 import liquibase.database.AbstractJdbcDatabase;
 import liquibase.database.Database;
 import liquibase.database.core.DB2Database;
@@ -126,11 +117,6 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 @Override
 				public List<CachedRow> bulkFetch() throws SQLException, DatabaseException {
                     if (database instanceof OracleDatabase) {
-                        File f = new File(Liquibase.getTmpDataDir(), catalogName + "." + schemaName + ".foreignkey.cache");
-                        if (f.exists()) {
-                            logger.info("loading database foreign keys metadata from " + f.getAbsolutePath());
-                            return readFromFile(f);
-                        }
                         CatalogAndSchema catalogAndSchema = new CatalogAndSchema(catalogName, schemaName).customize(database);
 
                         String jdbcSchemaName = ((AbstractJdbcDatabase) database).getJdbcSchemaName(catalogAndSchema);
@@ -169,7 +155,6 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                                 "AND f.constraint_type = 'R' " +
                                 "ORDER BY fktable_schem, fktable_name, key_seq";
                         List<CachedRow> rows = executeAndExtract(sql, database);
-                        writeToFile(f, rows);
                         return rows;
                     } else {
                         throw new RuntimeException("Cannot bulk select");
@@ -301,13 +286,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
                 @Override
 				public List<CachedRow> bulkFetchQuery() throws SQLException, DatabaseException {
                     if (database instanceof OracleDatabase) {
-                        File f = new File(Liquibase.getTmpDataDir(), catalogName + "." + schemaName + ".columns.cache");
-                        if (f.exists()) {
-                            logger.info("loading database columns metadata from " + f.getAbsolutePath());
-                            return readFromFile(f);
-                        }
                         List<CachedRow> rows = oracleQuery(true);
-                        writeToFile(f, rows);
                         return rows;
                     }
 
@@ -492,15 +471,9 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
 
                 @Override
 				public List<CachedRow> bulkFetchQuery() throws SQLException, DatabaseException {
-                    File f = new File(Liquibase.getTmpDataDir(), catalogName + "." + schemaName + ".uniqueconstraints.cache");
-                    if (f.exists()) {
-                        logger.info("loading database unique constraint metadata from " + f.getAbsolutePath());
-                        return readFromFile(f);
-                    }
                     CatalogAndSchema catalogAndSchema = new CatalogAndSchema(catalogName, schemaName).customize(database);
 
                     List<CachedRow> rows = executeAndExtract(createSql(((AbstractJdbcDatabase) database).getJdbcCatalogName(catalogAndSchema), ((AbstractJdbcDatabase) database).getJdbcSchemaName(catalogAndSchema), null), JdbcDatabaseSnapshot.this.getDatabase());
-                    writeToFile(f, rows);
                     return rows;
                 }
 
@@ -599,44 +572,6 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
             });
         }
         
-        private List<CachedRow> readFromFile(File f) {
-            FileInputStream fout = null;
-            ObjectInputStream oos = null;
-            try {
-                fout = new FileInputStream(f);
-                oos = new ObjectInputStream(fout);
-                List<CachedRow> crs = (List<CachedRow>) oos.readObject();
-                return crs;
-            } catch (Exception e) {
-                throw new RuntimeException("Error in loading " + f.getPath() + ", run 'mvn clean' please.", e);
-            } finally {
-                try {
-                    oos.close();
-                } catch (IOException e) {
-                    // do nothing
-                }
-            }
-        }
-
-        private void writeToFile(File f, List<CachedRow> rows) {
-            FileOutputStream fout = null;
-            ObjectOutputStream oos = null;
-            try {
-                fout = new FileOutputStream(f);
-                oos = new ObjectOutputStream(fout);
-                oos.writeObject(rows);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } finally {
-                try {
-                	if (oos != null) {
-                        oos.close();
-                	}
-                } catch (IOException e) {
-                    // do nothing
-                }
-            }
-        }
     }
 
 }
