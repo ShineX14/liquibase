@@ -23,7 +23,8 @@ public abstract class DatabaseSnapshot implements LiquibaseSerializable{
     private DatabaseObjectCollection allFound;
     private Map<Class<? extends DatabaseObject>, Set<DatabaseObject>> knownNull = new HashMap<Class<? extends DatabaseObject>, Set<DatabaseObject>>();
 
-    private static final Map<String, ResultSetCache> resultSetCaches = new HashMap<String, ResultSetCache>();
+    private final Map<String, ResultSetCache> resultSetCaches = new HashMap<String, ResultSetCache>();
+    private static final Map<String, ResultSetCache> globalResultSetCaches = new HashMap<String, ResultSetCache>();
 
     DatabaseSnapshot(DatabaseObject[] examples, Database database, SnapshotControl snapshotControl) throws DatabaseException, InvalidExampleException {
         this.database = database;
@@ -111,6 +112,13 @@ public abstract class DatabaseSnapshot implements LiquibaseSerializable{
             resultSetCaches.put(key, new ResultSetCache());
         }
         return resultSetCaches.get(key);
+    }
+
+    public ResultSetCache getGlobalResultSetCache(String key) {
+        if (!globalResultSetCaches.containsKey(key)) {
+            globalResultSetCaches.put(key, new ResultSetCache());
+        }
+        return globalResultSetCaches.get(key);
     }
 
     /**

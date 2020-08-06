@@ -69,7 +69,7 @@ public class JdbcDatabaseSnapshot extends DatabaseSnapshot {
         }
 
         public List<CachedRow> getForeignKeys(final String catalogName, final String schemaName, final String tableName, final String fkName) throws DatabaseException {
-            return getResultSetCache("getImportedKeys").get(new ResultSetCache.UnionResultSetExtractor(database) {
+            return getGlobalResultSetCache("getImportedKeys").get(new ResultSetCache.UnionResultSetExtractor(database) {
 
 
                 @Override
