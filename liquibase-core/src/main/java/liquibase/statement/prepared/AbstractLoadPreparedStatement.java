@@ -20,6 +20,10 @@ public abstract class AbstractLoadPreparedStatement extends AbstractPreparedStat
     change.setTableName(orgChange.getTableName());
     for (int i=0; i<headers.length; i++) {
       ColumnConfig headerColumn = orgChange.getColumnConfig(i, headers[i]);
+      if (headerColumn == null) {
+        continue;
+      }
+
       ColumnConfig valueColumn = getColumnConfig(headerColumn, lines[i]);
       change.addColumn(valueColumn);
     }
