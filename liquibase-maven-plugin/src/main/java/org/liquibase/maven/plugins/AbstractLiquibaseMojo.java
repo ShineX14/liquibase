@@ -23,6 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.wagon.authentication.AuthenticationInfo;
+import org.liquibase.maven.plugins.spi.PropertyDecrypter;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -70,6 +71,20 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
      @readonly
      */
     protected WagonManager wagonManager;
+    
+    /**
+     * The decrypter to decrypt property value
+     * @parameter expression="${liquibase.propertyDecrypterClass}"
+     */
+    protected String propertyDecrypterClass;
+    protected PropertyDecrypter propertyDecrypter;
+ 
+    /**
+     * The decrypted property names to be decrypted
+     * @parameter expression="${liquibase.decryptedProperties}"
+     */
+    protected String decryptedProperties;
+
     /**
      * The server id in settings.xml to use when authenticating with.
      *
@@ -615,10 +630,10 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
                         setFieldValue(field, value.toString());
                     }
                 }
-            }
-            catch (Exception e) {
-                getLog().info("  '" + key + "' in properties file is not being used by this "
-                        + "task.");
+            } catch (IllegalAccessException e) {
+                throw new MojoExecutionException(key, e);
+            } catch (NoSuchFieldException e) {
+                getLog().info("  '" + key + "' in properties file is not being used by this " + "task.");
             }
         }
     }
@@ -662,6 +677,17 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
     }
 
     private void setFieldValue(Field field, String value) throws IllegalAccessException {
+        if (propertyDecrypterClass != null && encryptedProperties.contains(field.getName())) {
+          if (propertyDecrypter == null) {
+            try {
+              propertyDecrypter = (PropertyDecrypter) Class.forName(propertyDecrypterClass).newInstance();
+            } catch (Exception e) {
+              throw new IllegalArgumentException(propertyDecrypterClass, e);
+            }
+          }
+          value = propertyDecrypter.decrypt(field.getName(), value);
+        }
+
         if (field.getType().equals(Boolean.class) || field.getType().equals(boolean.class)) {
             field.set(this, Boolean.valueOf(value));
         } else {
