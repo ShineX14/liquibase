@@ -339,11 +339,11 @@
 
     <distributionManagement>
         <repository>
-            <id>ebao</id>
+            <id>eBaoTech</id>
             <url>http://maven-repository.ebaotech.com/artifactory/libs-release-local</url>
         </repository>
         <snapshotRepository>
-            <id>ebao</id>
+            <id>eBaoTech</id>
             <url>http://maven-repository.ebaotech.com/artifactory/libs-snapshot-local</url>
         </snapshotRepository>
     </distributionManagement>

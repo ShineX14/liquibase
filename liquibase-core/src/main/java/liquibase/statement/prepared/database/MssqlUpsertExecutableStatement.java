@@ -53,9 +53,13 @@ public class MssqlUpsertExecutableStatement extends AbstractPreparedStatement {
 			insertColumnSql.append(columnName).append(",");
 
 			boolean pkcloum = primaryKeys.contains(column.getName()); 
+		    List<String> nullPrimaryKeys = new ArrayList<String>();
             Object valueObject = column.getValueObject();
             if (valueObject == null) {
 				insertValueSql.append("null,");
+		        if (pkcloum) {
+		          nullPrimaryKeys.add(columnName);
+		        }
 				if (!pkcloum) {
 					updateSql.append(columnName + "=null,");
 				}
@@ -91,7 +95,7 @@ public class MssqlUpsertExecutableStatement extends AbstractPreparedStatement {
 		mergeSql.append("merge" + tableName + " t ");
 		mergeSql.append("using (values(" + columnValueSql + ")) as s("
 				+ columnSql + ")");
-		String onClause = getPrimaryKeyClause(change.getPrimaryKey(), "s", "t");
+		String onClause = getPrimaryKeyClause(primaryKeys, nullPrimaryKeys, "s", "t");
 		mergeSql.append(" on " + onClause);
 		if (updateSql.length() > 0) {
             mergeSql.append(" when matched then update set " + updateSql);

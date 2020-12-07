@@ -67,8 +67,7 @@ public abstract class AbstractPreparedStatement implements
 		return sql.toString();
 	}
 	
-	protected String getPrimaryKeyClause(String primaryKeys, String sourceTablePrefix, String targetTablePrefix) {
-		List<String> pknames = getPrimaryKey(primaryKeys);
+	protected String getPrimaryKeyClause(List<String> pknames, List<String> nullpknames, String sourceTablePrefix, String targetTablePrefix) {
 		StringBuilder sql = new StringBuilder();
 		for (int i = 0; i < pknames.size(); i++) {
 			if (i > 0) {
@@ -79,11 +78,15 @@ public abstract class AbstractPreparedStatement implements
 			if (targetTablePrefix != null) {
 				sql.append(targetTablePrefix + ".");
 			}
-			sql.append(pkname + "=");
-			if (sourceTablePrefix != null) {
-				sql.append(sourceTablePrefix + ".");
+            if (nullpknames.contains(pkname)) {
+               sql.append(" is null");
+            } else {
+                sql.append("=");
+				if (sourceTablePrefix != null) {
+					sql.append(sourceTablePrefix + ".");
+				}
+				sql.append(pkname);
 			}
-			sql.append(pkname);
 		}
 		return sql.toString();
 	}

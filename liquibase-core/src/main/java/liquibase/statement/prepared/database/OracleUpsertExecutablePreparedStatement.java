@@ -40,6 +40,7 @@ public class OracleUpsertExecutablePreparedStatement extends
 		StringBuilder updateSql = new StringBuilder();
 
 		List<String> primaryKeys = getPrimaryKey(change.getPrimaryKey());
+	    List<String> nullPrimaryKeys = new ArrayList<String>();
 		for (ColumnConfig column : change.getColumns()) {
 			if (database.supportsAutoIncrement()
 					&& Boolean.TRUE.equals(column.isAutoIncrement())) {
@@ -56,6 +57,9 @@ public class OracleUpsertExecutablePreparedStatement extends
             Object valueObject = column.getValueObject();
             if (valueObject == null) {
 				insertValueSql.append("null,");
+		        if (pkcloum) {
+		          nullPrimaryKeys.add(columnName);
+		        }
 				if (!pkcloum) {
 					updateSql.append(columnName + "=null,");
 				}
@@ -84,7 +88,7 @@ public class OracleUpsertExecutablePreparedStatement extends
 		StringBuilder mergeSql = new StringBuilder();
 		mergeSql.append("merge into " + tableName + " t ");
 		mergeSql.append("using (select " + columnSql + " from dual) s");
-		String onClause = getPrimaryKeyClause(change.getPrimaryKey(), "s", "t");
+		String onClause = getPrimaryKeyClause(primaryKeys, nullPrimaryKeys, "s", "t");
 		mergeSql.append(" on (" + onClause + ")");
 		if (updateSql.length() > 0) {
 			mergeSql.append(" when matched then update set " + updateSql);
