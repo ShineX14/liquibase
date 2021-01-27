@@ -40,6 +40,7 @@ public class MssqlUpsertExecutableStatement extends AbstractPreparedStatement {
 		StringBuilder updateSql = new StringBuilder();
 
 		List<String> primaryKeys = getPrimaryKey(change.getPrimaryKey());
+	    List<String> nullPrimaryKeys = new ArrayList<String>();
 		for (ColumnConfig column : change.getColumns()) {
 			if (database.supportsAutoIncrement()
 					&& Boolean.TRUE.equals(column.isAutoIncrement())) {
@@ -53,7 +54,6 @@ public class MssqlUpsertExecutableStatement extends AbstractPreparedStatement {
 			insertColumnSql.append(columnName).append(",");
 
 			boolean pkcloum = primaryKeys.contains(column.getName()); 
-		    List<String> nullPrimaryKeys = new ArrayList<String>();
             Object valueObject = column.getValueObject();
             if (valueObject == null) {
 				insertValueSql.append("null,");

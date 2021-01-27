@@ -5,10 +5,9 @@ import liquibase.change.core.InsertDataChange;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.statement.DatabaseFunction;
 import liquibase.statement.ExecutablePreparedStatement;
-import liquibase.structure.core.Sequence;
 
 public abstract class AbstractLoadPreparedStatement extends AbstractPreparedStatement
-    implements ExecutablePreparedStatement {
+implements ExecutablePreparedStatement {
 
   protected void copyFromLoadExcutablePreparedStatementChange(InsertDataChange change,
       LoadExecutablePreparedStatementChange orgChange, String[] headers, String[] lines) {
@@ -29,8 +28,8 @@ public abstract class AbstractLoadPreparedStatement extends AbstractPreparedStat
     }
   }
 
-  private ColumnConfig getColumnConfig(ColumnConfig headerColumn, String value) {
-    ColumnConfig valueColumn = new ColumnConfig(); 
+  protected ColumnConfig getColumnConfig(ColumnConfig headerColumn, String value) {
+    ColumnConfig valueColumn = new ColumnConfig();
     valueColumn.setName(headerColumn.getName());
     if (value != null) {
       if (headerColumn.getType().equalsIgnoreCase("BOOLEAN")) {
@@ -57,7 +56,7 @@ public abstract class AbstractLoadPreparedStatement extends AbstractPreparedStat
         valueColumn.setValueClobFile(value.toString());
       } else {
         throw new UnexpectedLiquibaseException("loadData type of " + headerColumn.getType()
-            + " is not supported.  Please use BOOLEAN, NUMERIC, DATE, STRING, COMPUTED or SKIP");
+        + " is not supported.  Please use BOOLEAN, NUMERIC, DATE, STRING, COMPUTED or SKIP");
       }
     }
     return valueColumn;

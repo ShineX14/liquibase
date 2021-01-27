@@ -1,9 +1,11 @@
 package liquibase.change.core;
 
-import liquibase.change.*;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import liquibase.change.AbstractChange;
+import liquibase.change.ColumnConfig;
+import liquibase.change.DatabaseChangeProperty;
 
 /**
  * Encapsulates common fields for update and delete changes.
@@ -57,6 +59,7 @@ public abstract class AbstractModifyDataChange extends AbstractChange {
     /**
      * @deprecated use getWhere().
      */
+    @Deprecated
     @DatabaseChangeProperty(isChangeProperty = false)
     public String getWhereClause() {
         return where;
@@ -65,10 +68,14 @@ public abstract class AbstractModifyDataChange extends AbstractChange {
     /**
      * @deprecated use setWhere()
      */
+    @Deprecated
     public void setWhereClause(String where) {
         this.where = where;
     }
 
+    public void setWhereParam(List<ColumnConfig> params) {
+      whereParams = params;
+    }
 
     public void addWhereParam(ColumnConfig param) {
         whereParams.add(param);
