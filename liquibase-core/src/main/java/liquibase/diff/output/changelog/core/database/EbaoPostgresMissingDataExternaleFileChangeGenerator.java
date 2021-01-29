@@ -15,8 +15,9 @@ public class EbaoPostgresMissingDataExternaleFileChangeGenerator extends EbaoMis
     	return super.getPriority(objectType, database);
     }
 
-    public String getPagedSql(String sql, int i) {
-      return sql + " limit " + ROWS_PER_FILE + " offset " + (i * ROWS_PER_FILE);
+    @Override
+    public String getPagedSql(String sql, int i, int expectedRows) {
+      return sql + " limit " + expectedRows + " offset " + i * expectedRows;
     }
 
 }

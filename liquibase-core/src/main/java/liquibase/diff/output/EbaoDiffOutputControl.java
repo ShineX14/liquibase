@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import liquibase.database.Database;
-import liquibase.database.core.MSSQLDatabase;
-import liquibase.database.core.MySQLDatabase;
-import liquibase.database.core.OracleDatabase;
 import liquibase.structure.core.Table;
 
 public class EbaoDiffOutputControl extends DiffOutputControl {
@@ -17,9 +14,10 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
   private final Map<String, List<TableCondition>> diffTableMap = new LinkedHashMap<String, List<TableCondition>>();
 
   //generate change log
-  private Database database;
+  private final Database database;
   private boolean insertUpdatePreferred = false;
   private int xmlCsvRowLimit = 1000;
+  private int csvRowLimit = 10000;
 
   //compare
   private final List<String> skippedObjects = new ArrayList<String>();
@@ -28,7 +26,7 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
       super(includeCatalog, includeSchema, includeTablespace);
       this.database = database;
   }
-  
+
     public void addSkippedObject(String name) {
         skippedObjects.add(name);
     }
@@ -55,6 +53,14 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
 
   public void setXmlCsvRowLimit(int xmlCsvRowLimit) {
 	this.xmlCsvRowLimit = xmlCsvRowLimit;
+  }
+
+  public int getCsvRowLimit() {
+    return csvRowLimit;
+  }
+
+  public void setCsvRowLimit(int csvRowLimit) {
+    this.csvRowLimit = csvRowLimit;
   }
 
   public void addDiffTable(String diffTable, String condition) {
@@ -93,13 +99,13 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
 	  if (isSkipped(tableName)) {
 		return false;
 	  }
-	  
+
       if (diffTableMap.isEmpty()) {
           return true;
       }
       return diffTableMap.containsKey(tableName);
   }
-  
+
   public Collection<String> getDiffTables() {
     return diffTableMap.keySet();
   }

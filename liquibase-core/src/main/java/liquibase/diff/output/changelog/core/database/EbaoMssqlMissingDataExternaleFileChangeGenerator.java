@@ -15,7 +15,8 @@ public class EbaoMssqlMissingDataExternaleFileChangeGenerator extends EbaoMissin
     	return super.getPriority(objectType, database);
     }
 
-    public String getPagedSql(String sql, int i) {
-      return sql + " OFFSET " + (i * ROWS_PER_FILE) +" ROWS FETCH NEXT " + ROWS_PER_FILE + " ROWS ONLY";
+    @Override
+    public String getPagedSql(String sql, int i, int expectedRows) {
+      return sql + " OFFSET " + i * expectedRows +" ROWS FETCH NEXT " + expectedRows + " ROWS ONLY";
     }
 }

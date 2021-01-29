@@ -10,6 +10,13 @@ import java.util.Properties;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.maven.plugin.MojoExecutionException;
+
+import com.ebao.tool.liquibase.util.LinkedProperties;
+import com.ebao.tool.liquibase.util.PropertyParser;
+import com.ebao.tool.liquibase.util.PropertyPath;
+
 import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.diff.output.DataInterceptor;
@@ -28,13 +35,6 @@ import liquibase.statement.core.RawSqlStatement;
 import liquibase.util.ISODateFormat;
 import liquibase.util.StreamUtil;
 import liquibase.util.StringUtils;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.maven.plugin.MojoExecutionException;
-
-import com.ebao.tool.liquibase.util.LinkedProperties;
-import com.ebao.tool.liquibase.util.PropertyParser;
-import com.ebao.tool.liquibase.util.PropertyPath;
 
 /**
  * Generates SQL that marks all unapplied changes as applied.
@@ -134,12 +134,17 @@ public class LiquibaseGenerateChangeLogMojo extends
    * @parameter expression="${liquibase.xmlCsvRowLimit}" default-value="1000"
    */
   protected int xmlCsvRowLimit = 1000;
-  
+
+  /**
+   * @parameter expression="${liquibase.csvRowLimit}" default-value="10000"
+   */
+  protected int csvRowLimit = 10000;
+
   /**
    * @parameter expression="${liquibase.exportDateFormat}" default-value="yyyyMMddHHmmss";
    */
   protected String exportDateFormat = "yyyyMMddHHmmss";
-  
+
 	@Override
 	protected void performLiquibaseTask(Liquibase liquibase)
 			throws LiquibaseException {
@@ -183,6 +188,7 @@ public class LiquibaseGenerateChangeLogMojo extends
         EbaoDiffOutputControl diffControl = new EbaoDiffOutputControl(outputDefaultCatalog, outputDefaultSchema, true, liquibase.getDatabase());
         diffControl.setInsertUpdatePreferred(insertUpdate);
         diffControl.setXmlCsvRowLimit(xmlCsvRowLimit);
+        diffControl.setCsvRowLimit(csvRowLimit);
         if (outputChangeLogFile == null) {
 			throw new IllegalArgumentException("outputChangeLogFile not set");
 		}
@@ -211,7 +217,7 @@ public class LiquibaseGenerateChangeLogMojo extends
                     Executor executor = ExecutorService.getInstance().getExecutor(database);
                     SqlStatement statement = new RawSqlStatement(value.substring("sql:".length()));
                     try {
-                        value = (String) executor.queryForObject(statement, String.class);
+                        value = executor.queryForObject(statement, String.class);
                     } catch (DatabaseException e) {
                         throw new RuntimeException(e);
                     }
@@ -228,7 +234,7 @@ public class LiquibaseGenerateChangeLogMojo extends
                 loadDiffPropertyFile(propertyFile, params, diffControl);
             }
         }
-        
+
         if (diffPropertyString != null && !"".equals(diffPropertyString)) {
           loadDiffPropertyString(diffPropertyString, params, diffControl);
         }
@@ -269,10 +275,10 @@ public class LiquibaseGenerateChangeLogMojo extends
       } finally {
           IOUtils.closeQuietly(r);
       }
-      
+
       loadDiffProperties(props, params, diffControl);
     }
-    
+
     private void loadDiffProperties(Properties props, Map<String, String> params,
         EbaoDiffOutputControl diffControl) {
       PropertyParser parser = new PropertyParser();
@@ -293,7 +299,7 @@ public class LiquibaseGenerateChangeLogMojo extends
           log.info("table to be exported " + path.table + "[" + condition + "]");
       }
     }
-	
+
 	@Override
 	protected void printSettings(String indent) {
 		super.printSettings(indent);
