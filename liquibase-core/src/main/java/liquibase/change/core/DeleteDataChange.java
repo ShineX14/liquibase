@@ -2,6 +2,7 @@ package liquibase.change.core;
 
 import java.util.List;
 
+import liquibase.Liquibase;
 import liquibase.change.ChangeMetaData;
 import liquibase.change.ColumnConfig;
 import liquibase.change.DatabaseChange;
@@ -11,14 +12,26 @@ import liquibase.parser.core.ParsedNodeException;
 import liquibase.resource.ResourceAccessor;
 import liquibase.statement.SqlStatement;
 import liquibase.statement.core.DeleteStatement;
+import liquibase.statement.prepared.DeleteExecutablePreparedStatement;
 import liquibase.statement.prepared.DeleteExecutablePreparedStatementChange;
 
 @DatabaseChange(name="delete", description = "Deletes data from an existing table", priority = ChangeMetaData.PRIORITY_DEFAULT, appliesTo = "table")
 public class DeleteDataChange extends AbstractModifyDataChange implements DeleteExecutablePreparedStatementChange {
 
 
-    @Override
-    public SqlStatement[] generateStatements(Database database) {
+  private SqlStatement[] sqlStatements;//cache
+
+  @Override
+  public SqlStatement[] generateStatements(Database database) {
+    if (sqlStatements != null) {
+      return sqlStatements;
+    }
+
+    if (Liquibase.isPreparedStatementPreferred()) {
+      sqlStatements = new SqlStatement[] { new DeleteExecutablePreparedStatement(
+          database, this) };
+      return sqlStatements;
+    }
 
         DeleteStatement statement = new DeleteStatement(getCatalogName(), getSchemaName(), getTableName());
 
