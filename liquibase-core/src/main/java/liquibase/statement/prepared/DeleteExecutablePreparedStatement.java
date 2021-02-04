@@ -47,29 +47,34 @@ public class DeleteExecutablePreparedStatement extends
         change.getSchemaName(), change.getTableName());
     deleteSql.append(tableName).append(" WHERE ");
 
+    boolean firstColumn = true;
     for (ColumnConfig column : change.getColumns()) {
       if (database.supportsAutoIncrement()
           && Boolean.TRUE.equals(column.isAutoIncrement())) {
         continue;
       }
+
+      if (!firstColumn) {
+        deleteSql.append(" and ");
+      }
+
       String columnName = database.escapeColumnName(change.getCatalogName(),
           change.getSchemaName(), change.getTableName(), column.getName());
       deleteSql.append(columnName);
 
       Object valueObject = column.getValueObject();
       if (valueObject == null) {
-        deleteSql.append(" is null, ");
+        deleteSql.append(" is null");
       } else if (valueObject instanceof DatabaseFunction) {
         DatabaseFunction function = (DatabaseFunction)valueObject;
-        deleteSql.append("=").append(database.generateDatabaseFunctionValue(function)).append(", ");
+        deleteSql.append("=").append(database.generateDatabaseFunctionValue(function));
       } else {
-        deleteSql.append("=?, ");
+        deleteSql.append("=?");
         cols.add(column);
       }
-    }
 
-    deleteSql.deleteCharAt(deleteSql.lastIndexOf(" "));
-    deleteSql.deleteCharAt(deleteSql.lastIndexOf(","));
+      firstColumn = false;
+    }
 
     statement = new Info(deleteSql.toString(), cols, getParameters(cols, change.getChangeSet().getFilePath()));
     return statement;
