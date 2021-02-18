@@ -1,8 +1,36 @@
 package org.liquibase.maven.plugins;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import org.apache.maven.artifact.manager.WagonManager;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.wagon.authentication.AuthenticationInfo;
+import org.liquibase.maven.plugins.spi.PropertyDecrypter;
+
 import liquibase.Liquibase;
-import liquibase.configuration.LiquibaseConfiguration;
 import liquibase.configuration.GlobalConfiguration;
+import liquibase.configuration.LiquibaseConfiguration;
 import liquibase.database.Database;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
@@ -12,25 +40,8 @@ import liquibase.logging.LogFactory;
 import liquibase.resource.CompositeResourceAccessor;
 import liquibase.resource.FileSystemResourceAccessor;
 import liquibase.resource.ResourceAccessor;
-import liquibase.util.FileUtil;
 import liquibase.util.StreamUtil;
 import liquibase.util.ui.UIFactory;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.maven.artifact.manager.WagonManager;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.project.MavenProject;
-import org.apache.maven.wagon.authentication.AuthenticationInfo;
-import org.liquibase.maven.plugins.spi.PropertyDecrypter;
-
-import java.io.*;
-import java.lang.reflect.Field;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.*;
 
 /**
  * A base class for providing Liquibase {@link liquibase.Liquibase} functionality.
@@ -39,7 +50,7 @@ import java.util.*;
  * @author Florent Biville
  *
  * Test dependency is used because when you run a goal outside the build phases you want to have the same dependencies
- * that it would had if it was ran inside test phase 
+ * that it would had if it was ran inside test phase
  * @requiresDependencyResolution test
  */
 public abstract class AbstractLiquibaseMojo extends AbstractMojo {
@@ -71,19 +82,19 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
      @readonly
      */
     protected WagonManager wagonManager;
-    
+
     /**
      * The decrypter to decrypt property value
      * @parameter expression="${liquibase.propertyDecrypterClass}"
      */
     protected String propertyDecrypterClass;
     protected PropertyDecrypter propertyDecrypter;
- 
+
     /**
-     * The decrypted property names to be decrypted
-     * @parameter expression="${liquibase.decryptedProperties}"
+     * The encrypted property names to be decrypted
+     * @parameter expression="${liquibase.encryptedProperties}"
      */
-    protected String decryptedProperties;
+    protected String encryptedProperties;
 
     /**
      * The server id in settings.xml to use when authenticating with.
@@ -113,6 +124,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
      * @parameter expression="${liquibase.emptyPassword}" default-value="false"
      * @deprecated Use an empty or null value for the password instead.
      */
+    @Deprecated
     protected boolean emptyPassword;
 
 	/**
@@ -217,11 +229,11 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
      */
     protected boolean clearCheckSums;
 
-    /**                                                                                                                                                                          
-     * List of system properties to pass to the database.                                                                                                                        
-     *                                                                                                                                                                           
-     * @parameter                                                                                                                                                                
-     */                                                                                                                                                                          
+    /**
+     * List of system properties to pass to the database.
+     *
+     * @parameter
+     */
     protected Properties systemProperties;
 
     /**
@@ -424,7 +436,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
         configureFieldsAndValues(fo, propertyFile, null);
     }
 
-    public void configureFieldsAndValues(ResourceAccessor fo, String propertyFile, String prefix) 
+    public void configureFieldsAndValues(ResourceAccessor fo, String propertyFile, String prefix)
             throws MojoExecutionException, MojoFailureException {
         // Load the properties file if there is one, but only for values that the user has not
         // already specified.
@@ -484,17 +496,17 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
       ResourceAccessor fsFO = new FileSystemResourceAccessor(project.getBasedir().getAbsolutePath());
       return new CompositeResourceAccessor(mFO, fsFO);
     }
-    
+
     protected ResourceAccessor getPropertyFileOpener(ClassLoader cl) {
       ResourceAccessor mFO = new MavenResourceAccessor(cl);
       ResourceAccessor fsFO = new FileSystemResourceAccessor(project.getBasedir().getAbsolutePath());
-      
+
       File cd = new File(".");
       if (!cd.getAbsolutePath().equals(project.getBasedir().getAbsolutePath())) {
         ResourceAccessor cdFO = new FileSystemResourceAccessor(cd.getAbsolutePath());
         return new CompositeResourceAccessor(mFO, fsFO, cdFO);
       }
-      
+
       return new CompositeResourceAccessor(mFO, fsFO);
     }
 
@@ -580,7 +592,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
         parsePropertiesFile(propertiesInputStream, null);
     }
 
-    protected void parsePropertiesFile(InputStream propertiesInputStream, String prefix) 
+    protected void parsePropertiesFile(InputStream propertiesInputStream, String prefix)
             throws MojoExecutionException {
         if (propertiesInputStream == null) {
             throw new MojoExecutionException("Properties file InputStream is null.");
@@ -593,8 +605,8 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             throw new MojoExecutionException("Could not load the properties Liquibase file", e);
         }
 
-        for (Iterator it = props.keySet().iterator(); it.hasNext();) {
-            String key = (String) it.next();
+        for (Object element : props.keySet()) {
+            String key = (String) element;
             String value = (String) props.get(key);
             try {
                 if (key.startsWith("liquibase.")) {
@@ -694,7 +706,7 @@ public abstract class AbstractLiquibaseMojo extends AbstractMojo {
             field.set(this, value);
         }
     }
-    
+
     protected void processSystemProperties() {
         if (systemProperties == null)
         {
