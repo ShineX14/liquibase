@@ -8,7 +8,7 @@
 
   <mirrors>
     <mirror>
-      <id>eBaoTech</id>
+      <id>ebao</id>
       <name>eBaoTech Maven Repository</name>
       <url>http://maven-repository.ebaotech.com/artifactory/repo</url>
       <mirrorOf>*</mirrorOf>
@@ -17,14 +17,14 @@
   
   <profiles>
     <profile>
-      <id>eBaoTech</id>
+      <id>ebao</id>
       <activation>
         <activeByDefault>true</activeByDefault>
       </activation>
       <repositories>
         <repository>
           <snapshots/>
-          <id>eBaoTech</id>
+          <id>ebao</id>
           <name>eBaoTech Maven Repository</name>
           <url>http://maven-repository.ebaotech.com/artifactory/repo</url>
         </repository>
@@ -32,7 +32,7 @@
       <pluginRepositories>
         <pluginRepository>
           <snapshots/>
-          <id>eBaoTech</id>
+          <id>ebao</id>
           <name>eBaoTech Maven Repository</name>
           <url>http://maven-repository.ebaotech.com/artifactory/repo</url>
         </pluginRepository>
