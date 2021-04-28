@@ -46,7 +46,7 @@ public abstract class AbstractPreparedStatement implements
         }
 		return list;
 	}
-	
+
 	protected String getPrimaryKeyClause(String primaryKeys, List columns,
 			List<ColumnConfig> cols) {
 		List<String> pknames = getPrimaryKey(primaryKeys);
@@ -66,7 +66,7 @@ public abstract class AbstractPreparedStatement implements
 		}
 		return sql.toString();
 	}
-	
+
 	protected String getPrimaryKeyClause(List<String> pknames, List<String> nullpknames, String sourceTablePrefix, String targetTablePrefix) {
 		StringBuilder sql = new StringBuilder();
 		for (int i = 0; i < pknames.size(); i++) {
@@ -78,10 +78,11 @@ public abstract class AbstractPreparedStatement implements
 			if (targetTablePrefix != null) {
 				sql.append(targetTablePrefix + ".");
 			}
-            if (nullpknames.contains(pkname)) {
-               sql.append(" is null");
-            } else {
-                sql.append("=");
+			sql.append(pkname);
+      if (nullpknames.contains(pkname)) {
+        sql.append(" is null");
+      } else {
+        sql.append("=");
 				if (sourceTablePrefix != null) {
 					sql.append(sourceTablePrefix + ".");
 				}
@@ -265,14 +266,15 @@ public abstract class AbstractPreparedStatement implements
 		}
 	}
 
-	public abstract void setParameter(PreparedStatement stmt)
+	@Override
+  public abstract void setParameter(PreparedStatement stmt)
 			throws DatabaseException;
 
 	@Override
 	public boolean skipOnUnsupported() {
 		return false;
 	}
-	
+
 	public void deleteLastSeperator(StringBuilder s) {
 		int index = s.length() - 1;
 		if (index >= 0 && s.charAt(index) == ',') {
