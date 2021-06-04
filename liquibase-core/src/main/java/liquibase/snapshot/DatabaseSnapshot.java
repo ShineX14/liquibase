@@ -1,7 +1,19 @@
 package liquibase.snapshot;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+
 import liquibase.CatalogAndSchema;
 import liquibase.database.Database;
+import liquibase.database.core.OracleDatabase;
+import liquibase.diff.compare.DatabaseObjectComparatorFactory;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.UnexpectedLiquibaseException;
 import liquibase.parser.core.ParsedNode;
@@ -10,10 +22,8 @@ import liquibase.resource.ResourceAccessor;
 import liquibase.serializer.LiquibaseSerializable;
 import liquibase.structure.DatabaseObject;
 import liquibase.structure.DatabaseObjectCollection;
-import liquibase.structure.core.*;
-import liquibase.diff.compare.DatabaseObjectComparatorFactory;
-
-import java.util.*;
+import liquibase.structure.core.Catalog;
+import liquibase.structure.core.Schema;
 
 public abstract class DatabaseSnapshot implements LiquibaseSerializable{
 
@@ -115,6 +125,14 @@ public abstract class DatabaseSnapshot implements LiquibaseSerializable{
     }
 
     public ResultSetCache getGlobalResultSetCache(String key) {
+      if (database instanceof OracleDatabase) {
+        return _getGlobalResultSetCache(key);
+      } else {
+        return getResultSetCache(key);
+      }
+    }
+
+    private ResultSetCache _getGlobalResultSetCache(String key) {
         if (!globalResultSetCaches.containsKey(key)) {
             globalResultSetCaches.put(key, new ResultSetCache());
         }
