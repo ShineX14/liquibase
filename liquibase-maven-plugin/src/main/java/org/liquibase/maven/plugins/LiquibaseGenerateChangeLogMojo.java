@@ -189,6 +189,7 @@ public class LiquibaseGenerateChangeLogMojo extends
         diffControl.setInsertUpdatePreferred(insertUpdate);
         diffControl.setXmlCsvRowLimit(xmlCsvRowLimit);
         diffControl.setCsvRowLimit(csvRowLimit);
+        diffControl.setChangeSetAuthor(changeSetAuthor);
         if (outputChangeLogFile == null) {
 			throw new IllegalArgumentException("outputChangeLogFile not set");
 		}

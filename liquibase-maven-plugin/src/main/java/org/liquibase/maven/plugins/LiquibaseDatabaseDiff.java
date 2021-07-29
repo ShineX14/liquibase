@@ -4,16 +4,18 @@ package org.liquibase.maven.plugins;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+
+import com.ebao.tool.liquibase.util.LinkedProperties;
+
 import liquibase.CatalogAndSchema;
 import liquibase.Liquibase;
 import liquibase.database.Database;
-import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.EbaoDiffOutputControl;
 import liquibase.exception.LiquibaseException;
 import liquibase.integration.commandline.CommandLineUtils;
@@ -22,11 +24,6 @@ import liquibase.logging.Logger;
 import liquibase.resource.ResourceAccessor;
 import liquibase.util.StreamUtil;
 import liquibase.util.StringUtils;
-
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-
-import com.ebao.tool.liquibase.util.LinkedProperties;
 
 /**
  * Generates a diff between the specified database and the reference database.
@@ -119,7 +116,7 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
      * @parameter expression="${liquibase.diffIncludeTablespace}"
      */
     protected boolean diffIncludeTablespace;
-    
+
     /**
      * List of diff types to include in Change Log expressed as a comma separated list from: tables, views, columns, indexes, foreignkeys, primarykeys, uniqueconstraints, data.
      * If this is null then the default types will be: tables, views, columns, indexes, foreignkeys, primarykeys, uniqueconstraints
@@ -190,10 +187,10 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
             CommandLineUtils.createParentDir(diffChangeLogFile);
             try {
             	EbaoDiffOutputControl diffControl = loadDiffOutputControl(db);
-                
+
             	String dataDir = CommandLineUtils.createParentDir(diffChangeLogFile);
                 diffControl.setDataDir(dataDir);
-                
+
                 if (diffTable != null) {
                 	String[] tables = diffTable.split("[,;]");
                 	for (String table : tables) {
@@ -202,7 +199,7 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
                 		log.info("table to be compared is " + table);
 					}
                 }
-                
+
                 CommandLineUtils.doDiffToChangeLog(diffChangeLogFile, referenceDatabase, db, diffControl, StringUtils.trimToNull(diffTypes));
                 getLog().info("Differences written to Change Log File, " + diffChangeLogFile);
             }
@@ -220,6 +217,7 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
     private EbaoDiffOutputControl loadDiffOutputControl(Database database) throws LiquibaseException {
         EbaoDiffOutputControl diffConfig = new EbaoDiffOutputControl(diffIncludeCatalog, diffIncludeSchema, diffIncludeTablespace, database);
         diffConfig.addIncludedSchema(new CatalogAndSchema(referenceDefaultCatalogName, referenceDefaultSchemaName));
+        diffConfig.setChangeSetAuthor(diffAuthor);
 
         if (skipPropertyFile != null && !"".equals(skipPropertyFile)) {
           getLog().info("Loading skipped objects property file:" + skipPropertyFile);
@@ -241,12 +239,12 @@ public class LiquibaseDatabaseDiff extends AbstractLiquibaseChangeLogMojo {
             throw new LiquibaseException("Failed to resolve the properties file:" + propertyFile, e);
           }
         }
-        
+
         return diffConfig;
     }
 
-    
-    
+
+
     @Override
     protected void printSettings(String indent) {
         super.printSettings(indent);

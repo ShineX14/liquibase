@@ -18,6 +18,7 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
   private boolean insertUpdatePreferred = false;
   private int xmlCsvRowLimit = 1000;
   private int csvRowLimit = 10000;
+  private String changeSetAuthor;
 
   //compare
   private final List<String> skippedObjects = new ArrayList<String>();
@@ -27,17 +28,17 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
       this.database = database;
   }
 
-    public void addSkippedObject(String name) {
-        skippedObjects.add(name);
-    }
+  public void addSkippedObject(String name) {
+      skippedObjects.add(name);
+  }
 
-    public void addSkippedObjects(List<String> names) {
-        skippedObjects.addAll(names);
-    }
+  public void addSkippedObjects(List<String> names) {
+      skippedObjects.addAll(names);
+  }
 
-    public boolean isSkipped(String name) {
-        return skippedObjects.contains(name);
-    }
+  public boolean isSkipped(String name) {
+      return skippedObjects.contains(name);
+  }
 
   public boolean isInsertUpdatePreferred() {
     return insertUpdatePreferred;
@@ -61,6 +62,14 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
 
   public void setCsvRowLimit(int csvRowLimit) {
     this.csvRowLimit = csvRowLimit;
+  }
+
+  public String getChangeSetAuthor() {
+    return changeSetAuthor;
+  }
+
+  public void setChangeSetAuthor(String changeSetAuthor) {
+    this.changeSetAuthor = changeSetAuthor;
   }
 
   public void addDiffTable(String diffTable, String condition) {

@@ -272,7 +272,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
 
     EbaoDiffOutputControl ebaoDiffOutputControl = (EbaoDiffOutputControl)outputControl;
     String id = table.getName() + ".DATA";
-    ChangeSet changeSet = ChangeSetUtils.generateChangeSet(id, ebaoDiffOutputControl.isInsertUpdatePreferred());
+    ChangeSet changeSet = ChangeSetUtils.generateChangeSet(id, ebaoDiffOutputControl.getChangeSetAuthor(), ebaoDiffOutputControl.isInsertUpdatePreferred());
     if (csv) {
       LoadDataChange change = addInsertDataChangesCsv(ebaoDiffOutputControl, table, columnNames, rs, dataDir, fileName + ".csv");
       changeSet.addChange(change);
@@ -314,13 +314,13 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
       change.setTableName(table.getName());
 
       // loop over all columns for this row
-      for (int i = 0; i < columnNames.size(); i++) {
+      for (String columnName : columnNames) {
         ColumnConfig column = new ColumnConfig();
-        column.setName(columnNames.get(i));
+        column.setName(columnName);
 
-        Object value = row.get(columnNames.get(i));
+        Object value = row.get(columnName);
         if (value == null) {
-          value = row.get(columnNames.get(i).toUpperCase());
+          value = row.get(columnName.toUpperCase());
         }
         if (value == null) {
           column.setValue(null);
