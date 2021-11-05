@@ -63,13 +63,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
 
   private final Logger logger = LogFactory.getInstance().getLog();
 
-  private static String dataDir;
-
   public EbaoMissingDataExternalFileChangeGenerator() {
-  }
-
-  public static void setDataDir(String dataDir) {
-    EbaoMissingDataExternalFileChangeGenerator.dataDir = dataDir;
   }
 
   @Override
@@ -93,10 +87,10 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
 
     EbaoDiffOutputControl ebaoOutputControl = (EbaoDiffOutputControl) outputControl;
 
-    List<ChangeSet> changes = new ArrayList<ChangeSet>();
+    List<IncludedFile> changes = new ArrayList<IncludedFile>();
     try {
       for (EbaoDiffOutputControl.TableCondition filter : ebaoOutputControl.getDiffWhereClause(table.getName())) {
-        List<ChangeSet> change = fixMissing(ebaoOutputControl, referenceDatabase, table, filter);
+        List<IncludedFile> change = fixMissing(ebaoOutputControl, referenceDatabase, table, filter);
         changes.addAll(change);
       }
     } catch (Exception e) {
@@ -108,7 +102,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
 
   protected abstract String getPagedSql(String sql, int i, int expectedRows);
 
-  public List<ChangeSet> fixMissing(EbaoDiffOutputControl outputControl, Database referenceDatabase, Table table,
+  private List<IncludedFile> fixMissing(EbaoDiffOutputControl outputControl, Database referenceDatabase, Table table,
       EbaoDiffOutputControl.TableCondition filter) throws DatabaseException, IOException, ParserConfigurationException {
     String escapedTableName = referenceDatabase.escapeTableName(table.getSchema().getCatalogName(), table.getSchema().getName(),
         table.getName());
@@ -135,7 +129,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
       }
     }
 
-    List<ChangeSet> changeSets = new ArrayList<ChangeSet>();
+    List<IncludedFile> changeSets = new ArrayList<IncludedFile>();
 
     JdbcConnection connection = (JdbcConnection) referenceDatabase.getConnection();
 
@@ -149,9 +143,9 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
     if (rowCount <= outputControl.getXmlCsvRowLimit()) {
       List<Map<String, Object>> rs = executeQuery(connection, sql, outputControl.getCsvRowLimit());
       String filename = filter.getFilename() != null ? filter.getFilename() : table.getName();
-      ChangeSet changeSet = addInsertDataChanges(outputControl, table, rs, dataDir, filter.getSubdir(), filename, false);
-      if (changeSet != null) {
-        changeSets.add(changeSet);
+      IncludedFile includedFile = addInsertDataChanges(outputControl, table, rs, outputControl.getDataDir(), filter.getSubdir(), filename, false);
+      if (includedFile != null) {
+        changeSets.add(includedFile);
       }
     } else {
       for (int i = 0; i <= (rowCount - 1) / outputControl.getCsvRowLimit(); i++) {
@@ -163,9 +157,9 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
           filename = filename + "." + (i + 1);
         }
 
-        ChangeSet changeSet = addInsertDataChanges(outputControl, table, rs, dataDir, filter.getSubdir(), filename, true);
-        if (changeSet != null) {
-          changeSets.add(changeSet);
+        IncludedFile includedFile = addInsertDataChanges(outputControl, table, rs, outputControl.getDataDir(), filter.getSubdir(), filename, true);
+        if (includedFile != null) {
+          changeSets.add(includedFile);
         }
       }
     }
@@ -173,7 +167,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
     return changeSets;
   }
 
-  public int executeQueryRowCount(JdbcConnection connection, String sql) {
+  private int executeQueryRowCount(JdbcConnection connection, String sql) {
     Statement stmt = null;
     ResultSet rs = null;
     try {
@@ -190,7 +184,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
     }
   }
 
-  public List<Map<String, Object>> executeQuery(JdbcConnection connection, String sql, int expectedRows) {
+  private List<Map<String, Object>> executeQuery(JdbcConnection connection, String sql, int expectedRows) {
     Statement stmt = null;
     ResultSet rs = null;
     try {
@@ -244,7 +238,7 @@ public abstract class EbaoMissingDataExternalFileChangeGenerator extends Missing
   private static final String fileextension1 = ".data.xml";
   private static final String fileextension2 = ".xml";
 
-  private ChangeSet addInsertDataChanges(DiffOutputControl outputControl, Table table, List<Map<String, Object>> rs, String rootDir,
+  private IncludedFile addInsertDataChanges(DiffOutputControl outputControl, Table table, List<Map<String, Object>> rs, String rootDir,
       String subDir, String fileName, boolean csv) throws DatabaseException, IOException, ParserConfigurationException {
     String dataDir = rootDir;
     if (subDir != null) {

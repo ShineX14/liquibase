@@ -25,6 +25,8 @@ public class DiffOutputControl {
     private DatabaseObjectCollection alreadyHandledUnexpected = new DatabaseObjectCollection(new DatabaseForHash());
     private DatabaseObjectCollection alreadyHandledChanged = new DatabaseObjectCollection(new DatabaseForHash());
 
+    private String dataDir;
+    
     public DiffOutputControl() {
         includeSchema = true;
         includeCatalog = true;
@@ -65,14 +67,18 @@ public class DiffOutputControl {
     }
 
     public DiffOutputControl setDataDir(String dataDir) {
-
         if (dataDir != null) {
             //ChangeGeneratorFactory.getInstance().register(new EbaoOracleMissingDataExternalFileChangeGenerator(dataDir));
-        	EbaoMissingDataExternalFileChangeGenerator.setDataDir(dataDir);
+        	//EbaoMissingDataExternalFileChangeGenerator.setDataDir(dataDir);
+            this.dataDir = dataDir;
         }
         return this;
     }
 
+    public String getDataDir() {
+      return dataDir;
+    }
+    
     public void setAlreadyHandledMissing(DatabaseObject missingObject) {
         this.alreadyHandledMissing.add(missingObject);
     }

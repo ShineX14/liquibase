@@ -19,6 +19,7 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
   private int xmlCsvRowLimit = 1000;
   private int csvRowLimit = 10000;
   private String changeSetAuthor;
+  private boolean indexFileInEachDirectory = false;
 
   //compare
   private final List<String> skippedObjects = new ArrayList<String>();
@@ -70,6 +71,14 @@ public class EbaoDiffOutputControl extends DiffOutputControl {
 
   public void setChangeSetAuthor(String changeSetAuthor) {
     this.changeSetAuthor = changeSetAuthor;
+  }
+
+  public boolean isIndexFileInEachDirectory() {
+    return indexFileInEachDirectory;
+  }
+
+  public void setIndexFileInEachDirectory(boolean indexFileInEachDirectory) {
+    this.indexFileInEachDirectory = indexFileInEachDirectory;
   }
 
   public void addDiffTable(String diffTable, String condition) {

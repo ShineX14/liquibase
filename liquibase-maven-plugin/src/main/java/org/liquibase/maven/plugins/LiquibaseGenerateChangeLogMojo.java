@@ -145,6 +145,11 @@ public class LiquibaseGenerateChangeLogMojo extends
    */
   protected String exportDateFormat = "yyyyMMddHHmmss";
 
+  /**
+   * @parameter expression="${liquibase.indexFileInEachDirectory}" default-value="true"
+   */
+  protected boolean indexFileInEachDirectory = true;
+
 	@Override
 	protected void performLiquibaseTask(Liquibase liquibase)
 			throws LiquibaseException {
@@ -190,6 +195,7 @@ public class LiquibaseGenerateChangeLogMojo extends
         diffControl.setXmlCsvRowLimit(xmlCsvRowLimit);
         diffControl.setCsvRowLimit(csvRowLimit);
         diffControl.setChangeSetAuthor(changeSetAuthor);
+        diffControl.setIndexFileInEachDirectory(indexFileInEachDirectory);
         if (outputChangeLogFile == null) {
 			throw new IllegalArgumentException("outputChangeLogFile not set");
 		}
@@ -317,6 +323,9 @@ public class LiquibaseGenerateChangeLogMojo extends
         if (xmlCsvRowLimit != 1000) {
           getLog().info(indent + "xmlCsvRowLimit: " + xmlCsvRowLimit);
 		}
+        if (indexFileInEachDirectory) {
+          getLog().info(indent + "indexFileInEachDirectory: " + indexFileInEachDirectory);
+        }
 	}
 
 }

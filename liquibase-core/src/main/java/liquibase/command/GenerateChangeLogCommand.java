@@ -3,6 +3,7 @@ package liquibase.command;
 import liquibase.diff.DiffResult;
 import liquibase.diff.compare.CompareControl;
 import liquibase.diff.output.changelog.DiffToChangeLog;
+import liquibase.diff.output.changelog.EbaoDiffToChangeLog;
 import liquibase.exception.DatabaseException;
 import liquibase.snapshot.DatabaseSnapshot;
 import liquibase.snapshot.InvalidExampleException;
@@ -44,7 +45,7 @@ public class GenerateChangeLogCommand extends DiffToChangeLogCommand {
     protected Object run() throws Exception {
         DiffResult diffResult = createDiffResult();
 
-        DiffToChangeLog changeLogWriter = new DiffToChangeLog(diffResult, getDiffOutputControl());
+        DiffToChangeLog changeLogWriter = new EbaoDiffToChangeLog(diffResult, getDiffOutputControl());
 
         changeLogWriter.setChangeSetAuthor(author);
         changeLogWriter.setChangeSetContext(context);

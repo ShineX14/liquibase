@@ -84,4 +84,8 @@ public class IncludedFile extends ChangeSet {
         throw new UnsupportedOperationException();//DatabaseChangeLog.loadIncludedDatabaseChangeLog
     }
 
+    @Override
+    public String toString() {
+        return fileName;
+    }
 }
