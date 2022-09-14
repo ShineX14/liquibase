@@ -12,7 +12,13 @@ public class EbaoCompareControl extends CompareControl {
     public EbaoCompareControl(SchemaComparison[] schemaComparison, String compareTypes, EbaoDiffOutputControl diffOutputControl) {
         super(schemaComparison, compareTypes);
         this.diffOutputControl = diffOutputControl;
-    };
+    }
+    
+    public EbaoCompareControl(SchemaComparison[] schemaComparison,
+        Set<Class<? extends DatabaseObject>> compareTypes, EbaoDiffOutputControl diffOutputControl) {
+      super(schemaComparison, compareTypes);
+      this.diffOutputControl = diffOutputControl;
+    }
 
     public boolean isSkipped(String name) {
         return diffOutputControl != null ? diffOutputControl.isSkipped(name) : false;
