@@ -78,11 +78,6 @@ class AbstractResourceAccessorTest extends Specification {
             protected void init() {}
 
             @Override
-            protected Set<URL> getRootPaths() {
-                return rootUrlsSet;
-            }
-
-            @Override
             protected boolean isCaseSensitive() {
                 return caseSensitive;
             }
