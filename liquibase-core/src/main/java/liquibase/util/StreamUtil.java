@@ -8,6 +8,7 @@ import liquibase.changelog.ChangeSet;
 import liquibase.configuration.GlobalConfiguration;
 import liquibase.configuration.LiquibaseConfiguration;
 import liquibase.exception.UnexpectedLiquibaseException;
+import liquibase.logging.LogFactory;
 import liquibase.resource.ResourceAccessor;
 import liquibase.resource.UtfBomAwareReader;
 
@@ -15,17 +16,17 @@ import liquibase.resource.UtfBomAwareReader;
  * Utilities for working with streams.
  */
 public class StreamUtil {
-	
-    private static String defaultEncoding;
+  
+  private static String defaultEncoding;
 
-    public static String getDefaultEncoding() {
-        return defaultEncoding;
-    }
+  public static String getDefaultEncoding() {
+      return defaultEncoding;
+  }
 
-    public static void setDefaultEncoding(String defaultEncoding) {
-        StreamUtil.defaultEncoding = defaultEncoding;
-    }
-
+  public static void setDefaultEncoding(String defaultEncoding) {
+      StreamUtil.defaultEncoding = defaultEncoding;
+  }
+  
     public static String getLineSeparator() {
         return LiquibaseConfiguration.getInstance().getConfiguration(GlobalConfiguration.class).getOutputLineSeparator();
     }
@@ -59,25 +60,29 @@ public class StreamUtil {
             throw new IOException("No stream to open");
         }
 
-		if (charsetName == null) {
-			reader = new UtfBomAwareReader(ins);
-		} else {
-			String charsetCanonicalName = Charset.forName(charsetName).name();
-			String encoding;
+        try {
+            if (charsetName == null) {
+                reader = new UtfBomAwareReader(ins);
+            } else {
+                String charsetCanonicalName = Charset.forName(charsetName).name();
+                String encoding;
 
-			reader = new UtfBomAwareReader(ins, charsetName);
-			encoding = Charset.forName(reader.getEncoding()).name();
+                reader = new UtfBomAwareReader(ins, charsetName);
+                encoding = Charset.forName(reader.getEncoding()).name();
 
-			if (charsetCanonicalName.startsWith("UTF")
-					&& !charsetCanonicalName.equals(encoding)) {
-				reader.close();
-				throw new IllegalArgumentException("Expected encoding was '"
-						+ charsetCanonicalName + "' but a BOM was detected for '"
-						+ encoding + "'");
-			}
-		}
-		return getReaderContents(reader);
-	}
+                if (charsetCanonicalName.startsWith("UTF")
+                        && !charsetCanonicalName.equals(encoding)) {
+                    reader.close();
+                    throw new IllegalArgumentException("Expected encoding was '"
+                            + charsetCanonicalName + "' but a BOM was detected for '"
+                            + encoding + "'");
+                }
+            }
+            return getReaderContents(reader);
+        } finally {
+            ins.close();
+        }
+    }
     
     /**
      * Reads all the characters into a String.
@@ -153,9 +158,6 @@ public class StreamUtil {
     }
 
     public static InputStream openStream(String path, Boolean relativeToChangelogFile, ChangeSet changeSet, ResourceAccessor resourceAccessor) throws IOException {
-        if (relativeToChangelogFile != null && !relativeToChangelogFile) {
-            path = processDefaultPrefix(resourceAccessor, path);
-        }
         InputStream stream = openFromClasspath(path, relativeToChangelogFile, changeSet, resourceAccessor);
         if (stream == null) {
             stream = openFromFileSystem(path, relativeToChangelogFile, changeSet, resourceAccessor);
@@ -181,16 +183,40 @@ public class StreamUtil {
             } else {
                 base = changeSet.getChangeLog().getPhysicalFilePath().replaceAll("\\\\","/");
             }
-            if (base.contains("/")) {
-                file = base.replaceFirst("/[^/]*$", "") + "/" + file;
+            if (!base.contains("/")) {
+                base = ".";
             }
+            file = base.replaceFirst("/[^/]*$", "") + "/" + file;
         }
 
         return singleInputStream(file, resourceAccessor);
     }
 
     public static InputStream singleInputStream(String path, ResourceAccessor resourceAccessor) throws IOException {
-        return resourceAccessor.getSingleResourceAsStream(path);
+        Set<InputStream> streams = resourceAccessor.getResourcesAsStream(path);
+        if (streams == null || streams.size() == 0) {
+            return null;
+        }
+        if (streams.size() != 1) {
+            if (streams.size() > 1 && path != null && path.startsWith("liquibase/parser/core/xml/") && path.endsWith(".xsd")) {
+                LogFactory.getLogger().debug("Found " + streams.size() + " files that match " + path+", but choosing one at random.");
+                InputStream returnStream = null;
+                for (InputStream stream : streams) {
+                    if (returnStream == null) {
+                        returnStream = stream;
+                    } else {
+                        stream.close();
+                    }
+                }
+            } else {
+                for (InputStream stream : streams) {
+                    stream.close();
+                }
+                throw new IOException("Found " + streams.size() + " files that match " + path);
+            }
+        }
+
+        return streams.iterator().next();
     }
 
     /**
@@ -214,12 +240,27 @@ public class StreamUtil {
             } else {
                 base = changeSet.getChangeLog().getPhysicalFilePath().replaceAll("\\\\","/");
             }
-            if (base != null && base.contains("/")) {
-              file = base.replaceFirst("/[^/]*$", "") + "/" + file;
+            if (base == null || !base.contains("/")) {
+                base = ".";
             }
+
+            file = base.replaceFirst("/[^/]*$", "") + "/" + file;
         }
 
         return singleInputStream(file, resourceAccessor);
+    }
+
+    public static InputStream getLobFileStream(ResourceAccessor opener, String file, String parentFilePath) {
+        try {
+            String path = StreamUtil.getFilePath(file, parentFilePath);
+            InputStream stream = StreamUtil.singleInputStream(path, opener);
+            if (stream == null) {
+                throw new IllegalArgumentException(file + " not found.");
+            }
+            return stream;
+        } catch (IOException e) {
+            throw new RuntimeException(file, e);
+        }
     }
     
     public static String processDefaultPrefix(ResourceAccessor opener, String filepath) {
@@ -241,25 +282,10 @@ public class StreamUtil {
             throw new IllegalArgumentException(filepath, e);
         }
     }
-
-    public static InputStream getLobFileStream(ResourceAccessor opener, String file, String parentFilePath) {
-        try {
-            String path = StreamUtil.getFilePath(file, parentFilePath);
-            InputStream stream = StreamUtil.singleInputStream(path, opener);
-            if (stream == null) {
-                throw new IllegalArgumentException(file + " not found.");
-            }
-            return stream;
-        } catch (IOException e) {
-            throw new RuntimeException(file, e);
-        }
-    }
-
     public static String getFilePath(String file, String parentFilePath) {
-        if (parentFilePath.contains("/")) {
-            file = parentFilePath.replaceFirst("/[^/]*$", "") + "/" + file;
-        }
-        return file;
+      if (parentFilePath.contains("/")) {
+          file = parentFilePath.replaceFirst("/[^/]*$", "") + "/" + file;
+      }
+      return file;
     }
-    
 }

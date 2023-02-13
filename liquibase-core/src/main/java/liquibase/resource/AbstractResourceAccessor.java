@@ -1,20 +1,23 @@
 package liquibase.resource;
 
 import liquibase.exception.UnexpectedLiquibaseException;
+import liquibase.util.CollectionUtil;
 import liquibase.util.StringUtils;
 import liquibase.util.SystemUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Set;
+import java.net.URLClassLoader;
+import java.util.*;
+
 
 public abstract class AbstractResourceAccessor implements ResourceAccessor {
 
-    private Set<String> rootStrings = new HashSet<String>();
+    //We don't use an HashSet otherwise iteration order is not deterministic
+	private List<String> rootStrings = new ArrayList<String>();
 
     protected AbstractResourceAccessor() {
         init();
@@ -25,6 +28,14 @@ public abstract class AbstractResourceAccessor implements ResourceAccessor {
             Enumeration<URL> baseUrls;
             ClassLoader classLoader = toClassLoader();
             if (classLoader != null) {
+                if (classLoader instanceof URLClassLoader) {
+                    baseUrls = new Vector<URL>(Arrays.asList(((URLClassLoader) classLoader).getURLs())).elements();
+
+                    while (baseUrls.hasMoreElements()) {
+                        addRootPath(baseUrls.nextElement());
+                    }
+                }
+
                 baseUrls = classLoader.getResources("");
 
                 while (baseUrls.hasMoreElements()) {
@@ -41,10 +52,26 @@ public abstract class AbstractResourceAccessor implements ResourceAccessor {
     }
 
     protected void addRootPath(URL path) {
-        rootStrings.add(path.toExternalForm());
+        if (path == null) {
+            return;
+        }
+    	String externalForm = path.toExternalForm();
+        if (externalForm.startsWith("file:")) {
+            try {
+                externalForm = new File(path.toURI()).getCanonicalFile().toURL().toExternalForm();
+            } catch (Throwable e) {
+                //keep original version
+            }
+        }
+    	if (!externalForm.endsWith("/")) {
+    		externalForm += "/";
+    	}
+    	if (!rootStrings.contains(externalForm)) {
+    		rootStrings.add(externalForm);
+    	}
     }
 
-    protected Set<String> getRootPaths() {
+    protected List<String> getRootPaths() {
         return rootStrings;
     }
 
@@ -117,33 +144,30 @@ public abstract class AbstractResourceAccessor implements ResourceAccessor {
         if (baseUrl == null) {
             throw new UnexpectedLiquibaseException("Cannot find base path '"+relativeTo+"'");
         }
+        String base;
         if (baseUrl.toExternalForm().startsWith("file:")) {
             File baseFile = new File(baseUrl.getPath());
             if (!baseFile.exists()) {
-                throw new UnexpectedLiquibaseException("Base file '"+baseFile.getAbsolutePath()+"' does not exist");
+                throw new UnexpectedLiquibaseException("Base file '" + baseFile.getAbsolutePath() + "' does not exist");
             }
             if (baseFile.isFile()) {
                 baseFile = baseFile.getParentFile();
             }
-
-            return convertToPath(baseFile.toURI().getPath()+"/"+path);
+            base = baseFile.toURI().getPath();
+        } else if (baseUrl.toExternalForm().startsWith("jar:file:")) {
+                return convertToPath(new File(relativeTo).getParent() + '/' + path);
         } else {
-            return convertToPath(relativeTo+"/"+path);
+            base = relativeTo;
         }
+        String separator = "";
+        if (!base.endsWith("/") && !path.startsWith("/")) {
+        	separator = "/";
+        }
+        if (base.endsWith("/") && path.startsWith("/")) {
+        	base = base.substring(0, base.length() - 1);
+        }            
+        return convertToPath(base + separator + path);
     }
 
-	@Override
-	public InputStream getSingleResourceAsStream(String path) throws IOException {
-		Set<InputStream> set = getResourcesAsStream(path);
-		if (set == null || set.size() == 0) {
-			return null;
-		} else if (set.size() > 1) {
-			for (InputStream is : set) {
-				is.close();
-			}
-			throw new IllegalArgumentException(set.size() + " resources are found for " + path);
-		}
-		return set.iterator().next();
-	}
 
 }

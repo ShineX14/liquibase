@@ -1,16 +1,18 @@
 package liquibase.resource;
 
+import liquibase.configuration.GlobalConfiguration;
+import liquibase.configuration.LiquibaseConfiguration;
 import liquibase.logging.LogFactory;
-import liquibase.logging.Logger;
-import liquibase.logging.core.DefaultLogger;
-import liquibase.util.FileUtil;
 import liquibase.util.StringUtils;
+import liquibase.util.SpringBootFatJar;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * An implementation of {@link liquibase.resource.ResourceAccessor} that wraps a class loader.
@@ -28,135 +30,129 @@ public class ClassLoaderResourceAccessor extends AbstractResourceAccessor {
         init(); //init needs to be called after classloader is set
     }
 
-    private Set<InputStream> getResourcesAsStream(String path, boolean single) throws IOException {
+    @Override
+    public Set<InputStream> getResourcesAsStream(String path) throws IOException {
         Enumeration<URL> resources = classLoader.getResources(path);
         if (resources == null || !resources.hasMoreElements()) {
             return null;
         }
-        List<String> seenUrls = new ArrayList<String>();
-        List<InputStream> returnSet = new ArrayList<InputStream>();
+        Set<String> seenUrls = new HashSet<String>();
+        Set<InputStream> returnSet = new HashSet<InputStream>();
         while (resources.hasMoreElements()) {
             URL url = resources.nextElement();
             if (seenUrls.contains(url.toExternalForm())) {
                 continue;
             }
             seenUrls.add(url.toExternalForm());
-            InputStream resourceAsStream = url.openStream();
-            if (resourceAsStream == null) {
-            	throw new IllegalArgumentException(url.toExternalForm());
+//            LogFactory.getInstance().getLog().debug("Opening "+url.toExternalForm()+" as "+path);
+
+            URLConnection connection = url.openConnection();
+            connection.setUseCaches(false);
+            InputStream resourceAsStream = connection.getInputStream();
+            if (resourceAsStream != null) {
+                returnSet.add(resourceAsStream);
             }
-            returnSet.add(resourceAsStream);
         }
 
-        if (seenUrls.size() > 1 && !"META-INF/MANIFEST.MF".equals(path)) {
-            //circular dependency on ServiceLocator and Logger
-            Logger logger = LogFactory.getInstance().getLog();
-            logger.warning(seenUrls.toString());
-        }
-        Set<InputStream> set = new HashSet<InputStream>();
-        if (single && returnSet.size() > 1) {
-        	if (returnSet.size() > 2) {
-				throw new IllegalArgumentException(returnSet.size() + " resources are found for " +  path);
-			}
-        	
-        	String url1 = seenUrls.get(0);
-        	String url2 = seenUrls.get(1);
-        	if (url1.startsWith("file:") && url2.startsWith("jar:")) {
-				set.add(returnSet.get(0));
-        	} else if (url1.startsWith("jar:") && url2.startsWith("file:")) {
-				set.add(returnSet.get(1));
-        	} else if (url1.startsWith("jar:") && url2.startsWith("jar:")) {
-        	    if (!url1.contains("-db.zip") && url2.contains("-db.zip")) {
-                  set.add(returnSet.get(0));
-                } else if (url1.contains("-db.zip") && !url2.contains("-db.zip")) {
-                  set.add(returnSet.get(1));
-                } else {
-                  throw new IllegalArgumentException(returnSet.size() + " resources are found for " +  path);
-              }
-			} else {
-        	    throw new IllegalArgumentException(returnSet.size() + " resources are found for " +  path);
-			}
-		} else {
-            set.addAll(returnSet);
-		}
-        return set;
+        return returnSet;
     }
-
-    @Override
-    public Set<InputStream> getResourcesAsStream(String path) throws IOException {
-    	return getResourcesAsStream(path, false);
-    }
-    
-	@Override
-	public InputStream getSingleResourceAsStream(String path) throws IOException {
-		Set<InputStream> set = getResourcesAsStream(path, true);
-		if (set == null || set.size() == 0) {
-			return null;
-		} else if (set.size() > 1) {
-			throw new IllegalArgumentException(set.size() + " resources are found for " + path);
-		}
-		return set.iterator().next();
-	}
 
     @Override
     public Set<String> list(String relativeTo, String path, boolean includeFiles, boolean includeDirectories, boolean recursive) throws IOException {
         path = convertToPath(relativeTo, path);
 
-        URL fileUrl = classLoader.getResource(path);
-        if (fileUrl == null) {
-            return null;
+        Enumeration<URL> fileUrls = classLoader.getResources(path);
+
+        Set<String> returnSet = new HashSet<String>();
+
+        if (!fileUrls.hasMoreElements() && (path.startsWith("jar:") || path.startsWith("file:") || path.startsWith("wsjar:file:") || path.startsWith("zip:"))) {
+            fileUrls = new Vector<URL>(Arrays.asList(new URL(path))).elements();
         }
 
-        if (!fileUrl.toExternalForm().startsWith("file:")) {
+        while (fileUrls.hasMoreElements()) {
+            URL fileUrl = fileUrls.nextElement();
+
             if (fileUrl.toExternalForm().startsWith("jar:file:")
                     || fileUrl.toExternalForm().startsWith("wsjar:file:")
                     || fileUrl.toExternalForm().startsWith("zip:")) {
 
-                String file = fileUrl.getFile();
-                String splitPath = file.split("!")[0];
-                if (splitPath.matches("file:\\/[A-Za-z]:\\/.*")) {
-                    splitPath = splitPath.replaceFirst("file:\\/", "");
+                String[] zipAndFile = fileUrl.getFile().split("!");
+                String zipFilePath = zipAndFile[0];
+                if (zipFilePath.matches("file:\\/[A-Za-z]:\\/.*")) {
+                    zipFilePath = zipFilePath.replaceFirst("file:\\/", "");
                 } else {
-                    splitPath = splitPath.replaceFirst("file:", "");
+                    zipFilePath = zipFilePath.replaceFirst("file:", "");
                 }
-                splitPath = URLDecoder.decode(splitPath, "UTF-8");
-                File zipfile = new File(splitPath);
+                zipFilePath = URLDecoder.decode(zipFilePath, LiquibaseConfiguration.getInstance().getConfiguration(GlobalConfiguration.class).getOutputEncoding());
 
-
-                File zipFileDir = FileUtil.unzip(zipfile);
+                path = SpringBootFatJar.getPathForResource(path);
                 if (path.startsWith("classpath:")) {
                     path = path.replaceFirst("classpath:", "");
                 }
                 if (path.startsWith("classpath*:")) {
                     path = path.replaceFirst("classpath\\*:", "");
                 }
-                URI fileUri = new File(zipFileDir, path).toURI();
-                fileUrl = fileUri.toURL();
+
+                // TODO:When we update to Java 7+, we can can create a FileSystem from the JAR (zip)
+                // file, and then use NIO's directory walking and filtering mechanisms to search through it.
+                //
+                // As of 2016-02-03, Liquibase is Java 6+ (1.6)
+
+                // java.util.JarFile has a slightly nicer interface than ZipInputStream here and
+                // it works for zip files as well as JAR files
+                JarFile zipfile = new JarFile(zipFilePath, false);
+
+                try {
+                    Enumeration<JarEntry> entries = zipfile.entries();
+                    while (entries.hasMoreElements()) {
+                        JarEntry entry = entries.nextElement();
+
+                        if (entry.getName().startsWith(path)) {
+
+                            if (!recursive) {
+                                String pathAsDir = path.endsWith("/")
+                                        ? path
+                                        : path + "/";
+                                if (!entry.getName().startsWith(pathAsDir)
+                                 || entry.getName().substring(pathAsDir.length()).contains("/")) {
+                                    continue;
+                                }
+                            }
+
+                            if (entry.isDirectory() && includeDirectories) {
+                                returnSet.add(entry.getName());
+                            } else if (includeFiles) {
+                                returnSet.add(entry.getName());
+                            }
+                        }
+                    }
+                } finally {
+                    zipfile.close();
+                }
+            } else {
+                try {
+                    File file = new File(fileUrl.toURI());
+                    if (file.exists()) {
+                        getContents(file, recursive, includeFiles, includeDirectories, path, returnSet);
+                    }
+                } catch (URISyntaxException e) {
+                    //not a local file
+                } catch (IllegalArgumentException e) {
+                    //not a local file
+                }
+            }
+
+            Enumeration<URL> resources = classLoader.getResources(path);
+
+            while (resources.hasMoreElements()) {
+                String url = resources.nextElement().toExternalForm();
+                url = url.replaceFirst("^\\Q" + path + "\\E", "");
+                returnSet.add(url);
             }
         }
 
-        try {
-            File file = new File(fileUrl.toURI());
-            if (file.exists()) {
-                Set<String> returnSet = new HashSet<String>();
-                getContents(file, recursive, includeFiles, includeDirectories, path, returnSet);
-                return returnSet;
-            }
-        } catch (URISyntaxException e) {
-            //not a local file
-        } catch (IllegalArgumentException e) {
-            //not a local file
-        }
-
-        Enumeration<URL> resources = classLoader.getResources(path);
-        if (resources == null || !resources.hasMoreElements()) {
+        if (returnSet.size() == 0) {
             return null;
-        }
-        Set<String> returnSet = new HashSet<String>();
-        while (resources.hasMoreElements()) {
-            String url = resources.nextElement().toExternalForm();
-            url = url.replaceFirst("^\\Q"+path+"\\E", "");
-            returnSet.add(url);
         }
         return returnSet;
     }
